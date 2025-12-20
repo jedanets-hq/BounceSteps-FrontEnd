@@ -1,0 +1,291 @@
+const express = require('express');
+const passport = require('passport');
+const { ServiceProvider, User, Service } = require('../models');
+const { serializeDocument, isValidObjectId, toObjectId } = require('../utils/mongodb-helpers');
+
+const router = express.Router();
+const authenticateJWT = passport.authenticate('jwt', { session: false });
+
+// Search providers by location and categories
+router.get('/search', async (req, res) => {
+  try {
+    const { region, district, ward, categories, page = 1, limit = 20 } = req.query;
+    
+    console.log('🔍 Provider Search Query:', { region, district, ward, categories });
+
+    // Build query for location-based search
+    let query = { is_verified: true };
+    
+    // If no location specified, return all verified providers
+    if (!region && !district && !ward) {
+      console.log('📍 No location specified, returning all verified providers');
+    } else {
+      // Build location-based query
+      const locationConditions = [];
+      
+      if (region) {
+        locationConditions.push(
+          { region: new RegExp(region, 'i') },
+          { service_location: new RegExp(region, 'i') },
+          { 'location_data.region': new RegExp(region, 'i') },
+          { location: new RegExp(region, 'i') }
+        );
+      }
+      
+      if (district) {
+        locationConditions.push(
+          { district: new RegExp(district, 'i') },
+          { service_location: new RegExp(district, 'i') },
+          { 'location_data.district': new RegExp(district, 'i') },
+          { location: new RegExp(district, 'i') }
+        );
+      }
+      
+      if (ward) {
+        locationConditions.push(
+          { ward: new RegExp(ward, 'i') },
+          { service_location: new RegExp(ward, 'i') },
+          { 'location_data.ward': new RegExp(ward, 'i') },
+          { location: new RegExp(ward, 'i') }
+        );
+      }
+      
+      if (locationConditions.length > 0) {
+        query.$or = locationConditions;
+      }
+    }
+
+    // Service category filters
+    if (categories) {
+      const categoryArray = Array.isArray(categories) ? categories : [categories];
+      query.$and = query.$and || [];
+      query.$and.push({
+        $or: [
+          { service_categories: { $in: categoryArray.map(cat => new RegExp(cat, 'i')) } },
+          { business_type: { $in: categoryArray.map(cat => new RegExp(cat, 'i')) } }
+        ]
+      });
+    }
+
+    console.log('📋 Final Query:', JSON.stringify(query, null, 2));
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const providers = await ServiceProvider.find(query)
+      .populate('user_id', 'first_name last_name email phone avatar_url')
+      .sort({ rating: -1, total_bookings: -1, created_at: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await ServiceProvider.countDocuments(query);
+
+    console.log(`✅ Found ${providers.length} providers out of ${total} total`);
+
+    // If no providers found with specific location, try broader search
+    if (providers.length === 0 && (region || district || ward)) {
+      console.log('🔄 No providers found with specific location, trying broader search...');
+      
+      const fallbackQuery = { is_verified: true };
+      const fallbackProviders = await ServiceProvider.find(fallbackQuery)
+        .populate('user_id', 'first_name last_name email phone avatar_url')
+        .sort({ rating: -1, total_bookings: -1, created_at: -1 })
+        .limit(parseInt(limit))
+        .lean();
+      
+      console.log(`🔄 Fallback search found ${fallbackProviders.length} providers`);
+      
+      res.json({
+        success: true,
+        providers: fallbackProviders.map(p => serializeDocument(p)),
+        total: fallbackProviders.length,
+        page: parseInt(page),
+        totalPages: Math.ceil(fallbackProviders.length / limit),
+        searchCriteria: { region, district, ward, categories },
+        fallbackSearch: true,
+        message: 'No providers found in specific location. Showing all available providers.'
+      });
+    } else {
+      res.json({
+        success: true,
+        providers: providers.map(p => serializeDocument(p)),
+        total,
+        page: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        searchCriteria: { region, district, ward, categories }
+      });
+    }
+  } catch (error) {
+    console.error('❌ PROVIDER SEARCH Error:', error);
+    res.status(500).json({ success: false, message: 'Error searching providers' });
+  }
+});
+
+// Get all service providers (public)
+router.get('/', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, country, region } = req.query;
+
+    const query = { is_verified: true };
+    if (country) query.country = country;
+    if (region) query.region = region;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const providers = await ServiceProvider.find(query)
+      .populate('user_id', 'first_name last_name email')
+      .sort({ rating: -1, total_bookings: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await ServiceProvider.countDocuments(query);
+
+    res.json({
+      success: true,
+      providers: providers.map(p => serializeDocument(p)),
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('❌ GET PROVIDERS Error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching providers' });
+  }
+});
+
+// Get all providers (including unverified for admin) - MUST be before /:id route
+router.get('/all', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, verified } = req.query;
+
+    const query = {};
+    if (verified !== undefined) {
+      query.is_verified = verified === 'true';
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const providers = await ServiceProvider.find(query)
+      .populate('user_id', 'first_name last_name email phone')
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await ServiceProvider.countDocuments(query);
+
+    res.json({
+      success: true,
+      providers: providers.map(p => serializeDocument(p)),
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('❌ GET ALL PROVIDERS Error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching providers' });
+  }
+});
+
+// Get provider by ID
+router.get('/:id', async (req, res) => {
+  try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid provider ID' });
+    }
+
+    const provider = await ServiceProvider.findById(req.params.id)
+      .populate('user_id', 'first_name last_name email phone avatar_url')
+      .lean();
+
+    if (!provider) {
+      return res.status(404).json({ success: false, message: 'Provider not found' });
+    }
+
+    // Get provider's services
+    const services = await Service.find({ provider_id: provider._id, is_active: true })
+      .select('title category price location images average_rating')
+      .limit(10)
+      .lean();
+
+    res.json({
+      success: true,
+      provider: {
+        ...serializeDocument(provider),
+        services: services.map(s => serializeDocument(s))
+      }
+    });
+  } catch (error) {
+    console.error('❌ GET PROVIDER Error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching provider' });
+  }
+});
+
+// Update provider profile
+router.put('/profile', authenticateJWT, async (req, res) => {
+  try {
+    if (req.user.userType !== 'service_provider') {
+      return res.status(403).json({ success: false, message: 'Only service providers can update provider profile' });
+    }
+
+    const { business_name, business_type, description, location, country, region, district, area, license_number } = req.body;
+
+    const provider = await ServiceProvider.findOne({ user_id: toObjectId(req.user.id) });
+    if (!provider) {
+      return res.status(404).json({ success: false, message: 'Provider profile not found' });
+    }
+
+    const updateData = {};
+    if (business_name) updateData.business_name = business_name;
+    if (business_type) updateData.business_type = business_type;
+    if (description) updateData.description = description;
+    if (location) updateData.location = location;
+    if (country) updateData.country = country;
+    if (region) updateData.region = region;
+    if (district) updateData.district = district;
+    if (area) updateData.area = area;
+    if (license_number) updateData.license_number = license_number;
+
+    Object.assign(provider, updateData);
+    await provider.save();
+
+    console.log('✅ Provider profile updated');
+
+    res.json({ success: true, message: 'Provider profile updated successfully', provider: serializeDocument(provider) });
+  } catch (error) {
+    console.error('❌ UPDATE PROVIDER Error:', error);
+    res.status(500).json({ success: false, message: 'Error updating provider profile' });
+  }
+});
+
+// Admin endpoint to verify providers (for testing)
+router.post('/verify/:id', async (req, res) => {
+  try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'Invalid provider ID' });
+    }
+
+    const provider = await ServiceProvider.findByIdAndUpdate(
+      req.params.id,
+      { is_verified: true },
+      { new: true }
+    );
+
+    if (!provider) {
+      return res.status(404).json({ success: false, message: 'Provider not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Provider verified successfully',
+      provider: serializeDocument(provider)
+    });
+  } catch (error) {
+    console.error('❌ VERIFY PROVIDER Error:', error);
+    res.status(500).json({ success: false, message: 'Error verifying provider' });
+  }
+});
+
+
+module.exports = router;
