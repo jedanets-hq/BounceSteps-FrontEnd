@@ -22,7 +22,16 @@ router.get('/', async (req, res) => {
   try {
     const { category, location, district, region, minPrice, maxPrice, page = 1, limit = 10, search, sortBy, provider_id } = req.query;
     
-    console.log('📊 [GET SERVICES] Fetching services with filters:', { category, location, district, region, page, limit, provider_id });
+    console.log('📊 [GET SERVICES] ========================================');
+    console.log('📊 [GET SERVICES] STRICT Filtering with params:', { 
+      category: category || 'none', 
+      location: location || 'none', 
+      district: district || 'none', 
+      region: region || 'none', 
+      page, 
+      limit, 
+      provider_id: provider_id || 'none' 
+    });
 
     const pageNum = parseInt(page) || 1;
     const pageLimit = parseInt(limit) || 10;
@@ -30,6 +39,7 @@ router.get('/', async (req, res) => {
 
     // Get services with provider details using PostgreSQL
     const services = await Service.findWithProvider({ is_active: true });
+    console.log(`📊 [GET SERVICES] Total active services in DB: ${services.length}`);
     
     // Apply filters - STRICT MODE (no fallback)
     let filteredServices = services;
@@ -38,12 +48,14 @@ router.get('/', async (req, res) => {
     // Filter by provider_id if specified
     if (provider_id) {
       filteredServices = filteredServices.filter(s => s.provider_id === parseInt(provider_id));
+      console.log(`👤 [GET SERVICES] Provider filter: ${filteredServices.length} services`);
     }
     
     // Filter by category - STRICT (must match exactly)
     if (category) {
+      const beforeCategoryFilter = filteredServices.length;
       filteredServices = filteredServices.filter(s => s.category === category);
-      console.log(`🏷️ Category filter "${category}": ${filteredServices.length} services`);
+      console.log(`🏷️ [GET SERVICES] Category filter "${category}": ${beforeCategoryFilter} -> ${filteredServices.length} services`);
     }
     
     // Filter by location - STRICT (no fallback to all services)
@@ -51,47 +63,93 @@ router.get('/', async (req, res) => {
       const beforeLocationFilter = filteredServices.length;
       
       filteredServices = filteredServices.filter(s => {
-        // Check all location fields
-        const serviceLocation = (s.location || '').toLowerCase();
-        const serviceRegion = (s.region || '').toLowerCase();
-        const serviceDistrict = (s.district || '').toLowerCase();
-        const serviceArea = (s.area || '').toLowerCase();
-        const providerLocation = (s.provider_location || '').toLowerCase();
-        const providerRegion = (s.provider_region || '').toLowerCase();
-        const providerDistrict = (s.provider_district || '').toLowerCase();
+        // Check all location fields - normalize for comparison
+        const serviceLocation = (s.location || '').toLowerCase().trim();
+        const serviceRegion = (s.region || '').toLowerCase().trim();
+        const serviceDistrict = (s.district || '').toLowerCase().trim();
+        const serviceArea = (s.area || '').toLowerCase().trim();
+        const providerLocation = (s.provider_location || '').toLowerCase().trim();
+        const providerRegion = (s.provider_region || '').toLowerCase().trim();
+        const providerDistrict = (s.provider_district || '').toLowerCase().trim();
         
-        let matches = false;
+        // Normalize search parameters
+        const locationLower = (location || '').toLowerCase().trim();
+        const districtLower = (district || '').toLowerCase().trim();
+        const regionLower = (region || '').toLowerCase().trim();
         
-        // Check location parameter
-        if (location) {
-          const locationLower = location.toLowerCase();
-          matches = serviceLocation.includes(locationLower) ||
-                   serviceArea.includes(locationLower) ||
-                   serviceDistrict.includes(locationLower) ||
-                   providerLocation.includes(locationLower);
+        // STRICT HIERARCHICAL MATCHING
+        // If location (sublocation/area) is provided, it MUST match
+        // If district is provided, it MUST match
+        // If region is provided, it MUST match
+        
+        let locationMatches = true;  // Default to true if not provided
+        let districtMatches = true;  // Default to true if not provided
+        let regionMatches = true;    // Default to true if not provided
+        
+        // Check location/sublocation/area (most specific)
+        if (locationLower) {
+          locationMatches = 
+            serviceLocation === locationLower ||
+            serviceArea === locationLower ||
+            serviceLocation.includes(locationLower) ||
+            serviceArea.includes(locationLower) ||
+            locationLower.includes(serviceLocation) ||
+            locationLower.includes(serviceArea) ||
+            providerLocation === locationLower ||
+            providerLocation.includes(locationLower);
+            
+          // Also check if location matches district or region (for flexibility)
+          if (!locationMatches) {
+            locationMatches = 
+              serviceDistrict === locationLower ||
+              serviceDistrict.includes(locationLower) ||
+              serviceRegion === locationLower ||
+              serviceRegion.includes(locationLower);
+          }
         }
         
-        // Check district parameter
-        if (!matches && district) {
-          const districtLower = district.toLowerCase();
-          matches = serviceDistrict.includes(districtLower) ||
-                   serviceLocation.includes(districtLower) ||
-                   providerDistrict.includes(districtLower);
+        // Check district
+        if (districtLower) {
+          districtMatches = 
+            serviceDistrict === districtLower ||
+            serviceLocation === districtLower ||
+            serviceDistrict.includes(districtLower) ||
+            serviceLocation.includes(districtLower) ||
+            districtLower.includes(serviceDistrict) ||
+            providerDistrict === districtLower ||
+            providerDistrict.includes(districtLower);
         }
         
-        // Check region parameter
-        if (!matches && region) {
-          const regionLower = region.toLowerCase();
-          matches = serviceRegion.includes(regionLower) ||
-                   serviceLocation.includes(regionLower) ||
-                   providerRegion.includes(regionLower);
+        // Check region
+        if (regionLower) {
+          regionMatches = 
+            serviceRegion === regionLower ||
+            serviceLocation.includes(regionLower) ||
+            regionLower.includes(serviceRegion) ||
+            providerRegion === regionLower ||
+            providerRegion.includes(regionLower);
+        }
+        
+        // ALL provided filters must match (AND logic)
+        const matches = locationMatches && districtMatches && regionMatches;
+        
+        if (!matches) {
+          console.log(`   ❌ Service "${s.title}" rejected:`);
+          console.log(`      Service: loc="${s.location}", dist="${s.district}", reg="${s.region}"`);
+          console.log(`      Filter: loc="${location || 'none'}", dist="${district || 'none'}", reg="${region || 'none'}"`);
+          console.log(`      Results: locMatch=${locationMatches}, distMatch=${districtMatches}, regMatch=${regionMatches}`);
         }
         
         return matches;
       });
       
       locationFilterApplied = true;
-      console.log(`📍 Location filter: ${beforeLocationFilter} -> ${filteredServices.length} services`);
+      console.log(`📍 STRICT Location filter applied (AND logic):`);
+      console.log(`   - Location param: "${location || 'none'}"`);
+      console.log(`   - District param: "${district || 'none'}"`);
+      console.log(`   - Region param: "${region || 'none'}"`);
+      console.log(`   - Before: ${beforeLocationFilter} services`);
+      console.log(`   - After: ${filteredServices.length} services`);
       
       // NO FALLBACK - if no services found, return empty array
       // This ensures strict filtering by location
@@ -113,7 +171,7 @@ router.get('/', async (req, res) => {
     const total = filteredServices.length;
     const paginatedServices = filteredServices.slice(offset, offset + pageLimit);
 
-    // Format response
+    // Format response - include ALL location fields for frontend filtering
     const enrichedServices = paginatedServices.map(service => ({
       id: service.id,
       title: service.title,
@@ -125,6 +183,9 @@ router.get('/', async (req, res) => {
       duration: service.duration,
       location: service.location,
       region: service.region,
+      district: service.district,  // ADDED: Include district for filtering
+      area: service.area,          // ADDED: Include area for filtering
+      country: service.country,    // ADDED: Include country
       images: service.images || [],
       amenities: service.amenities || [],
       is_active: service.is_active,
@@ -149,7 +210,8 @@ router.get('/', async (req, res) => {
         : (service.contact_info || {})
     }));
 
-    console.log(`✅ [GET SERVICES] Found ${enrichedServices.length} services`);
+    console.log(`✅ [GET SERVICES] Returning ${enrichedServices.length} services`);
+    console.log('📊 [GET SERVICES] ========================================');
 
     res.json({
       success: true,
@@ -158,7 +220,13 @@ router.get('/', async (req, res) => {
       page: pageNum,
       limit: pageLimit,
       totalPages: Math.ceil(total / pageLimit),
-      locationFilterApplied: locationFilterApplied || false
+      locationFilterApplied: locationFilterApplied || false,
+      filters: {
+        category: category || null,
+        location: location || null,
+        district: district || null,
+        region: region || null
+      }
     });
   } catch (error) {
     console.error('❌ [GET SERVICES] Error:', error);
@@ -877,54 +945,102 @@ router.get('/destinations', async (req, res) => {
   }
 });
 
-// Get services by location with providers - for journey planner
+// Get services by location with providers - for journey planner - STRICT FILTERING
 router.get('/by-location', async (req, res) => {
   try {
     const { region, district, ward, category, limit = 50 } = req.query;
     
-    console.log('📍 [SERVICES BY LOCATION] Query:', { region, district, ward, category });
+    console.log('📍 [SERVICES BY LOCATION] STRICT Query:', { region, district, ward, category });
     
     // Get all services with provider details
     const services = await Service.findWithProvider({ is_active: true });
     
     let filteredServices = services;
+    let locationFilterApplied = false;
+    let categoryFilterApplied = false;
     
-    // Filter by location - flexible matching
+    // STRICT Filter by location - NO FALLBACK
     if (region || district || ward) {
+      const regionLower = (region || '').toLowerCase().trim();
+      const districtLower = (district || '').toLowerCase().trim();
+      const wardLower = (ward || '').toLowerCase().trim();
+      
       filteredServices = filteredServices.filter(s => {
-        const locationFields = [
-          s.location, s.region, s.district, s.area, s.country
-        ].filter(Boolean).map(f => f.toLowerCase());
+        const serviceLocation = (s.location || '').toLowerCase().trim();
+        const serviceRegion = (s.region || '').toLowerCase().trim();
+        const serviceDistrict = (s.district || '').toLowerCase().trim();
+        const serviceArea = (s.area || '').toLowerCase().trim();
+        const providerLocation = (s.provider_location || '').toLowerCase().trim();
+        const providerRegion = (s.provider_region || '').toLowerCase().trim();
+        const providerDistrict = (s.provider_district || '').toLowerCase().trim();
         
-        const searchTerms = [region, district, ward].filter(Boolean).map(t => t.toLowerCase());
+        let matchesWard = false;
+        let matchesDistrict = false;
+        let matchesRegion = false;
         
-        // Match if any location field contains any search term
-        return searchTerms.some(term => 
-          locationFields.some(field => field.includes(term))
-        );
+        // Check ward/sublocation (most specific)
+        if (wardLower) {
+          matchesWard = 
+            serviceLocation === wardLower ||
+            serviceArea === wardLower ||
+            serviceLocation.includes(wardLower) ||
+            serviceArea.includes(wardLower) ||
+            wardLower.includes(serviceLocation) ||
+            wardLower.includes(serviceArea) ||
+            providerLocation.includes(wardLower);
+        } else {
+          matchesWard = true; // No ward filter, so it matches
+        }
+        
+        // Check district
+        if (districtLower) {
+          matchesDistrict = 
+            serviceDistrict === districtLower ||
+            serviceLocation === districtLower ||
+            serviceDistrict.includes(districtLower) ||
+            serviceLocation.includes(districtLower) ||
+            districtLower.includes(serviceDistrict) ||
+            providerDistrict.includes(districtLower);
+        } else {
+          matchesDistrict = true; // No district filter, so it matches
+        }
+        
+        // Check region
+        if (regionLower) {
+          matchesRegion = 
+            serviceRegion === regionLower ||
+            serviceLocation.includes(regionLower) ||
+            regionLower.includes(serviceRegion) ||
+            providerRegion.includes(regionLower);
+        } else {
+          matchesRegion = true; // No region filter, so it matches
+        }
+        
+        // ALL provided filters must match (AND logic)
+        return matchesWard && matchesDistrict && matchesRegion;
       });
       
-      console.log(`📍 After location filter: ${filteredServices.length} services`);
+      locationFilterApplied = true;
+      console.log(`📍 STRICT Location filter: ${services.length} -> ${filteredServices.length} services`);
     }
     
-    // Filter by category
+    // STRICT Filter by category - NO FALLBACK
     if (category) {
-      filteredServices = filteredServices.filter(s => 
-        s.category && s.category.toLowerCase().includes(category.toLowerCase())
-      );
-      console.log(`🏷️ After category filter: ${filteredServices.length} services`);
+      const categoryLower = category.toLowerCase().trim();
+      filteredServices = filteredServices.filter(s => {
+        const serviceCategory = (s.category || '').toLowerCase().trim();
+        return serviceCategory === categoryLower || serviceCategory.includes(categoryLower);
+      });
+      categoryFilterApplied = true;
+      console.log(`🏷️ STRICT Category filter "${category}": ${filteredServices.length} services`);
     }
     
-    // If no services found with filters, return all services
-    if (filteredServices.length === 0) {
-      console.log('⚠️ No services found with filters, returning all services');
-      filteredServices = services.slice(0, parseInt(limit));
-    } else {
-      filteredServices = filteredServices.slice(0, parseInt(limit));
-    }
+    // NO FALLBACK - Return empty array if no matches found
+    // This ensures strict filtering by location and category
+    const limitedServices = filteredServices.slice(0, parseInt(limit));
     
     // Format response with provider info
-    const enrichedServices = filteredServices.map(service => ({
+    const enrichedServices = limitedServices.map(service => ({
       id: service.id,
       title: service.title,
       description: service.description,
@@ -932,6 +1048,8 @@ router.get('/by-location', async (req, res) => {
       price: service.price,
       location: service.location,
       region: service.region,
+      district: service.district,
+      area: service.area,
       images: service.images || [],
       provider_id: service.provider_id,
       business_name: service.business_name,
@@ -948,13 +1066,15 @@ router.get('/by-location', async (req, res) => {
         : (service.contact_info || {})
     }));
     
-    console.log(`✅ [SERVICES BY LOCATION] Returning ${enrichedServices.length} services`);
+    console.log(`✅ [SERVICES BY LOCATION] STRICT: Returning ${enrichedServices.length} services (no fallback)`);
     
     res.json({
       success: true,
       services: enrichedServices,
       total: enrichedServices.length,
-      fallback: filteredServices.length === 0
+      locationFilterApplied,
+      categoryFilterApplied,
+      filters: { region, district, ward, category }
     });
   } catch (error) {
     console.error('❌ [SERVICES BY LOCATION] Error:', error);

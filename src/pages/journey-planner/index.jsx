@@ -66,15 +66,19 @@ const JourneyPlanner = () => {
   const fetchServicesByCategory = async (category) => {
     try {
       setLoadingServices(true);
-      console.log('🔍 Fetching services for category:', category);
-      console.log('📍 Location:', formData.sublocation, formData.district, formData.region);
+      console.log('🔍 [JOURNEY PLANNER] Fetching services for category:', category);
+      console.log('📍 [JOURNEY PLANNER] Location filters:', {
+        sublocation: formData.sublocation,
+        district: formData.district,
+        region: formData.region
+      });
 
       // Build query parameters with STRICT category and location filter
       const params = new URLSearchParams();
       params.append('category', category);
       params.append('limit', '100');
       
-      // Add all location filters for strict matching
+      // Add all location filters for strict matching - backend will filter
       if (formData.sublocation) {
         params.append('location', formData.sublocation);
       }
@@ -85,86 +89,41 @@ const JourneyPlanner = () => {
         params.append('region', formData.region);
       }
 
+      console.log('🌐 [JOURNEY PLANNER] API Request:', `/api/services?${params.toString()}`);
+
       const response = await fetch(`/api/services?${params.toString()}`);
       const data = await response.json();
 
-      console.log('📦 Services response:', data);
+      console.log('📦 [JOURNEY PLANNER] API Response:', {
+        success: data.success,
+        totalServices: data.services?.length || 0,
+        locationFilterApplied: data.locationFilterApplied
+      });
 
       if (data.success && data.services) {
-        // STRICT FILTER: Only show services that match BOTH category AND location EXACTLY
-        const filteredServices = data.services.filter(service => {
-          // Category must match EXACTLY
-          const matchesCategory = service.category === category;
-          if (!matchesCategory) {
-            console.log(`❌ Service "${service.title}" rejected: category "${service.category}" !== "${category}"`);
+        // Backend already filtered by category and location
+        // Only do additional client-side validation for extra safety
+        const validatedServices = data.services.filter(service => {
+          // Verify category matches (backend should have done this)
+          if (service.category !== category) {
+            console.log(`⚠️ [JOURNEY PLANNER] Service "${service.title}" has wrong category: "${service.category}" !== "${category}"`);
             return false;
           }
-          
-          // Location matching - STRICT: must match at least one location level EXACTLY
-          const serviceLocationLower = (service.location || '').toLowerCase().trim();
-          const serviceRegionLower = (service.region || '').toLowerCase().trim();
-          const serviceDistrictLower = (service.district || '').toLowerCase().trim();
-          const serviceAreaLower = (service.area || '').toLowerCase().trim();
-          
-          const selectedSublocation = (formData.sublocation || '').toLowerCase().trim();
-          const selectedDistrict = (formData.district || '').toLowerCase().trim();
-          const selectedRegion = (formData.region || '').toLowerCase().trim();
-          
-          // STRICT MATCHING: Check exact matches or contains for hierarchical locations
-          let matchesLocation = false;
-          
-          // Priority 1: Check sublocation/area (most specific)
-          if (selectedSublocation) {
-            matchesLocation = 
-              serviceLocationLower === selectedSublocation ||
-              serviceAreaLower === selectedSublocation ||
-              serviceDistrictLower === selectedSublocation ||
-              serviceLocationLower.includes(selectedSublocation) ||
-              serviceAreaLower.includes(selectedSublocation);
-          }
-          
-          // Priority 2: Check district if sublocation didn't match
-          if (!matchesLocation && selectedDistrict) {
-            matchesLocation = 
-              serviceDistrictLower === selectedDistrict ||
-              serviceLocationLower === selectedDistrict ||
-              serviceAreaLower === selectedDistrict ||
-              serviceDistrictLower.includes(selectedDistrict) ||
-              serviceLocationLower.includes(selectedDistrict);
-          }
-          
-          // Priority 3: Check region if district didn't match
-          if (!matchesLocation && selectedRegion) {
-            matchesLocation = 
-              serviceRegionLower === selectedRegion ||
-              serviceDistrictLower === selectedRegion ||
-              serviceLocationLower === selectedRegion ||
-              serviceRegionLower.includes(selectedRegion);
-          }
-          
-          // If no location selected, don't filter by location
-          if (!selectedSublocation && !selectedDistrict && !selectedRegion) {
-            matchesLocation = true;
-          }
-          
-          if (!matchesLocation) {
-            console.log(`❌ Service "${service.title}" rejected: location mismatch`);
-            console.log(`   Service location: ${service.location}, district: ${service.district}, region: ${service.region}`);
-            console.log(`   Selected: ${formData.sublocation}, ${formData.district}, ${formData.region}`);
-          }
-          
-          return matchesLocation;
+          return true;
         });
 
-        console.log(`✅ STRICT FILTER RESULTS:`);
+        console.log(`✅ [JOURNEY PLANNER] STRICT FILTER RESULTS:`);
         console.log(`   Category: ${category}`);
-        console.log(`   Location: ${formData.sublocation || formData.district || formData.region}`);
-        console.log(`   Total from API: ${data.services.length}`);
-        console.log(`   After strict filtering: ${filteredServices.length}`);
-        console.log(`   Filtered services:`, filteredServices.map(s => `${s.title} (${s.category}, ${s.location})`));
+        console.log(`   Location: ${formData.sublocation || formData.district || formData.region || 'any'}`);
+        console.log(`   Services from API: ${data.services.length}`);
+        console.log(`   After validation: ${validatedServices.length}`);
+        
+        if (validatedServices.length > 0) {
+          console.log(`   Services:`, validatedServices.map(s => `${s.title} (${s.category}, ${s.location || s.district || s.region})`));
+        }
         
         // Transform services to match expected format
-        const transformedServices = filteredServices.map(service => ({
+        const transformedServices = validatedServices.map(service => ({
           id: service.id,
           name: service.title,
           title: service.title,
@@ -192,11 +151,11 @@ const JourneyPlanner = () => {
 
         setAvailableServices(transformedServices);
       } else {
-        console.log('⚠️ No services found');
+        console.log('⚠️ [JOURNEY PLANNER] No services found or API error');
         setAvailableServices([]);
       }
     } catch (error) {
-      console.error('❌ Error fetching services:', error);
+      console.error('❌ [JOURNEY PLANNER] Error fetching services:', error);
       setAvailableServices([]);
     } finally {
       setLoadingServices(false);
