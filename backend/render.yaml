@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: backend-bncb
+    name: isafarinetworkglobal-2
     env: node
     plan: free
     buildCommand: npm install
@@ -15,8 +15,17 @@ services:
       - key: SESSION_SECRET
         value: isafari_session_secret_key_2024
       - key: FRONTEND_URL
-        value: https://isafari-global.netlify.app
-      - key: MONGODB_URI
-        value: mongodb+srv://mfungojoctan01_db_user:%40Jctnftr01@cluster0.yvx6dyz.mongodb.net/iSafari-Global?retryWrites=true&w=majority&appName=Cluster0
-      - key: MONGODB_DB_NAME
-        value: iSafari-Global
+        value: https://isafari-tz.netlify.app
+      - key: DATABASE_URL
+        sync: false
+        # Set this in Render dashboard - PostgreSQL connection string
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        value: iSafari-Global-Network
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
