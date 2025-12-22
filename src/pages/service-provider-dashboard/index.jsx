@@ -13,6 +13,7 @@ import BusinessProfile from './components/BusinessProfile';
 import ServicePromotion from './components/ServicePromotion';
 import AccountVerification from './components/AccountVerification';
 import TravelerStoriesView from './components/TravelerStoriesView';
+import { API_URL } from '../../utils/api';
 
 const ServiceProviderDashboard = () => {
   const { theme, toggleTheme, isDark } = useTheme();
@@ -73,7 +74,7 @@ const ServiceProviderDashboard = () => {
 
       if (!token) return;
 
-      const response = await fetch('/api/providers/my-followers', {
+      const response = await fetch(`${API_URL}/providers/my-followers`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -107,7 +108,7 @@ const ServiceProviderDashboard = () => {
 
       if (!token) return;
 
-      const response = await fetch('/api/services/provider/my-services', {
+      const response = await fetch(`${API_URL}/services/provider/my-services`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -158,7 +159,7 @@ const ServiceProviderDashboard = () => {
 
       if (!token) return;
 
-      const response = await fetch('/api/bookings/provider/my-bookings', {
+      const response = await fetch(`${API_URL}/bookings/provider/my-bookings`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -198,7 +199,7 @@ const ServiceProviderDashboard = () => {
         return false;
       }
 
-      const response = await fetch(`/api/bookings/${bookingId}/status`, {
+      const response = await fetch(`${API_URL}/bookings/${bookingId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -234,7 +235,7 @@ const ServiceProviderDashboard = () => {
         return false;
       }
 
-      const response = await fetch(`/api/bookings/${bookingId}`, {
+      const response = await fetch(`${API_URL}/bookings/${bookingId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

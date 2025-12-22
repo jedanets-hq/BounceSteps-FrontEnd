@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
+import { API_URL } from '../../../utils/api';
 
 const TrustIndicators = () => {
   const [partnerships, setPartnerships] = useState([]);
@@ -12,7 +13,7 @@ const TrustIndicators = () => {
 
   const fetchTrustedPartners = async () => {
     try {
-      const response = await fetch('/api/admin/trusted-partners');
+      const response = await fetch(`${API_URL}/admin/trusted-partners`);
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.partners && data.partners.length > 0) {

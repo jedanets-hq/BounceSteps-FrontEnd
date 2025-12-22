@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from './AppIcon';
 import Button from './ui/Button';
+import { API_URL } from '../utils/api';
 
 const ServiceProviderList = ({ region, district, selectedServices, onSelectProvider, selectedProviders = [] }) => {
   const [services, setServices] = useState([]);
@@ -48,7 +49,7 @@ const ServiceProviderList = ({ region, district, selectedServices, onSelectProvi
         
         console.log('Fetching services with params:', params.toString());
         
-        const response = await fetch(`/api/services?${params}`);
+        const response = await fetch(`${API_URL}/services?${params}`);
         const data = await response.json();
         
         console.log(`Services for ${categoryName}:`, data);

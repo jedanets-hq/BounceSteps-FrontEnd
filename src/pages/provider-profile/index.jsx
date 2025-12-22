@@ -9,6 +9,7 @@ import CartSidebar from '../../components/CartSidebar';
 import { PaymentModal, BookingConfirmation } from '../../components/PaymentSystem';
 import ServiceDetailsModal from '../../components/ServiceDetailsModal';
 import { useCart } from '../../contexts/CartContext';
+import { API_URL } from '../../utils/api';
 
 const ProviderProfile = () => {
   const { providerId } = useParams();
@@ -40,7 +41,7 @@ const ProviderProfile = () => {
 
   const fetchFollowerCount = async () => {
     try {
-      const response = await fetch(`/api/providers/${providerId}/followers/count`);
+      const response = await fetch(`${API_URL}/providers/${providerId}/followers/count`);
       const data = await response.json();
       if (data.success) {
         setFollowerCount(data.count);
@@ -63,7 +64,7 @@ const ProviderProfile = () => {
       }
 
       const endpoint = isFollowing ? 'unfollow' : 'follow';
-      const response = await fetch(`/api/providers/${providerId}/${endpoint}`, {
+      const response = await fetch(`${API_URL}/providers/${providerId}/${endpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -110,7 +111,7 @@ const ProviderProfile = () => {
 
       // Fetch provider details
       try {
-        const providerResponse = await fetch(`/api/providers/${providerId}`);
+        const providerResponse = await fetch(`${API_URL}/providers/${providerId}`);
         const providerData = await providerResponse.json();
         
         console.log('📦 Provider data:', providerData);
@@ -129,7 +130,7 @@ const ProviderProfile = () => {
 
       // Fetch all services by this provider
       try {
-        const servicesResponse = await fetch(`/api/services?provider_id=${providerId}&limit=50`);
+        const servicesResponse = await fetch(`${API_URL}/services?provider_id=${providerId}&limit=50`);
         const servicesData = await servicesResponse.json();
         
         console.log('📦 Services data:', servicesData);
@@ -327,7 +328,7 @@ const ProviderProfile = () => {
                         const updated = favorites.filter(p => p.id !== parseInt(providerId));
                         localStorage.setItem('favorite_providers', JSON.stringify(updated));
                         
-                        await fetch(`/api/users/favorites/${providerId}`, {
+                        await fetch(`${API_URL}/users/favorites/${providerId}`, {
                           method: 'DELETE',
                           headers: { 'Authorization': `Bearer ${token}` }
                         });
@@ -344,7 +345,7 @@ const ProviderProfile = () => {
                         };
                         localStorage.setItem('favorite_providers', JSON.stringify([...favorites, newFavorite]));
                         
-                        await fetch('/api/users/favorites', {
+                        await fetch(`${API_URL}/users/favorites`, {
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',
@@ -389,7 +390,7 @@ const ProviderProfile = () => {
                     if (!isAlreadyFavorite) {
                       // Follow via API
                       try {
-                        await fetch(`/api/providers/${providerId}/follow`, {
+                        await fetch(`${API_URL}/providers/${providerId}/follow`, {
                           method: 'POST',
                           headers: { 'Authorization': `Bearer ${userData.token}` }
                         });

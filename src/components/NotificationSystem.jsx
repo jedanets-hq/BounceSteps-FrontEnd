@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Icon from './AppIcon';
 import Button from './ui/Button';
 import { useAuth } from '../contexts/AuthContext';
+import { API_URL } from '../utils/api';
 
 const NotificationSystem = ({ isOpen, onClose, userType = 'traveler' }) => {
   const { user } = useAuth();
@@ -22,7 +23,7 @@ const NotificationSystem = ({ isOpen, onClose, userType = 'traveler' }) => {
 
       if (!token) return;
 
-      const response = await fetch('/api/notifications', {
+      const response = await fetch(`${API_URL}/notifications`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

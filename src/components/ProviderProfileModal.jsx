@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from './AppIcon';
 import Button from './ui/Button';
+import { API_URL } from '../utils/api';
 
 const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
   const [providerDetails, setProviderDetails] = useState(null);
@@ -16,7 +17,7 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
   const fetchProviderDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/providers/${provider.id}`);
+      const response = await fetch(`${API_URL}/providers/${provider.id}`);
       const data = await response.json();
       
       if (data.success) {

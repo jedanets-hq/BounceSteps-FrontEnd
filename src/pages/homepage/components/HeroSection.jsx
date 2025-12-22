@@ -4,6 +4,7 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { useCart } from '../../../contexts/CartContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
+import { API_URL } from '../../../utils/api';
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -20,14 +21,14 @@ const HeroSection = () => {
 
   const fetchFeaturedServices = async () => {
     try {
-      const response = await fetch('/api/services/featured/slides');
+      const response = await fetch(`${API_URL}/services/featured/slides`);
       const data = await response.json();
       
       if (data.success && data.slides.length > 0) {
         setFeaturedServices(data.slides);
       } else {
         // Fallback to regular services if no featured services
-        const regularResponse = await fetch('/api/services?limit=3');
+        const regularResponse = await fetch(`${API_URL}/services?limit=3`);
         const regularData = await regularResponse.json();
         if (regularData.success) {
           setFeaturedServices(regularData.services);

@@ -5,6 +5,7 @@ import VerifiedBadge from '../../../components/ui/VerifiedBadge';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
+import { API_URL } from '../../../utils/api';
 
 const EventAccess = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const EventAccess = () => {
   const fetchEventServices = async () => {
     try {
       // Fetch all services - you can filter by event category if needed
-      const response = await fetch('/api/services');
+      const response = await fetch(`${API_URL}/services`);
       const data = await response.json();
       
       if (data.success) {

@@ -6,6 +6,7 @@ import Header from '../components/ui/Header';
 import Button from '../components/ui/Button';
 import Icon from '../components/AppIcon';
 import VerifiedBadge from '../components/ui/VerifiedBadge';
+import { API_URL } from '../utils/api';
 
 const DestinationDiscovery = () => {
   const { user } = useAuth();
@@ -101,7 +102,7 @@ const DestinationDiscovery = () => {
         params.append('search', searchQuery);
       }
       
-      const response = await fetch(`/api/services?${params}`);
+      const response = await fetch(`${API_URL}/services?${params}`);
       const data = await response.json();
       
       if (data.success) {

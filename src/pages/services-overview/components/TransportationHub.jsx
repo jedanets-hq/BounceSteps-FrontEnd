@@ -5,6 +5,7 @@ import VerifiedBadge from '../../../components/ui/VerifiedBadge';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
+import { API_URL } from '../../../utils/api';
 
 const TransportationHub = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const TransportationHub = () => {
 
   const fetchTransportServices = async () => {
     try {
-      const response = await fetch('/api/services?category=Transportation');
+      const response = await fetch(`${API_URL}/services?category=Transportation`);
       const data = await response.json();
       
       if (data.success) {

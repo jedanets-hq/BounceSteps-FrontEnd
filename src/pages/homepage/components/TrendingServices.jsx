@@ -5,6 +5,7 @@ import VerifiedBadge from '../../../components/ui/VerifiedBadge';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
+import { API_URL } from '../../../utils/api';
 
 const TrendingServices = () => {
   const navigate = useNavigate();
@@ -23,14 +24,14 @@ const TrendingServices = () => {
   const fetchServices = async () => {
     try {
       // Fetch only promoted trending services
-      const response = await fetch('/api/services?limit=6');
+      const response = await fetch(`${API_URL}/services?limit=6`);
       const data = await response.json();
       
       if (data.success && data.services.length > 0) {
         setServices(data.services);
       } else {
         // Fallback to regular services if no trending services are promoted
-        const fallbackResponse = await fetch('/api/services?limit=12');
+        const fallbackResponse = await fetch(`${API_URL}/services?limit=12`);
         const fallbackData = await fallbackResponse.json();
         if (fallbackData.success) {
           setServices(fallbackData.services);

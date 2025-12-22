@@ -3,6 +3,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import LocationSelector from '../../../components/LocationSelector';
+import { API_URL } from '../../../utils/api';
 
 const ServiceManagement = () => {
   const { user } = useAuth();
@@ -73,7 +74,7 @@ const ServiceManagement = () => {
         return;
       }
 
-      const response = await fetch('/api/users/profile', {
+      const response = await fetch(`${API_URL}/users/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -131,7 +132,7 @@ const ServiceManagement = () => {
         return;
       }
 
-      const response = await fetch('/api/services/provider/my-services', {
+      const response = await fetch(`${API_URL}/services/provider/my-services`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -338,7 +339,7 @@ const ServiceManagement = () => {
       const newStatus = !currentStatus;
       console.log('📤 Sending request to activate/deactivate:', { serviceId, newStatus });
 
-      const response = await fetch(`/api/services/${serviceId}/status`, {
+      const response = await fetch(`${API_URL}/services/${serviceId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -418,7 +419,7 @@ const ServiceManagement = () => {
           return;
         }
 
-        const response = await fetch(`/api/services/${serviceId}`, {
+        const response = await fetch(`${API_URL}/services/${serviceId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`

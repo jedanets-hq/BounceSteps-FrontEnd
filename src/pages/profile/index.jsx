@@ -6,6 +6,7 @@ import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import Image from '../../components/AppImage';
 import MyStories from './components/MyStories';
+import { API_URL } from '../../utils/api';
 
 const Profile = () => {
   const { user, updateProfile, switchUserType } = useAuth();
@@ -97,7 +98,7 @@ const Profile = () => {
         return;
       }
       
-      const response = await fetch('/api/users/upload-avatar', {
+      const response = await fetch(`${API_URL}/users/upload-avatar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -144,7 +145,7 @@ const Profile = () => {
         return;
       }
 
-      const response = await fetch('/api/users/profile', {
+      const response = await fetch(`${API_URL}/users/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

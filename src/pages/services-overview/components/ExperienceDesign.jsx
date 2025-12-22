@@ -5,6 +5,7 @@ import VerifiedBadge from '../../../components/ui/VerifiedBadge';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
+import { API_URL } from '../../../utils/api';
 
 const ExperienceDesign = ({ title = "Tours & Activities", description = "Discover authentic experiences from verified tour providers", category = "Tours & Activities" }) => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const ExperienceDesign = ({ title = "Tours & Activities", description = "Discove
       else if (title === "Shopping") apiCategory = "Shopping";
       else if (title === "Health & Wellness") apiCategory = "Health & Wellness";
       
-      const response = await fetch(`/api/services?category=${encodeURIComponent(apiCategory)}&limit=20`);
+      const response = await fetch(`${API_URL}/services?category=${encodeURIComponent(apiCategory)}&limit=20`);
       const data = await response.json();
       
       if (data.success) {

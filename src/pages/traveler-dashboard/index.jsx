@@ -10,6 +10,7 @@ import TripDetailsModal from '../../components/TripDetailsModal';
 import PastTripGallery from './components/PastTripGallery';
 import UpcomingTripCard from './components/UpcomingTripCard';
 import PreOrdersSection from './components/PreOrdersSection';
+import { API_URL } from '../../utils/api';
 const TravelerDashboard = () => {
   const location = useLocation();
   const { theme, toggleTheme, isDark } = useTheme();
@@ -143,7 +144,7 @@ const TravelerDashboard = () => {
       }
 
       // Call API to update profile
-      const response = await fetch('/api/users/profile', {
+      const response = await fetch(`${API_URL}/users/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -206,7 +207,7 @@ const TravelerDashboard = () => {
         return;
       }
 
-      const response = await fetch('/api/users/change-password', {
+      const response = await fetch(`${API_URL}/users/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -332,7 +333,7 @@ const TravelerDashboard = () => {
         return;
       }
 
-      const response = await fetch('/api/bookings', {
+      const response = await fetch(`${API_URL}/bookings`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -381,7 +382,7 @@ const TravelerDashboard = () => {
 
       console.log('Creating booking with:', { serviceId, bookingDate, participants });
 
-      const response = await fetch('/api/bookings', {
+      const response = await fetch(`${API_URL}/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -899,7 +900,7 @@ const TravelerDashboard = () => {
                               const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
                               const token = userData.token;
                               
-                              await fetch(`/api/users/favorites/${provider.id}`, {
+                              await fetch(`${API_URL}/users/favorites/${provider.id}`, {
                                 method: 'DELETE',
                                 headers: {
                                   'Authorization': `Bearer ${token}`

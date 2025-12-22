@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_URL } from '../../utils/api';
 
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
@@ -32,7 +33,7 @@ const OAuthCallback = () => {
         localStorage.setItem('token', token);
         
         // Verify token and get user data
-        const response = await fetch('/api/auth/me', {
+        const response = await fetch(`${API_URL}/auth/me`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

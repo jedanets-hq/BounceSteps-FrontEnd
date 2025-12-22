@@ -3,6 +3,19 @@ node_modules
 .idea
 package-lock.json
 /build
+dist/
+admin-portal/dist/
 .vscode/
 .idea/
 vite.config.*s.*
+
+# Environment files (keep .env.production for reference)
+.env.local
+
+# Logs
+*.log
+backend.log
+frontend.log
+
+# OS files
+Thumbs.db

@@ -8,6 +8,7 @@ import Image from '../../components/AppImage';
 import VerifiedBadge from '../../components/ui/VerifiedBadge';
 import CartSidebar from '../../components/CartSidebar';
 import { PaymentModal, BookingConfirmation } from '../../components/PaymentSystem';
+import { API_URL } from '../../utils/api';
 
 const DestinationDiscovery = () => {
   const navigate = useNavigate();
@@ -40,11 +41,12 @@ const DestinationDiscovery = () => {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      let url = '/api/services?limit=50';
+      let url = `${API_URL}/services?limit=50`;
       if (selectedCategory !== 'all') {
         url += `&category=${encodeURIComponent(selectedCategory)}`;
       }
       
+      console.log('🌐 [DESTINATION DISCOVERY] Fetching from:', url);
       const response = await fetch(url);
       const data = await response.json();
       

@@ -4,6 +4,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
+import { API_URL } from '../../../utils/api';
 
 const TravelerStoriesSection = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const TravelerStoriesSection = () => {
 
   const fetchFeaturedStories = async () => {
     try {
-      const response = await fetch('/api/traveler-stories');
+      const response = await fetch(`${API_URL}/traveler-stories`);
       
       // Check if response is ok
       if (!response.ok) {

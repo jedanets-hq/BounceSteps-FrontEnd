@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { useAuth } from '../../../contexts/AuthContext';
+import { API_URL } from '../../../utils/api';
 
 const BusinessProfile = () => {
   const { user, updateProfile, logout } = useAuth();
@@ -61,7 +62,7 @@ const BusinessProfile = () => {
 
         if (!token) return;
 
-        const response = await fetch('/api/users/profile', {
+        const response = await fetch(`${API_URL}/users/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -176,7 +177,7 @@ const BusinessProfile = () => {
         return;
       }
 
-      const response = await fetch('/api/users/change-password', {
+      const response = await fetch(`${API_URL}/users/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

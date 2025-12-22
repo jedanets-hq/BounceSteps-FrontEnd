@@ -10,6 +10,7 @@ import CartSidebar from '../../components/CartSidebar';
 import { PaymentModal, BookingConfirmation } from '../../components/PaymentSystem';
 import ServiceDetailsModal from '../../components/ServiceDetailsModal';
 import { locationData, serviceCategories } from '../../data/locations';
+import { API_URL } from '../../utils/api';
 
 const JourneyPlanner = () => {
   const { user, isAuthenticated } = useAuth();
@@ -57,6 +58,142 @@ const JourneyPlanner = () => {
   const [showServiceDetailsModal, setShowServiceDetailsModal] = useState(false);
   const [selectedServiceForDetails, setSelectedServiceForDetails] = useState(null);
 
+  // Track the last fetched category to prevent duplicate fetches
+  const [lastFetchedCategory, setLastFetchedCategory] = useState('');
+
+  // CRITICAL FIX: Re-fetch services when entering step 4 OR when category changes
+  // This prevents showing services from wrong categories
+  useEffect(() => {
+    // Use formData.serviceCategory as the source of truth for category
+    const currentCategory = formData.serviceCategory;
+    
+    // Only fetch if we're on step 4 AND have a category AND location
+    // AND the category is different from what we last fetched
+    if (step === 4 && currentCategory && formData.sublocation) {
+      // Check if we need to fetch (category changed or first time on step 4)
+      const needsFetch = currentCategory !== lastFetchedCategory;
+      
+      console.log(`🔄 [STEP 4] Check: currentCategory="${currentCategory}", lastFetched="${lastFetchedCategory}", needsFetch=${needsFetch}`);
+      
+      if (needsFetch) {
+        console.log(`🔄 [STEP 4 FETCH] Fetching services for category: ${currentCategory}`);
+        console.log(`📍 [STEP 4 FETCH] Location: ${formData.sublocation}, ${formData.district}, ${formData.region}`);
+        
+        // Clear any stale services IMMEDIATELY
+        setAvailableServices([]);
+        
+        // Sync selectedCategory with formData
+        setSelectedCategory(currentCategory);
+        
+        // Update last fetched category BEFORE fetch to prevent race conditions
+        setLastFetchedCategory(currentCategory);
+        
+        // Fetch fresh services for the selected category
+        const fetchServices = async () => {
+          try {
+            setLoadingServices(true);
+            
+            const params = new URLSearchParams();
+            params.append('category', currentCategory);
+            params.append('limit', '100');
+            
+            if (formData.sublocation) {
+              params.append('location', formData.sublocation);
+            }
+            if (formData.district) {
+              params.append('district', formData.district);
+            }
+            if (formData.region) {
+              params.append('region', formData.region);
+            }
+
+            console.log(`🌐 [STEP 4] API Request: ${API_URL}/services?${params.toString()}`);
+
+            const response = await fetch(`${API_URL}/services?${params.toString()}`);
+            const data = await response.json();
+
+            // IMPORTANT: Verify we're still on the same category (user might have changed it)
+            if (formData.serviceCategory !== currentCategory) {
+              console.log(`⚠️ [STEP 4] Category changed during fetch, discarding results`);
+              return;
+            }
+
+            if (data.success && data.services) {
+              // STRICT CATEGORY VALIDATION - Only show services matching selected category
+              const validatedServices = data.services.filter(service => {
+                const categoryMatch = service.category === currentCategory;
+                if (!categoryMatch) {
+                  console.log(`⚠️ [STEP 4] REJECTED: "${service.title}" - category "${service.category}" !== "${currentCategory}"`);
+                }
+                return categoryMatch;
+              });
+
+              console.log(`✅ [STEP 4] Category: ${currentCategory}`);
+              console.log(`✅ [STEP 4] Services from API: ${data.services.length}`);
+              console.log(`✅ [STEP 4] After strict validation: ${validatedServices.length}`);
+
+              const transformedServices = validatedServices.map(service => ({
+                id: service.id,
+                name: service.title,
+                title: service.title,
+                description: service.description,
+                price: parseFloat(service.price),
+                category: service.category,
+                location: service.location,
+                region: service.region,
+                district: service.district,
+                area: service.area,
+                images: service.images || [],
+                provider_id: service.provider_id,
+                provider: {
+                  id: service.provider_id,
+                  name: service.business_name,
+                  rating: service.provider_rating || 0,
+                  verified: service.provider_verified || false
+                },
+                businessName: service.business_name,
+                rating: service.provider_rating || 0,
+                provider_verified: service.provider_verified || false,
+                payment_methods: service.payment_methods || {},
+                contact_info: service.contact_info || {}
+              }));
+
+              setAvailableServices(transformedServices);
+            } else {
+              setAvailableServices([]);
+            }
+          } catch (error) {
+            console.error('❌ [STEP 4] Error fetching services:', error);
+            setAvailableServices([]);
+          } finally {
+            setLoadingServices(false);
+          }
+        };
+
+        fetchServices();
+      }
+    }
+  }, [step, formData.serviceCategory, formData.sublocation, formData.district, formData.region, lastFetchedCategory]);
+
+  // CRITICAL: Reset lastFetchedCategory when user goes back to step 3
+  // This ensures fresh fetch when they return to step 4
+  useEffect(() => {
+    if (step === 3) {
+      console.log(`🔙 [STEP 3] User returned to step 3, resetting lastFetchedCategory`);
+      setLastFetchedCategory('');
+      // ALSO clear available services to prevent showing old data
+      setAvailableServices([]);
+    }
+  }, [step]);
+
+  // SYNC FIX: Ensure selectedCategory and formData.serviceCategory are always in sync
+  useEffect(() => {
+    if (formData.serviceCategory && formData.serviceCategory !== selectedCategory) {
+      console.log(`🔄 [SYNC] Syncing selectedCategory from formData: ${formData.serviceCategory}`);
+      setSelectedCategory(formData.serviceCategory);
+    }
+  }, [formData.serviceCategory, selectedCategory]);
+
   const interests = [
     'Adventure', 'Culture', 'Food & Drink', 'Nature', 'History', 
     'Art & Museums', 'Nightlife', 'Shopping', 'Wellness', 'Photography'
@@ -89,9 +226,9 @@ const JourneyPlanner = () => {
         params.append('region', formData.region);
       }
 
-      console.log('🌐 [JOURNEY PLANNER] API Request:', `/api/services?${params.toString()}`);
+      console.log('🌐 [JOURNEY PLANNER] API Request:', `${API_URL}/services?${params.toString()}`);
 
-      const response = await fetch(`/api/services?${params.toString()}`);
+      const response = await fetch(`${API_URL}/services?${params.toString()}`);
       const data = await response.json();
 
       console.log('📦 [JOURNEY PLANNER] API Response:', {
@@ -189,14 +326,30 @@ const JourneyPlanner = () => {
     }
     
     if (field === 'serviceCategory') {
-      // Fetch real services from API when category is selected
-      fetchServicesByCategory(value);
+      // CRITICAL: Clear old services IMMEDIATELY when category changes
+      // This prevents showing services from wrong category
+      setAvailableServices([]);
+      // Reset lastFetchedCategory to force re-fetch when entering step 4
+      setLastFetchedCategory('');
+      console.log(`🧹 [CATEGORY CHANGE] Cleared old services for: ${value}`);
+      // NOTE: Don't fetch here - let the step 4 useEffect handle it
+      // This prevents race conditions and duplicate fetches
     }
   };
 
   const handleServiceToggle = (serviceId) => {
     const service = availableServices.find(s => s.id === serviceId);
-    const categoryKey = selectedCategory;
+    
+    // CRITICAL FIX: Use formData.serviceCategory as the source of truth
+    const currentCategory = formData.serviceCategory;
+    const categoryKey = service?.category || currentCategory;
+    
+    // Validate that service category matches selected category
+    if (service && service.category !== currentCategory) {
+      console.warn(`⚠️ [SERVICE TOGGLE] Service category mismatch: service.category="${service.category}" !== currentCategory="${currentCategory}"`);
+      // Don't add services from wrong category
+      return;
+    }
     
     setServicesByCategory(prev => {
       const currentCategoryServices = prev[categoryKey] || [];
@@ -519,11 +672,16 @@ const JourneyPlanner = () => {
                       <button
                         key={category}
                         onClick={() => {
+                          // IMPORTANT: Clear previous services when selecting new category
+                          // This prevents mixing services from different categories
+                          setAvailableServices([]);
                           setSelectedCategory(category);
+                          setLastFetchedCategory(''); // Reset to force fresh fetch on step 4
                           handleInputChange('serviceCategory', category);
+                          console.log(`🏷️ [CATEGORY SELECTED] Category changed to: ${category}`);
                         }}
                         className={`p-6 border-2 rounded-lg text-left transition-all ${
-                          selectedCategory === category
+                          formData.serviceCategory === category
                             ? 'border-primary bg-primary/5'
                             : 'border-border hover:border-primary/50'
                         }`}
@@ -557,7 +715,7 @@ const JourneyPlanner = () => {
             )}
 
             {step === 4 && (
-              <div className="space-y-6">
+              <div className="space-y-6" key={`step4-${formData.serviceCategory}`}>
                 <h2 className="text-2xl font-semibold text-foreground mb-6">Available Services</h2>
                 
                 {/* Location and Category Info */}
@@ -571,7 +729,7 @@ const JourneyPlanner = () => {
                     <div className="flex items-center gap-2">
                       <Icon name="Tag" size={16} className="text-primary" />
                       <span className="font-medium">Category:</span>
-                      <span className="text-muted-foreground">{selectedCategory}</span>
+                      <span className="text-muted-foreground">{formData.serviceCategory}</span>
                     </div>
                   </div>
                 </div>
@@ -596,17 +754,17 @@ const JourneyPlanner = () => {
                 ) : loadingServices ? (
                   <div className="text-center p-8 bg-muted/50 rounded-lg">
                     <Icon name="Loader2" size={48} className="text-primary mx-auto mb-4 animate-spin" />
-                    <p className="text-foreground font-medium">Loading {selectedCategory} services...</p>
+                    <p className="text-foreground font-medium">Loading {formData.serviceCategory} services...</p>
                     <p className="text-sm text-muted-foreground mt-2">Searching in {formData.sublocation || formData.district || formData.region}...</p>
                   </div>
                 ) : availableServices.length === 0 ? (
                   <div className="text-center p-8 bg-muted/50 rounded-lg border-2 border-dashed border-border">
                     <Icon name="AlertCircle" size={56} className="text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">
-                      No {selectedCategory} Services Found
+                      No {formData.serviceCategory} Services Found
                     </h3>
                     <p className="text-muted-foreground mb-1">
-                      We couldn't find any <span className="font-medium text-foreground">{selectedCategory}</span> services in
+                      We couldn't find any <span className="font-medium text-foreground">{formData.serviceCategory}</span> services in
                     </p>
                     <p className="text-primary font-medium mb-3">
                       {formData.sublocation}, {formData.district}, {formData.region}
@@ -618,7 +776,7 @@ const JourneyPlanner = () => {
                         This might be because:
                       </p>
                       <ul className="text-xs text-muted-foreground text-left space-y-1">
-                        <li>• No providers offer {selectedCategory} services in this area yet</li>
+                        <li>• No providers offer {formData.serviceCategory} services in this area yet</li>
                         <li>• The location or category combination is too specific</li>
                         <li>• Services may be available in nearby areas</li>
                       </ul>
@@ -662,10 +820,10 @@ const JourneyPlanner = () => {
                   <div>
                     <div className="mb-6">
                       <h3 className="text-lg font-semibold text-foreground mb-2">
-                        {selectedCategory} in {formData.sublocation}, {formData.district}
+                        {formData.serviceCategory} in {formData.sublocation}, {formData.district}
                       </h3>
                       <p className="text-muted-foreground text-sm">
-                        Showing only {selectedCategory} services from {formData.sublocation || formData.district || formData.region}. Select services to add to your plan.
+                        Showing only {formData.serviceCategory} services from {formData.sublocation || formData.district || formData.region}. Select services to add to your plan.
                       </p>
                       
                       {/* Show previously selected services from other categories */}
@@ -673,7 +831,7 @@ const JourneyPlanner = () => {
                         <div className="mt-4 p-3 bg-secondary/5 rounded-lg">
                           <p className="text-sm font-medium text-foreground mb-2">Services from other categories:</p>
                           {Object.entries(servicesByCategory).map(([category, services]) => (
-                            category !== selectedCategory && services.length > 0 && (
+                            category !== formData.serviceCategory && services.length > 0 && (
                               <div key={category} className="text-xs text-muted-foreground">
                                 <span className="font-medium">{category}:</span> {services.map(s => s.name).join(', ')}
                               </div>
@@ -682,22 +840,25 @@ const JourneyPlanner = () => {
                         </div>
                       )}
                     </div>
-                    
                     <div className="mb-4 flex items-center justify-between">
                       <p className="text-sm font-medium text-foreground">
                         Found <span className="text-primary font-bold">
                           {availableServices.filter(s => 
-                            !serviceSearchTerm || 
+                            // STRICT: Only count services matching selected category
+                            s.category === formData.serviceCategory &&
+                            (!serviceSearchTerm || 
                             s.title?.toLowerCase().includes(serviceSearchTerm.toLowerCase()) ||
                             s.businessName?.toLowerCase().includes(serviceSearchTerm.toLowerCase()) ||
-                            s.description?.toLowerCase().includes(serviceSearchTerm.toLowerCase())
+                            s.description?.toLowerCase().includes(serviceSearchTerm.toLowerCase()))
                           ).length}
-                        </span> {selectedCategory} service{availableServices.length !== 1 ? 's' : ''} in {formData.sublocation || formData.district}
+                        </span> {formData.serviceCategory} service{availableServices.length !== 1 ? 's' : ''} in {formData.sublocation || formData.district}
                       </p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {availableServices
+                        // STRICT CATEGORY FILTER: Only show services matching selected category
+                        .filter(service => service.category === formData.serviceCategory)
                         .filter(service => 
                           !serviceSearchTerm || 
                           service.title?.toLowerCase().includes(serviceSearchTerm.toLowerCase()) ||
@@ -705,7 +866,7 @@ const JourneyPlanner = () => {
                           service.description?.toLowerCase().includes(serviceSearchTerm.toLowerCase())
                         )
                         .map((service) => {
-                        const isSelected = servicesByCategory[selectedCategory]?.some(s => s.id === service.id) || false;
+                        const isSelected = servicesByCategory[formData.serviceCategory]?.some(s => s.id === service.id) || false;
                         return (
                           <div
                             key={service.id}
@@ -897,7 +1058,7 @@ const JourneyPlanner = () => {
                                       
                                       // Save to database
                                       try {
-                                        await fetch('/api/users/favorites', {
+                                        await fetch(`${API_URL}/users/favorites`, {
                                           method: 'POST',
                                           headers: {
                                             'Content-Type': 'application/json',

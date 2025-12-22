@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/ui/Header';
 import Button from '../components/ui/Button';
 import Icon from '../components/AppIcon';
+import { API_URL } from '../utils/api';
 
 const ServiceBooking = () => {
   const { user } = useAuth();
@@ -32,7 +33,7 @@ const ServiceBooking = () => {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch('/api/services');
+      const response = await fetch(`${API_URL}/services`);
       const data = await response.json();
       
       if (data.success) {

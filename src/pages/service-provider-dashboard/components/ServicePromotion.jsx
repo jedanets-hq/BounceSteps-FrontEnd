@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { useAuth } from '../../../contexts/AuthContext';
+import { API_URL } from '../../../utils/api';
 
 const ServicePromotion = () => {
   const { user } = useAuth();
@@ -30,7 +31,7 @@ const ServicePromotion = () => {
       const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       const token = userData.token;
       
-      const response = await fetch('/api/services/provider/my-services', {
+      const response = await fetch(`${API_URL}/services/provider/my-services`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -167,7 +168,7 @@ const ServicePromotion = () => {
       const cardBrand = getCardBrand(cardDetails.cardNumber);
       const cardLastFour = cardDetails.cardNumber.replace(/\s/g, '').slice(-4);
       
-      const response = await fetch(`/api/services/${selectedService}/promote`, {
+      const response = await fetch(`${API_URL}/services/${selectedService}/promote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

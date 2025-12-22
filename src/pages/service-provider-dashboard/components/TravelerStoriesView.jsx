@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { API_URL } from '../../../utils/api';
 
 const TravelerStoriesView = () => {
   const [stories, setStories] = useState([]);
@@ -13,7 +14,7 @@ const TravelerStoriesView = () => {
 
   const fetchStories = async () => {
     try {
-      const response = await fetch('/api/traveler-stories?limit=20');
+      const response = await fetch(`${API_URL}/traveler-stories?limit=20`);
       
       if (!response.ok) {
         console.log('Stories endpoint not available');

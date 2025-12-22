@@ -10,6 +10,7 @@ import ProviderCard from '../components/ProviderCard';
 import ProviderProfileModal from '../components/ProviderProfileModal';
 import { tanzaniaRegions, destinations } from '../data/tanzaniaData';
 import { getAccommodationsByType, getTransportByRegion } from '../data/accommodationData';
+import { API_URL } from '../utils/api';
 
 const JourneyPlannerEnhanced = () => {
   const { user } = useAuth();
@@ -292,7 +293,7 @@ const JourneyPlannerEnhanced = () => {
     };
 
     try {
-      const response = await fetch('/api/payments', {
+      const response = await fetch(`${API_URL}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paymentData)
@@ -366,7 +367,7 @@ const JourneyPlannerEnhanced = () => {
       servicesParams.append('limit', '50');
       
       // Fetch services first
-      const servicesResponse = await fetch(`/api/services?${servicesParams.toString()}`);
+      const servicesResponse = await fetch(`${API_URL}/services?${servicesParams.toString()}`);
       const servicesData = await servicesResponse.json();
       
       console.log('📦 Frontend: Services response:', servicesData);

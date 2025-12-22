@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { useAuth } from '../../../contexts/AuthContext';
+import { API_URL } from '../../../utils/api';
 
 const MyStories = ({ profileData, autoOpenCreate = false }) => {
   const { user } = useAuth();
@@ -40,7 +41,7 @@ const MyStories = ({ profileData, autoOpenCreate = false }) => {
         return;
       }
 
-      const response = await fetch('/api/traveler-stories/my-stories', {
+      const response = await fetch(`${API_URL}/traveler-stories/my-stories`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -103,7 +104,7 @@ const MyStories = ({ profileData, autoOpenCreate = false }) => {
         formDataToSend.append('media', file);
       });
 
-      const response = await fetch('/api/traveler-stories', {
+      const response = await fetch(`${API_URL}/traveler-stories`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -154,7 +155,7 @@ const MyStories = ({ profileData, autoOpenCreate = false }) => {
         return;
       }
 
-      const response = await fetch(`/api/traveler-stories/${storyId}`, {
+      const response = await fetch(`${API_URL}/traveler-stories/${storyId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
