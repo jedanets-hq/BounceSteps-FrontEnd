@@ -97,17 +97,20 @@ const JourneyPlanner = () => {
             params.append('category', currentCategory);
             params.append('limit', '100');
             
-            if (formData.sublocation) {
-              params.append('location', formData.sublocation);
+            // IMPORTANT: Always send region first as primary filter
+            // This ensures services are found even if they only have region set
+            if (formData.region) {
+              params.append('region', formData.region);
             }
             if (formData.district) {
               params.append('district', formData.district);
             }
-            if (formData.region) {
-              params.append('region', formData.region);
+            if (formData.sublocation) {
+              params.append('location', formData.sublocation);
             }
 
             console.log(`🌐 [STEP 4] API Request: ${API_URL}/services?${params.toString()}`);
+            console.log(`📍 [STEP 4] Location params: region="${formData.region}", district="${formData.district}", sublocation="${formData.sublocation}"`);
 
             const response = await fetch(`${API_URL}/services?${params.toString()}`);
             const data = await response.json();
@@ -215,18 +218,20 @@ const JourneyPlanner = () => {
       params.append('category', category);
       params.append('limit', '100');
       
-      // Add all location filters for strict matching - backend will filter
-      if (formData.sublocation) {
-        params.append('location', formData.sublocation);
+      // IMPORTANT: Always send region first as primary filter
+      // This ensures services are found even if they only have region set
+      if (formData.region) {
+        params.append('region', formData.region);
       }
       if (formData.district) {
         params.append('district', formData.district);
       }
-      if (formData.region) {
-        params.append('region', formData.region);
+      if (formData.sublocation) {
+        params.append('location', formData.sublocation);
       }
 
       console.log('🌐 [JOURNEY PLANNER] API Request:', `${API_URL}/services?${params.toString()}`);
+      console.log('📍 [JOURNEY PLANNER] Location params:', { region: formData.region, district: formData.district, sublocation: formData.sublocation });
 
       const response = await fetch(`${API_URL}/services?${params.toString()}`);
       const data = await response.json();
