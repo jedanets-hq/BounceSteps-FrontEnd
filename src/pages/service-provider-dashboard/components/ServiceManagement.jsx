@@ -97,11 +97,34 @@ const ServiceManagement = () => {
       
       if (data.success && data.user) {
         if (data.user.provider) {
-          setProviderProfile(data.user.provider);
-          // Set location and categories from profile
-          if (data.user.provider.location_data) {
-            setLocation(data.user.provider.location_data);
+          // Parse location_data if it's a string
+          let providerData = { ...data.user.provider };
+          if (providerData.location_data && typeof providerData.location_data === 'string') {
+            try {
+              providerData.location_data = JSON.parse(providerData.location_data);
+            } catch (e) {
+              console.log('⚠️ Could not parse location_data:', e.message);
+              providerData.location_data = {};
+            }
           }
+          
+          setProviderProfile(providerData);
+          console.log('📋 Provider profile loaded:', {
+            business_name: providerData.business_name,
+            region: providerData.region,
+            district: providerData.district,
+            area: providerData.area,
+            location_data: providerData.location_data
+          });
+          
+          // Set location from profile - use location_data or individual fields
+          const locationData = providerData.location_data || {};
+          setLocation({
+            region: locationData.region || providerData.region || '',
+            district: locationData.district || providerData.district || '',
+            ward: locationData.ward || providerData.ward || '',
+            street: locationData.street || providerData.area || ''
+          });
         } else {
           // For service providers without complete profile, create a basic one
           // This allows them to add services - backend will auto-create provider profile
@@ -250,6 +273,43 @@ const ServiceManagement = () => {
         return;
       }
 
+      // Extract location components from provider profile for proper filtering
+      // IMPORTANT: Handle both location_data object and individual fields as fallback
+      let locationData = providerProfile?.location_data || providerProfile?.locationData || {};
+      
+      // Parse location_data if it's a string (can happen with PostgreSQL JSONB)
+      if (typeof locationData === 'string') {
+        try {
+          locationData = JSON.parse(locationData);
+        } catch (e) {
+          console.log('⚠️ Could not parse location_data string:', e.message);
+          locationData = {};
+        }
+      }
+      
+      // Use location_data fields first, then fallback to provider profile direct fields
+      const region = locationData.region || providerProfile?.region || '';
+      const district = locationData.district || providerProfile?.district || '';
+      const area = locationData.ward || locationData.street || providerProfile?.area || providerProfile?.ward || '';
+      
+      // Build full location string for display
+      const fullLocationString = [area, district, region, 'Tanzania']
+        .filter(Boolean)
+        .join(', ') || locationString;
+      
+      console.log('📍 [SERVICE CREATE] Location data extracted:', { 
+        region, 
+        district, 
+        area, 
+        fullLocationString,
+        fromLocationData: locationData,
+        fromProviderProfile: {
+          region: providerProfile?.region,
+          district: providerProfile?.district,
+          area: providerProfile?.area
+        }
+      });
+
       const serviceData = {
         title: serviceForm.name,
         description: serviceForm.description || 'No description provided',
@@ -257,7 +317,12 @@ const ServiceManagement = () => {
         price: parseFloat(serviceForm.price),
         duration: parseInt(serviceForm.duration) || null,
         maxParticipants: parseInt(serviceForm.capacity) || null,
-        location: locationString,
+        location: fullLocationString,
+        // IMPORTANT: Send region, district, area separately for proper filtering
+        region: region,
+        district: district,
+        area: area,
+        country: 'Tanzania',
         images: imageUrls,
         amenities: serviceForm.includes ? serviceForm.includes.split(',').map(item => item.trim()) : [],
         paymentMethods: serviceForm.paymentMethods,
