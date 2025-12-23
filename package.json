@@ -59,7 +59,7 @@
     "dev": "concurrently \"npm run backend\" \"npm run frontend\" --names \"BACKEND,FRONTEND\" --prefix-colors \"bgBlue.bold,bgMagenta.bold\"",
     "backend": "cd backend && node server.js",
     "frontend": "vite",
-    "build": "node build-with-version.js",
+    "build": "cd backend && npm install",
     "build:prod": "cross-env NODE_ENV=production node build-with-version.js",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
