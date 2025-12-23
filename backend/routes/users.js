@@ -27,16 +27,42 @@ router.get('/profile', authenticateJWT, async (req, res) => {
     if (user.user_type === 'service_provider') {
       providerProfile = await ServiceProvider.findOne({ user_id: parseInt(userId) });
       console.log('👤 [GET PROFILE] Provider profile found:', providerProfile ? 'Yes' : 'No');
+      
+      // IMPORTANT: Parse location_data if it's a string (PostgreSQL JSONB can return string)
+      if (providerProfile && providerProfile.location_data) {
+        if (typeof providerProfile.location_data === 'string') {
+          try {
+            providerProfile.location_data = JSON.parse(providerProfile.location_data);
+          } catch (e) {
+            console.log('⚠️ [GET PROFILE] Could not parse location_data:', e.message);
+            providerProfile.location_data = {};
+          }
+        }
+      }
+      
       if (providerProfile) {
         console.log('📋 Provider data:', {
           business_name: providerProfile.business_name,
           service_location: providerProfile.service_location,
           service_categories: providerProfile.service_categories,
-          location_data: providerProfile.location_data
+          location_data: providerProfile.location_data,
+          region: providerProfile.region,
+          district: providerProfile.district,
+          area: providerProfile.area
         });
       }
     }
 
+    // Build location_data object - prioritize parsed location_data, fallback to individual fields
+    const locationDataObj = providerProfile?.location_data && typeof providerProfile.location_data === 'object' 
+      ? providerProfile.location_data 
+      : {
+          region: providerProfile?.region || '',
+          district: providerProfile?.district || '',
+          ward: providerProfile?.ward || '',
+          street: providerProfile?.area || ''
+        };
+    
     // Build response with provider data for frontend - FLATTEN provider data into user object
     const responseUser = {
       id: user.id,
@@ -54,12 +80,7 @@ router.get('/profile', authenticateJWT, async (req, res) => {
       description: providerProfile?.description || '',
       serviceLocation: providerProfile?.service_location || providerProfile?.location || '',
       serviceCategories: providerProfile?.service_categories || [],
-      locationData: providerProfile?.location_data || {
-        region: providerProfile?.region || '',
-        district: providerProfile?.district || '',
-        ward: providerProfile?.ward || '',
-        street: providerProfile?.area || ''
-      },
+      locationData: locationDataObj,
       // Include provider profile data if exists (for backward compatibility)
       provider: providerProfile ? {
         id: providerProfile.id,
@@ -73,7 +94,7 @@ router.get('/profile', authenticateJWT, async (req, res) => {
         district: providerProfile.district,
         area: providerProfile.area,
         ward: providerProfile.ward,
-        location_data: providerProfile.location_data,
+        location_data: locationDataObj,
         service_categories: providerProfile.service_categories || [],
         license_number: providerProfile.license_number,
         rating: providerProfile.rating,
@@ -107,20 +128,107 @@ router.put('/profile', [authenticateJWT, body('email').optional().isEmail()], as
     }
 
     const userId = req.user.id;
-    const { first_name, last_name, phone, avatar_url } = req.body;
+    const { 
+      first_name, firstName, last_name, lastName, phone, avatar_url, profileImage,
+      // Provider profile fields
+      companyName, businessType, description, serviceLocation, serviceCategories, locationData
+    } = req.body;
 
     console.log('✏️ [UPDATE PROFILE] User:', userId);
+    console.log('📋 [UPDATE PROFILE] Data received:', { 
+      firstName: firstName || first_name, 
+      lastName: lastName || last_name,
+      companyName, 
+      serviceLocation, 
+      locationData,
+      serviceCategories 
+    });
 
-    const updateData = {};
-    if (first_name) updateData.first_name = first_name;
-    if (last_name) updateData.last_name = last_name;
-    if (phone) updateData.phone = phone;
-    if (avatar_url) updateData.avatar_url = avatar_url;
+    // Update user data
+    const userUpdateData = {};
+    if (first_name || firstName) userUpdateData.first_name = first_name || firstName;
+    if (last_name || lastName) userUpdateData.last_name = last_name || lastName;
+    if (phone) userUpdateData.phone = phone;
+    if (avatar_url || profileImage) userUpdateData.avatar_url = avatar_url || profileImage;
 
-    const user = await User.findByIdAndUpdate(userId, updateData);
+    const user = await User.findByIdAndUpdate(userId, userUpdateData);
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // If service provider, also update provider profile
+    if (user.user_type === 'service_provider') {
+      let provider = await ServiceProvider.findOne({ user_id: parseInt(userId) });
+      
+      if (provider) {
+        const providerUpdateData = {};
+        
+        if (companyName) providerUpdateData.business_name = companyName;
+        if (businessType) providerUpdateData.business_type = businessType;
+        if (description) providerUpdateData.description = description;
+        if (serviceCategories) providerUpdateData.service_categories = serviceCategories;
+        
+        // Handle location data
+        if (locationData) {
+          providerUpdateData.region = locationData.region || '';
+          providerUpdateData.district = locationData.district || '';
+          providerUpdateData.ward = locationData.ward || '';
+          providerUpdateData.area = locationData.street || locationData.area || '';
+          providerUpdateData.location_data = JSON.stringify(locationData);
+          
+          // Build full location string
+          const locationParts = [
+            locationData.street,
+            locationData.ward,
+            locationData.district,
+            locationData.region,
+            'Tanzania'
+          ].filter(Boolean);
+          providerUpdateData.location = locationParts.join(', ');
+          providerUpdateData.service_location = locationParts.join(', ');
+        } else if (serviceLocation) {
+          providerUpdateData.location = serviceLocation;
+          providerUpdateData.service_location = serviceLocation;
+        }
+        
+        if (Object.keys(providerUpdateData).length > 0) {
+          await ServiceProvider.findByIdAndUpdate(provider.id, providerUpdateData);
+          console.log('✅ [UPDATE PROFILE] Provider profile updated:', providerUpdateData);
+        }
+      } else {
+        // Create provider profile if it doesn't exist
+        console.log('📝 [UPDATE PROFILE] Creating new provider profile');
+        const newProviderData = {
+          user_id: parseInt(userId),
+          business_name: companyName || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'My Business',
+          business_type: businessType || 'General Services',
+          description: description || '',
+          service_categories: serviceCategories || ['General'],
+          country: 'Tanzania'
+        };
+        
+        if (locationData) {
+          newProviderData.region = locationData.region || '';
+          newProviderData.district = locationData.district || '';
+          newProviderData.ward = locationData.ward || '';
+          newProviderData.area = locationData.street || locationData.area || '';
+          newProviderData.location_data = JSON.stringify(locationData);
+          
+          const locationParts = [
+            locationData.street,
+            locationData.ward,
+            locationData.district,
+            locationData.region,
+            'Tanzania'
+          ].filter(Boolean);
+          newProviderData.location = locationParts.join(', ');
+          newProviderData.service_location = locationParts.join(', ');
+        }
+        
+        await ServiceProvider.create(newProviderData);
+        console.log('✅ [UPDATE PROFILE] New provider profile created');
+      }
     }
 
     // Remove password from response

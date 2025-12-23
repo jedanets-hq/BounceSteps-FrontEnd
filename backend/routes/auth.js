@@ -87,7 +87,7 @@ router.post('/register', getValidationMiddleware('register'), async (req, res) =
         country: providerLocationData.country || 'Tanzania',
         region: providerLocationData.region || '',
         district: providerLocationData.district || '',
-        area: providerLocationData.area || '',
+        area: providerLocationData.street || providerLocationData.area || '',
         ward: providerLocationData.ward || '',
         location_data: providerLocationData,
         service_categories: serviceCategories || []
@@ -199,6 +199,16 @@ router.post('/login', getValidationMiddleware('login'), async (req, res) => {
     if (user.user_type === 'service_provider') {
       const provider = await ServiceProvider.findOne({ user_id: parseInt(user.id) });
       if (provider) {
+        // Parse location_data if it's a string (PostgreSQL JSONB can return string)
+        let locationData = provider.location_data;
+        if (typeof locationData === 'string') {
+          try {
+            locationData = JSON.parse(locationData);
+          } catch (e) {
+            locationData = {};
+          }
+        }
+        
         providerData = {
           companyName: provider.business_name || '',
           businessName: provider.business_name || '',
@@ -206,7 +216,7 @@ router.post('/login', getValidationMiddleware('login'), async (req, res) => {
           description: provider.description || '',
           serviceLocation: provider.service_location || provider.location || '',
           serviceCategories: provider.service_categories || [],
-          locationData: provider.location_data || {
+          locationData: locationData && typeof locationData === 'object' ? locationData : {
             region: provider.region || '',
             district: provider.district || '',
             ward: provider.ward || '',
