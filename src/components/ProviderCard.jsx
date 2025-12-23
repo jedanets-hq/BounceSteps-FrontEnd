@@ -88,13 +88,35 @@ const ProviderCard = ({ provider, onViewProfile, onSelect, isSelected }) => {
           View Profile
         </Button>
         <Button
-          variant={isSelected ? 'default' : 'secondary'}
+          variant="outline"
           size="sm"
-          onClick={() => onSelect(provider)}
-          className="flex-1"
+          onClick={() => {
+            // Add to favorites
+            const favorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
+            const alreadyFavorite = favorites.find(f => f.id === provider.id);
+            
+            if (!alreadyFavorite) {
+              const newFavorite = {
+                id: provider.id,
+                business_name: provider.business_name,
+                location: provider.location,
+                service_categories: provider.service_categories,
+                is_verified: provider.is_verified,
+                rating: provider.rating,
+                total_reviews: provider.total_reviews,
+                services_count: provider.services_count
+              };
+              favorites.push(newFavorite);
+              localStorage.setItem('favorite_providers', JSON.stringify(favorites));
+              alert('✅ Added to favorites!');
+            } else {
+              alert('Already in favorites!');
+            }
+          }}
+          className="flex-1 text-red-500 hover:bg-red-50"
         >
-          <Icon name={isSelected ? 'Check' : 'Plus'} size={16} />
-          {isSelected ? 'Selected' : 'Select'}
+          <Icon name="Heart" size={16} />
+          Add to Favorite
         </Button>
       </div>
     </div>

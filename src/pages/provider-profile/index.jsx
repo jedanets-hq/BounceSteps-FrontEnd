@@ -373,6 +373,21 @@ const ProviderProfile = () => {
                   })()}
                 </Button>
                 
+                {/* Follow Button */}
+                <Button
+                  variant={isFollowing ? 'default' : 'outline'}
+                  onClick={handleFollowToggle}
+                  disabled={loadingFollow}
+                  className={isFollowing ? 'bg-primary text-primary-foreground' : ''}
+                >
+                  {loadingFollow ? (
+                    <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
+                  ) : (
+                    <Icon name={isFollowing ? 'UserCheck' : 'UserPlus'} size={18} className="mr-2" />
+                  )}
+                  {isFollowing ? `Following (${followerCount})` : `Follow (${followerCount})`}
+                </Button>
+                
                 {/* Add to Favorite Button */}
                 <Button
                   variant="outline"
@@ -383,32 +398,27 @@ const ProviderProfile = () => {
                       return;
                     }
                     
-                    const userData = JSON.parse(savedUser);
                     const favorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
                     const isAlreadyFavorite = favorites.some(p => p.id === parseInt(providerId));
                     
                     if (!isAlreadyFavorite) {
-                      // Follow via API
-                      try {
-                        await fetch(`${API_URL}/providers/${providerId}/follow`, {
-                          method: 'POST',
-                          headers: { 'Authorization': `Bearer ${userData.token}` }
-                        });
-                        const newFavorite = {
-                          id: parseInt(providerId),
-                          business_name: provider?.business_name || provider?.name,
-                          location: provider?.location,
-                          is_verified: provider?.is_verified || provider?.verified
-                        };
-                        localStorage.setItem('favorite_providers', JSON.stringify([...favorites, newFavorite]));
-                        alert('Added to favorites!');
-                      } catch (error) {
-                        console.error('Error adding to favorites:', error);
-                      }
+                      const newFavorite = {
+                        id: parseInt(providerId),
+                        business_name: provider?.business_name || provider?.name,
+                        location: provider?.location,
+                        is_verified: provider?.is_verified || provider?.verified,
+                        service_categories: provider?.service_categories || [],
+                        rating: provider?.rating || 0,
+                        total_reviews: provider?.total_reviews || 0,
+                        services_count: services?.length || 0
+                      };
+                      localStorage.setItem('favorite_providers', JSON.stringify([...favorites, newFavorite]));
+                      alert('✅ Added to favorites! View in Dashboard > Favorites');
                     } else {
                       alert('Already in favorites!');
                     }
                   }}
+                  className="text-red-500 hover:bg-red-50"
                 >
                   <Icon name="Heart" size={18} className="mr-2" />
                   Add to Favorite
@@ -529,7 +539,7 @@ const ProviderProfile = () => {
                         </div>
                       )}
                       
-                      <div className="flex flex-col gap-2">
+                       <div className="flex flex-col gap-2">
                         <Button 
                           variant="outline"
                           size="sm"
@@ -542,41 +552,60 @@ const ProviderProfile = () => {
                           <Icon name="Eye" size={16} />
                           View Details
                         </Button>
-                        <div className="flex space-x-2">
-                          <Button 
-                            onClick={() => {
-                              const savedUser = localStorage.getItem('isafari_user');
-                              if (!savedUser) {
-                                navigate('/login?redirect=/provider/' + providerId);
-                                return;
+                        <Button 
+                          onClick={() => {
+                            const savedUser = localStorage.getItem('isafari_user');
+                            if (!savedUser) {
+                              navigate('/login?redirect=/provider/' + providerId);
+                              return;
+                            }
+                            
+                            // Add service to journey plan
+                            const journeyPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
+                            const currentPlan = journeyPlans.find(p => p.status === 'building') || {
+                              id: Date.now(),
+                              status: 'building',
+                              services: [],
+                              created_at: new Date().toISOString()
+                            };
+                            
+                            // Check if service already added
+                            const alreadyAdded = currentPlan.services.find(s => s.id === service.id);
+                            if (!alreadyAdded) {
+                              currentPlan.services.push({
+                                id: service.id,
+                                service_id: service.id,
+                                title: service.title,
+                                name: service.title,
+                                category: service.category,
+                                price: service.price,
+                                provider_id: service.provider_id || providerId,
+                                provider_name: service.business_name || provider?.business_name,
+                                location: service.location,
+                                image: service.images?.[0],
+                                description: service.description
+                              });
+                              
+                              // Update or add plan
+                              const planIndex = journeyPlans.findIndex(p => p.id === currentPlan.id);
+                              if (planIndex >= 0) {
+                                journeyPlans[planIndex] = currentPlan;
+                              } else {
+                                journeyPlans.push(currentPlan);
                               }
-                              handleAddToCart(service);
-                              navigate('/traveler-dashboard?tab=cart');
-                            }}
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                          >
-                            <Icon name="ShoppingBag" size={14} />
-                            Add to Cart
-                          </Button>
-                          <Button 
-                            onClick={() => {
-                              const savedUser = localStorage.getItem('isafari_user');
-                              if (!savedUser) {
-                                navigate('/login?redirect=/provider/' + providerId);
-                                return;
-                              }
-                              handleAddToCart(service);
-                              navigate('/traveler-dashboard?tab=cart&openPayment=true');
-                            }}
-                            size="sm"
-                            className="flex-1"
-                          >
-                            <Icon name="CreditCard" size={14} />
-                            Book Now
-                          </Button>
-                        </div>
+                              
+                              localStorage.setItem('journey_plans', JSON.stringify(journeyPlans));
+                              alert('✅ Added to Plan! Continue planning or view in Dashboard > My Trips');
+                            } else {
+                              alert('Service already in your plan!');
+                            }
+                          }}
+                          size="sm"
+                          className="w-full"
+                        >
+                          <Icon name="Plus" size={14} />
+                          Add to Plan
+                        </Button>
                       </div>
                     </div>
                   </div>

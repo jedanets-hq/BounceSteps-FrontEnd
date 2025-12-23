@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import VersionChecker from './components/VersionChecker';
 import HomePage from './pages/homepage';
 import LoginPage from './pages/auth/login';
 import RegisterPage from './pages/auth/register';
@@ -29,6 +30,7 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <CartProvider>
+              <VersionChecker />
               <div className="App">
             <Routes>
               <Route path="/" element={<HomePage />} />

@@ -58,11 +58,12 @@
     "dev": "concurrently \"npm run backend\" \"npm run frontend\" --names \"BACKEND,FRONTEND\" --prefix-colors \"bgBlue.bold,bgMagenta.bold\"",
     "backend": "cd backend && node server.js",
     "frontend": "vite",
-    "build": "vite build",
-    "build:prod": "NODE_ENV=production vite build",
+    "build": "node build-with-version.js",
+    "build:prod": "cross-env NODE_ENV=production node build-with-version.js",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "deploy": "npm run build:prod && npm run preview"
+    "deploy": "npm run build:prod && npm run preview",
+    "verify": "node verify-deployment.js"
   },
   "eslintConfig": {
     "extends": [

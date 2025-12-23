@@ -345,92 +345,94 @@ const JourneyPlannerEnhanced = () => {
   const fetchProviders = async () => {
     try {
       setLoadingProviders(true);
-      const params = new URLSearchParams();
+      console.log('🔍 STRICT FILTERING: Starting provider search...');
+      console.log('📍 Location:', selectedLocation);
+      console.log('🏷️ Selected Services:', journeyData.selectedServices);
       
-      console.log('🔍 Frontend: Searching providers with location:', selectedLocation);
-      
-      if (selectedLocation.region) params.append('region', selectedLocation.region);
-      if (selectedLocation.district) params.append('district', selectedLocation.district);
-      if (selectedLocation.ward) params.append('ward', selectedLocation.ward);
-      
-      // Add selected service categories as filter
-      if (journeyData.selectedServices.length > 0) {
-        journeyData.selectedServices.forEach(category => {
-          params.append('categories', category);
-        });
-      }
-      
-      // First try to fetch services to get providers with actual services
-      const servicesParams = new URLSearchParams();
-      if (selectedLocation.region) servicesParams.append('location', selectedLocation.region);
-      if (selectedLocation.district) servicesParams.append('location', selectedLocation.district);
-      servicesParams.append('limit', '50');
-      
-      // Fetch services first
-      const servicesResponse = await fetch(`${API_URL}/services?${servicesParams.toString()}`);
+      // Fetch ALL services first
+      const servicesResponse = await fetch(`${API_URL}/services?limit=500`);
       const servicesData = await servicesResponse.json();
       
-      console.log('📦 Frontend: Services response:', servicesData);
-      
-      // Extract unique providers from services
-      if (servicesData.success && servicesData.services && servicesData.services.length > 0) {
-        const providerMap = new Map();
-        
-        servicesData.services.forEach(service => {
-          if (service.provider_id && !providerMap.has(service.provider_id)) {
-            providerMap.set(service.provider_id, {
-              id: service.provider_id,
-              business_name: service.business_name || 'Service Provider',
-              business_type: service.category || 'General',
-              location: service.location || service.region,
-              region: service.region,
-              district: service.district,
-              is_verified: service.provider_verified || false,
-              rating: service.provider_rating || 0,
-              service_categories: [service.category],
-              services_count: 1
-            });
-          } else if (service.provider_id) {
-            const existing = providerMap.get(service.provider_id);
-            existing.services_count++;
-            if (!existing.service_categories.includes(service.category)) {
-              existing.service_categories.push(service.category);
-            }
-          }
-        });
-        
-        const providersFromServices = Array.from(providerMap.values());
-        console.log('✅ Frontend: Providers from services:', providersFromServices.length);
-        
-        if (providersFromServices.length > 0) {
-          setProviders(providersFromServices);
-          return;
-        }
-      }
-      
-      // Fallback to providers search if no services found
-      const searchUrl = `/api/providers/search?${params.toString()}`;
-      console.log('🌐 Frontend: Fallback to providers API:', searchUrl);
-      
-      const response = await fetch(searchUrl);
-      const data = await response.json();
-      
-      console.log('📊 Frontend: Providers API Response:', data);
-      
-      if (data.success) {
-        setProviders(data.providers || []);
-        console.log('✅ Frontend: Providers set:', data.providers?.length || 0);
-        
-        // Show message if fallback search was used
-        if (data.fallbackSearch) {
-          console.log('ℹ️ Frontend: Using fallback search - showing all providers');
-        }
-      } else {
-        console.error('❌ Frontend: API returned error:', data.message);
+      if (!servicesData.success || !servicesData.services || servicesData.services.length === 0) {
+        console.log('⚠️ No services found in database');
         setProviders([]);
+        setLoadingProviders(false);
+        return;
       }
+      
+      let filteredServices = servicesData.services;
+      console.log('📦 Total services before filtering:', filteredServices.length);
+      
+      // STRICT LOCATION FILTERING
+      if (selectedLocation.district) {
+        filteredServices = filteredServices.filter(service => 
+          service.district === selectedLocation.district && 
+          service.region === selectedLocation.region
+        );
+        console.log(`📍 After district filter (${selectedLocation.district}):`, filteredServices.length);
+      } else if (selectedLocation.region) {
+        filteredServices = filteredServices.filter(service => 
+          service.region === selectedLocation.region
+        );
+        console.log(`📍 After region filter (${selectedLocation.region}):`, filteredServices.length);
+      }
+      
+      // STRICT SERVICE CATEGORY FILTERING
+      if (journeyData.selectedServices && journeyData.selectedServices.length > 0) {
+        filteredServices = filteredServices.filter(service => 
+          journeyData.selectedServices.includes(service.category)
+        );
+        console.log(`🏷️ After category filter (${journeyData.selectedServices.join(', ')}):`, filteredServices.length);
+      }
+      
+      if (filteredServices.length === 0) {
+        console.log('❌ No services match EXACT criteria');
+        setProviders([]);
+        setLoadingProviders(false);
+        return;
+      }
+      
+      // Group by provider
+      const providerMap = new Map();
+      filteredServices.forEach(service => {
+        const providerId = service.provider_id;
+        if (!providerId) return;
+        
+        if (!providerMap.has(providerId)) {
+          providerMap.set(providerId, {
+            id: providerId,
+            business_name: service.business_name || 'Service Provider',
+            business_type: service.category || 'General',
+            location: service.location || `${service.district}, ${service.region}`,
+            region: service.region,
+            district: service.district,
+            ward: service.ward,
+            is_verified: service.provider_verified || false,
+            is_premium: service.provider_premium || false,
+            rating: service.average_rating || 0,
+            total_reviews: service.review_count || 0,
+            service_categories: [service.category],
+            services: [service],
+            services_count: 1,
+            description: service.provider_description || service.description,
+            price: service.price
+          });
+        } else {
+          const provider = providerMap.get(providerId);
+          if (!provider.service_categories.includes(service.category)) {
+            provider.service_categories.push(service.category);
+          }
+          provider.services.push(service);
+          provider.services_count++;
+        }
+      });
+      
+      const matchingProviders = Array.from(providerMap.values());
+      console.log('✅ Providers matching EXACT criteria:', matchingProviders.length);
+      setProviders(matchingProviders);
+      
     } catch (error) {
-      console.error('❌ Frontend: Error fetching providers:', error);
+      console.error('❌ Error fetching providers:', error);
       setProviders([]);
     } finally {
       setLoadingProviders(false);
@@ -975,14 +977,83 @@ const JourneyPlannerEnhanced = () => {
             <Icon name="ArrowLeft" size={16} /> Back
           </Button>
           <div className="space-x-3">
-            <Button variant="outline" onClick={saveJourney}>
+            <Button variant="outline" onClick={() => {
+              // Save journey plan
+              const journeyPlan = {
+                id: Date.now(),
+                status: 'saved',
+                country: 'Tanzania',
+                region: selectedLocation.region,
+                district: selectedLocation.district,
+                area: selectedLocation.ward || selectedLocation.district,
+                startDate: journeyData.checkInDate || journeyData.startDate,
+                endDate: journeyData.checkOutDate || journeyData.endDate,
+                travelers: journeyData.adults || journeyData.travelers || 1,
+                services: journeyData.selectedServiceDetails?.map(service => ({
+                  id: service.id,
+                  service_id: service.id,
+                  title: service.title,
+                  name: service.title,
+                  category: service.category,
+                  price: parseFloat(service.price || 0),
+                  provider_id: service.provider_id,
+                  provider_name: service.provider_name,
+                  location: service.provider_location || service.location,
+                  image: service.images?.[0],
+                  description: service.description
+                })) || [],
+                totalCost: totalBudget,
+                created_at: new Date().toISOString()
+              };
+              
+              // Get existing plans
+              const existingPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
+              existingPlans.push(journeyPlan);
+              localStorage.setItem('journey_plans', JSON.stringify(existingPlans));
+              
+              alert('✅ Trip plan saved! View it in Dashboard > My Trips');
+              navigate('/traveler-dashboard?tab=trips');
+            }}>
               <Icon name="Save" size={16} /> Save Plan
             </Button>
             <Button onClick={() => {
-              // Prepare cart items from selected service details
+              // Save trip AND add to cart
+              const journeyPlan = {
+                id: Date.now(),
+                status: 'pending_payment',
+                country: 'Tanzania',
+                region: selectedLocation.region,
+                district: selectedLocation.district,
+                area: selectedLocation.ward || selectedLocation.district,
+                startDate: journeyData.checkInDate || journeyData.startDate,
+                endDate: journeyData.checkOutDate || journeyData.endDate,
+                travelers: journeyData.adults || journeyData.travelers || 1,
+                services: journeyData.selectedServiceDetails?.map(service => ({
+                  id: service.id,
+                  service_id: service.id,
+                  title: service.title,
+                  name: service.title,
+                  category: service.category,
+                  price: parseFloat(service.price || 0),
+                  provider_id: service.provider_id,
+                  provider_name: service.provider_name,
+                  location: service.provider_location || service.location,
+                  image: service.images?.[0],
+                  description: service.description
+                })) || [],
+                totalCost: totalBudget,
+                created_at: new Date().toISOString()
+              };
+              
+              // Save plan
+              const existingPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
+              existingPlans.push(journeyPlan);
+              localStorage.setItem('journey_plans', JSON.stringify(existingPlans));
+              
+              // Add services to cart
               const cartItems = journeyData.selectedServiceDetails?.map(service => ({
                 id: `service_${service.id}_${Date.now()}`,
-                service_id: service.id, // Real service ID from database
+                service_id: service.id,
                 name: service.title,
                 category: service.category,
                 description: service.description,
@@ -994,27 +1065,21 @@ const JourneyPlannerEnhanced = () => {
                 provider_id: service.provider_id,
                 provider_name: service.provider_name,
                 journey_details: {
-                  startDate: journeyData.startDate,
-                  endDate: journeyData.endDate,
-                  travelers: travelers,
+                  startDate: journeyData.checkInDate || journeyData.startDate,
+                  endDate: journeyData.checkOutDate || journeyData.endDate,
+                  travelers: journeyData.adults || journeyData.travelers || 1,
                   destination: journeyData.destination
                 }
               })) || [];
 
-              // Add all items to cart
               if (cartItems.length > 0) {
                 addMultipleToCart(cartItems);
-                // Navigate to cart
-                navigate('/traveler-dashboard', { 
-                  state: { 
-                    tab: 'cart'
-                  } 
-                });
+                navigate('/traveler-dashboard?tab=cart&openPayment=true');
               } else {
                 alert('Please select services from providers first!');
               }
             }}>
-              <Icon name="ArrowRight" size={16} /> Continue to Cart & Payment
+              <Icon name="ShoppingCart" size={16} /> Continue to Cart & Payment
             </Button>
           </div>
         </div>
@@ -1048,47 +1113,13 @@ const JourneyPlannerEnhanced = () => {
             </div>
           </div>
 
-          {/* Saved Journeys */}
-          {savedJourneys.length > 0 && (
-            <div className="mt-12">
-              <h2 className="text-2xl font-semibold mb-6">Your Trip</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {savedJourneys.map((journey, idx) => (
-                  <div key={`journey-${journey.id}-${idx}`} className="bg-card border rounded-lg p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-semibold text-lg">{journey.destination}</h3>
-                        <p className="text-sm text-muted-foreground">{journey.region}, {journey.district}</p>
-                      </div>
-                      <button
-                        onClick={() => deleteJourney(journey.id)}
-                        className="text-destructive hover:text-destructive/80"
-                      >
-                        <Icon name="Trash2" size={18} />
-                      </button>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Duration:</span>
-                        <span className="font-medium">{journey.days} days</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Budget:</span>
-                        <span className="font-medium">Tshs {journey.totalBudget?.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">People:</span>
-                        <span className="font-medium">{journey.adults}</span>
-                      </div>
-                    </div>
-                    <Button fullWidth className="mt-4" size="sm">
-                      <Icon name="Eye" size={16} /> View Details
-                    </Button>
-                  </div>
-                ))}
-              </div>
+          {/* Note about saved trips */}
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg">
+              <Icon name="Info" size={16} />
+              <span className="text-sm">Your saved trips are available in Dashboard → My Trips</span>
             </div>
-          )}
+          </div>
         </div>
       </div>
 

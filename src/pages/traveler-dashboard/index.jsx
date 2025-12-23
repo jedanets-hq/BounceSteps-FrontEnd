@@ -632,7 +632,7 @@ const TravelerDashboard = () => {
         return (
           <div className="space-y-8">
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-2xl font-medium">Your Trip</h2>
+              <h2 className="font-display text-2xl font-medium">My Trips</h2>
               <Button onClick={() => navigate('/journey-planner')}>
                 <Icon name="Plus" size={16} />
                 Plan New Trip
@@ -644,7 +644,7 @@ const TravelerDashboard = () => {
               <div className="space-y-4">
                 <h3 className="font-semibold text-foreground text-lg flex items-center">
                   <Icon name="Bookmark" size={20} className="mr-2 text-primary" />
-                  Your Trip
+                  Saved Trip Plans
                 </h3>
                 {savedJourneyPlans.map((plan, index) => (
                   <div key={plan.id || index} className="bg-card border border-border rounded-lg overflow-hidden">
@@ -692,11 +692,11 @@ const TravelerDashboard = () => {
                             <Button 
                               size="sm"
                               onClick={() => {
-                                // Add services to cart and go to payment
+                                // Add services to cart
                                 plan.services?.forEach(service => {
                                   addToCart({
                                     ...service,
-                                    location: `${plan.area}, ${plan.district}, ${plan.region}, ${plan.country}`,
+                                    location: `${plan.area || plan.district}, ${plan.region}`,
                                     travelers: plan.travelers,
                                     journey_details: {
                                       startDate: plan.startDate,
@@ -705,16 +705,17 @@ const TravelerDashboard = () => {
                                     }
                                   });
                                 });
-                                // Update plan status
+                                // Update plan status to pending_payment
                                 const updatedPlans = savedJourneyPlans.map(p => 
                                   p.id === plan.id ? {...p, status: 'pending_payment'} : p
                                 );
                                 localStorage.setItem('journey_plans', JSON.stringify(updatedPlans));
+                                // Navigate to cart with payment section open
                                 navigate('/traveler-dashboard?tab=cart&openPayment=true');
                               }}
                             >
-                              <Icon name="CreditCard" size={16} />
-                              Continue to Payment
+                              <Icon name="ShoppingCart" size={16} />
+                              Continue to Cart & Payment
                             </Button>
                           )}
                         </div>
