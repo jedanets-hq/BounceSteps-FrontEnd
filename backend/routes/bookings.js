@@ -26,7 +26,7 @@ router.get('/public/recent-activity', async (req, res) => {
         user: 'John D.',
         action: 'booked Safari Adventure',
         location: 'Serengeti',
-        timestamp: Date.create(),
+        timestamp: new Date(),
         category: 'safari'
       },
       {
@@ -35,7 +35,7 @@ router.get('/public/recent-activity', async (req, res) => {
         user: 'Sarah M.',
         action: 'booked Mountain Climbing',
         location: 'Kilimanjaro',
-        timestamp: Date.create(Date.now() - 3600000),
+        timestamp: new Date(Date.now() - 3600000),
         category: 'adventure'
       }
     ];
@@ -290,8 +290,8 @@ router.get('/recent-activity', async (req, res) => {
     });
 
     // Get stats
-    const now = Date.create();
-    const weekAgo = Date.create(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     const [weeklyBookings, totalBookings, activeServices] = await Promise.all([
       Booking.countDocuments({ 
@@ -303,7 +303,7 @@ router.get('/recent-activity', async (req, res) => {
     ]);
 
     // Get active travelers (users who booked in last 30 days)
-    const monthAgo = Date.create(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const activeTravelers = await Booking.distinct('traveler_id', {
       created_at: { $gte: monthAgo }
     });
@@ -343,20 +343,20 @@ router.get('/provider-analytics', authenticateJWT, async (req, res) => {
     }
 
     // Calculate date range
-    const now = Date.create();
+    const now = new Date();
     let startDate;
     switch (timeRange) {
       case '7days':
-        startDate = Date.create(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
       case '90days':
-        startDate = Date.create(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
         break;
       case '1year':
-        startDate = Date.create(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
         break;
       default:
-        startDate = Date.create(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
 
     // Get bookings
@@ -372,7 +372,7 @@ router.get('/provider-analytics', authenticateJWT, async (req, res) => {
     const confirmedBookings = bookings.filter(b => ['confirmed', 'completed'].includes(b.status));
     const totalRevenue = confirmedBookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
     const totalBookings = confirmedBookings.length;
-    const uniqueCustomers = [...Set.create(bookings.map(b => b.traveler_id?.id?.toString()).filter(Boolean))].length;
+    const uniqueCustomers = [...new Set(bookings.map(b => b.traveler_id?.id?.toString()).filter(Boolean))].length;
 
     // Calculate average rating
     const reviewedBookings = bookings.filter(b => b.rating);
@@ -381,7 +381,7 @@ router.get('/provider-analytics', authenticateJWT, async (req, res) => {
       : 0;
 
     // Calculate growth
-    const previousStartDate = Date.create(startDate.getTime() - (now.getTime() - startDate.getTime()));
+    const previousStartDate = new Date(startDate.getTime() - (now.getTime() - startDate.getTime()));
     const previousBookings = await Booking.find({
       provider_id: provider.id,
       created_at: { $gte: previousStartDate, $lt: startDate },
@@ -439,11 +439,11 @@ router.get('/provider-analytics', authenticateJWT, async (req, res) => {
     // Monthly data (last 6 months)
     const monthlyData = [];
     for (let i = 5; i >= 0; i--) {
-      const monthStart = Date.create(now.getFullYear(), now.getMonth() - i, 1);
-      const monthEnd = Date.create(now.getFullYear(), now.getMonth() - i + 1, 0);
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
       
       const monthBookings = bookings.filter(b => {
-        const date = Date.create(b.created_at);
+        const date = new Date(b.created_at);
         return date >= monthStart && date <= monthEnd && ['confirmed', 'completed'].includes(b.status);
       });
 
