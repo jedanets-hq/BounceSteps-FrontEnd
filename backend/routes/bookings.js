@@ -18,7 +18,7 @@ router.get('/public/recent-activity', async (req, res) => {
   try {
     const { limit = 10 } = req.query;
     
-    // Return mock data for now to fix the dashboard
+    // Return mock data - using standard JavaScript Date constructor
     const activities = [
       {
         id: '1',
