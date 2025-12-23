@@ -58,142 +58,119 @@ router.get('/', async (req, res) => {
       console.log(`🏷️ [GET SERVICES] Category filter "${category}": ${beforeCategoryFilter} -> ${filteredServices.length} services`);
     }
     
-    // Filter by location - SUPER FLEXIBLE HIERARCHICAL MATCHING
-    // Services should match if ANY of the location levels match (OR logic)
-    // This allows services to be found even if they only have region/district set
-    // IMPORTANT: If region matches, show ALL services in that region regardless of sublocation
+    // Filter by location - ULTRA FLEXIBLE HIERARCHICAL MATCHING
+    // PRIORITY: Region is the PRIMARY filter - if region matches, include service
+    // This ensures services are found even if they only have region/district set
     if (location || district || region) {
       const beforeLocationFilter = filteredServices.length;
       
+      // Helper function to normalize location strings for comparison
+      const normalize = (str) => (str || '').toLowerCase().trim().replace(/\s+/g, ' ');
+      
+      // Helper function to extract base name (remove city, cbd, rural, etc)
+      const getBaseName = (str) => normalize(str).replace(/\s*(city|cbd|rural|municipal|urban|central|mjini|town)\s*/gi, '').trim();
+      
+      // Helper function to check if two strings match flexibly
+      const flexMatch = (a, b) => {
+        if (!a || !b) return false;
+        const aNorm = normalize(a);
+        const bNorm = normalize(b);
+        const aBase = getBaseName(a);
+        const bBase = getBaseName(b);
+        
+        return aNorm === bNorm || 
+               aNorm.includes(bNorm) || 
+               bNorm.includes(aNorm) ||
+               aBase === bBase ||
+               aBase.includes(bBase) ||
+               bBase.includes(aBase);
+      };
+      
       filteredServices = filteredServices.filter(s => {
-        // Check all location fields - normalize for comparison (lowercase + trim)
-        const serviceLocation = (s.location || '').toLowerCase().trim();
-        const serviceRegion = (s.region || '').toLowerCase().trim();
-        const serviceDistrict = (s.district || '').toLowerCase().trim();
-        const serviceArea = (s.area || '').toLowerCase().trim();
-        const providerLocation = (s.provider_location || '').toLowerCase().trim();
-        const providerRegion = (s.provider_region || '').toLowerCase().trim();
-        const providerDistrict = (s.provider_district || '').toLowerCase().trim();
+        // Collect ALL location fields from service and provider
+        const serviceLocations = [
+          s.location, s.region, s.district, s.area, s.country,
+          s.provider_location, s.provider_region, s.provider_district
+        ].filter(Boolean);
         
-        // Normalize search parameters
-        const locationLower = (location || '').toLowerCase().trim();
-        const districtLower = (district || '').toLowerCase().trim();
-        const regionLower = (region || '').toLowerCase().trim();
-        
-        // SUPER FLEXIBLE HIERARCHICAL MATCHING
-        // Priority: Region > District > Location
-        // If region matches, show ALL services in that region
-        // This ensures services are found even with partial location data
-        
-        let hasAnyMatch = false;
-        
-        // FIRST: Check region match (highest priority - if region matches, include service)
-        if (regionLower) {
-          const regionMatch = 
-            serviceRegion === regionLower ||
-            serviceRegion.includes(regionLower) ||
-            regionLower.includes(serviceRegion) ||
-            providerRegion === regionLower ||
-            providerRegion.includes(regionLower) ||
-            regionLower.includes(providerRegion) ||
-            // Check if region name appears anywhere in location fields
-            serviceLocation.includes(regionLower) ||
-            serviceDistrict.includes(regionLower) ||
-            serviceArea.includes(regionLower) ||
-            providerLocation.includes(regionLower) ||
-            providerDistrict.includes(regionLower);
-          
-          if (regionMatch) {
-            hasAnyMatch = true;
-            // If region matches, we're done - include this service
-          }
-        }
-        
-        // SECOND: Check district match (if region didn't match)
-        if (!hasAnyMatch && districtLower) {
-          const districtMatch = 
-            serviceDistrict === districtLower ||
-            serviceDistrict.includes(districtLower) ||
-            districtLower.includes(serviceDistrict) ||
-            providerDistrict === districtLower ||
-            providerDistrict.includes(districtLower) ||
-            districtLower.includes(providerDistrict) ||
-            // Check if district name appears in location/area
-            serviceLocation.includes(districtLower) ||
-            serviceArea.includes(districtLower) ||
-            providerLocation.includes(districtLower) ||
-            // Handle "Mbeya City" vs "Mbeya CBD" naming differences
-            (districtLower.includes('city') && serviceDistrict.includes('cbd')) ||
-            (districtLower.includes('cbd') && serviceDistrict.includes('city')) ||
-            (serviceDistrict.includes('city') && districtLower.includes('cbd')) ||
-            (serviceDistrict.includes('cbd') && districtLower.includes('city'));
-          
-          if (districtMatch) {
-            hasAnyMatch = true;
-          }
-        }
-        
-        // THIRD: Check location/sublocation/area match (most specific)
-        if (!hasAnyMatch && locationLower) {
-          const locationMatch = 
-            serviceLocation === locationLower ||
-            serviceArea === locationLower ||
-            serviceLocation.includes(locationLower) ||
-            serviceArea.includes(locationLower) ||
-            locationLower.includes(serviceLocation) ||
-            locationLower.includes(serviceArea) ||
-            providerLocation === locationLower ||
-            providerLocation.includes(locationLower) ||
-            locationLower.includes(providerLocation) ||
-            // Also check if location matches district or region (for flexibility)
-            serviceDistrict.includes(locationLower) ||
-            serviceRegion.includes(locationLower);
-          
-          if (locationMatch) hasAnyMatch = true;
-        }
-        
-        // FALLBACK: If only region is provided and no match yet, try broader matching
-        if (!hasAnyMatch && regionLower && !districtLower && !locationLower) {
-          // Extract just the region name without "city", "cbd", "rural" etc
-          const regionBase = regionLower.replace(/\s*(city|cbd|rural|municipal|urban)\s*/gi, '').trim();
-          const serviceRegionBase = serviceRegion.replace(/\s*(city|cbd|rural|municipal|urban)\s*/gi, '').trim();
-          const serviceDistrictBase = serviceDistrict.replace(/\s*(city|cbd|rural|municipal|urban)\s*/gi, '').trim();
-          
-          if (regionBase && (
-            serviceRegionBase.includes(regionBase) ||
-            regionBase.includes(serviceRegionBase) ||
-            serviceDistrictBase.includes(regionBase) ||
-            regionBase.includes(serviceDistrictBase)
-          )) {
-            hasAnyMatch = true;
-          }
-        }
+        // Search parameters
+        const searchRegion = region || '';
+        const searchDistrict = district || '';
+        const searchLocation = location || '';
         
         // If no location params provided, match all
-        if (!locationLower && !districtLower && !regionLower) {
-          hasAnyMatch = true;
+        if (!searchRegion && !searchDistrict && !searchLocation) {
+          return true;
         }
         
-        if (!hasAnyMatch) {
+        // ULTRA FLEXIBLE MATCHING - check if ANY search param matches ANY service location field
+        let hasMatch = false;
+        
+        // Check region match (highest priority)
+        if (searchRegion) {
+          for (const loc of serviceLocations) {
+            if (flexMatch(loc, searchRegion)) {
+              hasMatch = true;
+              break;
+            }
+          }
+        }
+        
+        // Check district match
+        if (!hasMatch && searchDistrict) {
+          for (const loc of serviceLocations) {
+            if (flexMatch(loc, searchDistrict)) {
+              hasMatch = true;
+              break;
+            }
+          }
+        }
+        
+        // Check location/sublocation match
+        if (!hasMatch && searchLocation) {
+          for (const loc of serviceLocations) {
+            if (flexMatch(loc, searchLocation)) {
+              hasMatch = true;
+              break;
+            }
+          }
+        }
+        
+        // FALLBACK: If region provided, try matching just the base region name
+        // This handles cases like "Mbeya" matching "Mbeya City", "Mbeya CBD", "Mbeya Central"
+        if (!hasMatch && searchRegion) {
+          const searchBase = getBaseName(searchRegion);
+          if (searchBase.length >= 3) { // Only if base name is meaningful
+            for (const loc of serviceLocations) {
+              const locBase = getBaseName(loc);
+              if (locBase && searchBase && (locBase.includes(searchBase) || searchBase.includes(locBase))) {
+                hasMatch = true;
+                break;
+              }
+            }
+          }
+        }
+        
+        if (!hasMatch) {
           console.log(`   ❌ Service "${s.title}" rejected:`);
-          console.log(`      Service: loc="${s.location}", dist="${s.district}", reg="${s.region}", area="${s.area}"`);
-          console.log(`      Filter: loc="${location || 'none'}", dist="${district || 'none'}", reg="${region || 'none'}"`);
+          console.log(`      Service locations: ${serviceLocations.join(', ')}`);
+          console.log(`      Search: region="${searchRegion}", district="${searchDistrict}", location="${searchLocation}"`);
         } else {
           console.log(`   ✅ Service "${s.title}" MATCHED`);
         }
         
-        return hasAnyMatch;
+        return hasMatch;
       });
       
       locationFilterApplied = true;
-      console.log(`📍 SUPER FLEXIBLE Location filter applied:`);
+      console.log(`📍 ULTRA FLEXIBLE Location filter applied:`);
       console.log(`   - Location param: "${location || 'none'}"`);
       console.log(`   - District param: "${district || 'none'}"`);
       console.log(`   - Region param: "${region || 'none'}"`);
       console.log(`   - Before: ${beforeLocationFilter} services`);
       console.log(`   - After: ${filteredServices.length} services`);
       
-      // If no services found with flexible matching, log helpful info
+      // If no services found, log helpful info
       if (filteredServices.length === 0) {
         console.log(`   ⚠️ No services found. Available services in DB have these locations:`);
         services.slice(0, 10).forEach(s => {

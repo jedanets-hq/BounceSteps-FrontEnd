@@ -67,9 +67,11 @@ const JourneyPlanner = () => {
     // Use formData.serviceCategory as the source of truth for category
     const currentCategory = formData.serviceCategory;
     
-    // Only fetch if we're on step 4 AND have a category AND location
-    // AND the category is different from what we last fetched
-    if (step === 4 && currentCategory && formData.sublocation) {
+    // FIXED: Fetch if we're on step 4 AND have a category AND have at least region selected
+    // Don't require sublocation - region is enough for filtering
+    const hasLocation = formData.region || formData.district || formData.sublocation;
+    
+    if (step === 4 && currentCategory && hasLocation) {
       // Check if we need to fetch (category changed or first time on step 4)
       const needsFetch = currentCategory !== lastFetchedCategory;
       
@@ -77,7 +79,7 @@ const JourneyPlanner = () => {
       
       if (needsFetch) {
         console.log(`🔄 [STEP 4 FETCH] Fetching services for category: ${currentCategory}`);
-        console.log(`📍 [STEP 4 FETCH] Location: ${formData.sublocation}, ${formData.district}, ${formData.region}`);
+        console.log(`📍 [STEP 4 FETCH] Location: region="${formData.region}", district="${formData.district}", sublocation="${formData.sublocation}"`);
         
         // Clear any stale services IMMEDIATELY
         setAvailableServices([]);
@@ -97,8 +99,8 @@ const JourneyPlanner = () => {
             params.append('category', currentCategory);
             params.append('limit', '100');
             
-            // IMPORTANT: Always send region first as primary filter
-            // This ensures services are found even if they only have region set
+            // IMPORTANT: Send ALL location params - backend will do flexible matching
+            // Region is the primary filter - most important
             if (formData.region) {
               params.append('region', formData.region);
             }
@@ -110,7 +112,6 @@ const JourneyPlanner = () => {
             }
 
             console.log(`🌐 [STEP 4] API Request: ${API_URL}/services?${params.toString()}`);
-            console.log(`📍 [STEP 4] Location params: region="${formData.region}", district="${formData.district}", sublocation="${formData.sublocation}"`);
 
             const response = await fetch(`${API_URL}/services?${params.toString()}`);
             const data = await response.json();
@@ -122,20 +123,16 @@ const JourneyPlanner = () => {
             }
 
             if (data.success && data.services) {
-              // STRICT CATEGORY VALIDATION - Only show services matching selected category
-              const validatedServices = data.services.filter(service => {
-                const categoryMatch = service.category === currentCategory;
-                if (!categoryMatch) {
-                  console.log(`⚠️ [STEP 4] REJECTED: "${service.title}" - category "${service.category}" !== "${currentCategory}"`);
-                }
-                return categoryMatch;
-              });
-
               console.log(`✅ [STEP 4] Category: ${currentCategory}`);
               console.log(`✅ [STEP 4] Services from API: ${data.services.length}`);
-              console.log(`✅ [STEP 4] After strict validation: ${validatedServices.length}`);
+              
+              // Log all services received for debugging
+              if (data.services.length > 0) {
+                console.log(`✅ [STEP 4] Services received:`, data.services.map(s => `${s.title} (${s.category})`));
+              }
 
-              const transformedServices = validatedServices.map(service => ({
+              // Transform services - trust backend filtering
+              const transformedServices = data.services.map(service => ({
                 id: service.id,
                 name: service.title,
                 title: service.title,
@@ -162,7 +159,9 @@ const JourneyPlanner = () => {
               }));
 
               setAvailableServices(transformedServices);
+              console.log(`✅ [STEP 4] Set ${transformedServices.length} services to state`);
             } else {
+              console.log(`⚠️ [STEP 4] No services returned from API`);
               setAvailableServices([]);
             }
           } catch (error) {
@@ -345,16 +344,13 @@ const JourneyPlanner = () => {
   const handleServiceToggle = (serviceId) => {
     const service = availableServices.find(s => s.id === serviceId);
     
-    // CRITICAL FIX: Use formData.serviceCategory as the source of truth
-    const currentCategory = formData.serviceCategory;
-    const categoryKey = service?.category || currentCategory;
-    
-    // Validate that service category matches selected category
-    if (service && service.category !== currentCategory) {
-      console.warn(`⚠️ [SERVICE TOGGLE] Service category mismatch: service.category="${service.category}" !== currentCategory="${currentCategory}"`);
-      // Don't add services from wrong category
+    if (!service) {
+      console.warn(`⚠️ [SERVICE TOGGLE] Service not found: ${serviceId}`);
       return;
     }
+    
+    // Use the service's actual category for grouping
+    const categoryKey = service.category || formData.serviceCategory;
     
     setServicesByCategory(prev => {
       const currentCategoryServices = prev[categoryKey] || [];
@@ -825,10 +821,10 @@ const JourneyPlanner = () => {
                   <div>
                     <div className="mb-6">
                       <h3 className="text-lg font-semibold text-foreground mb-2">
-                        {formData.serviceCategory} in {formData.sublocation}, {formData.district}
+                        {formData.serviceCategory} in {formData.sublocation || formData.district || formData.region}
                       </h3>
                       <p className="text-muted-foreground text-sm">
-                        Showing only {formData.serviceCategory} services from {formData.sublocation || formData.district || formData.region}. Select services to add to your plan.
+                        Showing {formData.serviceCategory} services from {formData.region}. Select services to add to your plan.
                       </p>
                       
                       {/* Show previously selected services from other categories */}
@@ -849,21 +845,18 @@ const JourneyPlanner = () => {
                       <p className="text-sm font-medium text-foreground">
                         Found <span className="text-primary font-bold">
                           {availableServices.filter(s => 
-                            // STRICT: Only count services matching selected category
-                            s.category === formData.serviceCategory &&
-                            (!serviceSearchTerm || 
+                            !serviceSearchTerm || 
                             s.title?.toLowerCase().includes(serviceSearchTerm.toLowerCase()) ||
                             s.businessName?.toLowerCase().includes(serviceSearchTerm.toLowerCase()) ||
-                            s.description?.toLowerCase().includes(serviceSearchTerm.toLowerCase()))
+                            s.description?.toLowerCase().includes(serviceSearchTerm.toLowerCase())
                           ).length}
-                        </span> {formData.serviceCategory} service{availableServices.length !== 1 ? 's' : ''} in {formData.sublocation || formData.district}
+                        </span> {formData.serviceCategory} service{availableServices.length !== 1 ? 's' : ''} in {formData.region}
                       </p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {availableServices
-                        // STRICT CATEGORY FILTER: Only show services matching selected category
-                        .filter(service => service.category === formData.serviceCategory)
+                        // Trust backend filtering - just apply search filter
                         .filter(service => 
                           !serviceSearchTerm || 
                           service.title?.toLowerCase().includes(serviceSearchTerm.toLowerCase()) ||
@@ -893,10 +886,10 @@ const JourneyPlanner = () => {
                                   <span>{service.businessName || service.provider?.name || 'Provider'}</span>
                                   {service.provider_verified && <VerifiedBadge size="xs" />}
                                 </div>
-                                {service.location && (
+                                {(service.location || service.region || service.district) && (
                                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <Icon name="MapPin" size={12} />
-                                    <span>{service.location}</span>
+                                    <span>{service.location || service.district || service.region}</span>
                                   </div>
                                 )}
                               </div>
