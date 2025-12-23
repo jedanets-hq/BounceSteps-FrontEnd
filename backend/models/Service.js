@@ -1,5 +1,12 @@
 const { pool } = require('../config/postgresql');
 
+// Helper function to normalize location strings for consistent storage
+const normalizeLocation = (str) => {
+  if (!str) return null;
+  const trimmed = str.trim();
+  return trimmed === '' ? null : trimmed;
+};
+
 class Service {
   // Create a new service
   static async create(serviceData) {
@@ -36,6 +43,22 @@ class Service {
       contact_info = {}
     } = serviceData;
 
+    // Normalize location fields for consistent storage and filtering
+    const normalizedRegion = normalizeLocation(region);
+    const normalizedDistrict = normalizeLocation(district);
+    const normalizedArea = normalizeLocation(area);
+    const normalizedLocation = normalizeLocation(location);
+    const normalizedCountry = normalizeLocation(country) || 'Tanzania';
+
+    // Log location normalization for debugging
+    console.log('📍 [SERVICE CREATE] Normalized location:', {
+      region: normalizedRegion,
+      district: normalizedDistrict,
+      area: normalizedArea,
+      location: normalizedLocation,
+      country: normalizedCountry
+    });
+
     const query = `
       INSERT INTO services (
         provider_id, title, description, category, subcategory, price, currency,
@@ -58,11 +81,11 @@ class Service {
       currency?.trim(),
       duration,
       max_participants,
-      location?.trim(),
-      country?.trim(),
-      region?.trim(),
-      district?.trim(),
-      area?.trim(),
+      normalizedLocation,
+      normalizedCountry,
+      normalizedRegion,
+      normalizedDistrict,
+      normalizedArea,
       images,
       amenities,
       is_active,
