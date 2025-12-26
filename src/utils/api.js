@@ -8,9 +8,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://isafarinetworkglobal-2.onrender.com/api';
 const API_URL = API_BASE_URL;
 
-// 📝 NOTE: For local development, change to:
-// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-
 // Helper function to get auth token
 const getAuthToken = () => {
   const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');

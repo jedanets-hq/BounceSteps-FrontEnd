@@ -76,6 +76,7 @@ const JourneyPlanner = () => {
       const needsFetch = currentCategory !== lastFetchedCategory;
       
       console.log(`🔄 [STEP 4] Check: currentCategory="${currentCategory}", lastFetched="${lastFetchedCategory}", needsFetch=${needsFetch}`);
+      console.log(`🔄 [STEP 4] Location: region="${formData.region}", district="${formData.district}", sublocation="${formData.sublocation}"`);
       
       if (needsFetch) {
         console.log(`🔄 [STEP 4 FETCH] Fetching services for category: ${currentCategory}`);
@@ -99,22 +100,49 @@ const JourneyPlanner = () => {
             params.append('category', currentCategory);
             params.append('limit', '100');
             
-            // IMPORTANT: Send ALL location params - backend will do flexible matching
-            // Region is the primary filter - most important
+            // CRITICAL: ALWAYS send region as primary filter
+            // Backend requires region for proper filtering
             if (formData.region) {
               params.append('region', formData.region);
+              console.log(`📍 [STEP 4 FETCH] Adding region filter: ${formData.region}`);
+            } else {
+              console.error(`❌ [STEP 4 FETCH] ERROR: No region provided! Cannot fetch services.`);
+              setLoadingServices(false);
+              return;
             }
+            
+            // Optional: Add district and sublocation for more specific filtering
             if (formData.district) {
               params.append('district', formData.district);
+              console.log(`📍 [STEP 4 FETCH] Adding district filter: ${formData.district}`);
             }
             if (formData.sublocation) {
               params.append('location', formData.sublocation);
+              console.log(`📍 [STEP 4 FETCH] Adding sublocation filter: ${formData.sublocation}`);
             }
 
-            console.log(`🌐 [STEP 4] API Request: ${API_URL}/services?${params.toString()}`);
+            const apiUrl = `${API_URL}/services?${params.toString()}`;
+            console.log(`🌐 [STEP 4] API Request: ${apiUrl}`);
+            console.log(`🌐 [STEP 4] Timestamp: ${new Date().toISOString()}`);
 
-            const response = await fetch(`${API_URL}/services?${params.toString()}`);
+            const response = await fetch(apiUrl, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+              }
+            });
+            
+            if (!response.ok) {
+              console.error(`❌ [STEP 4] API Error: ${response.status} ${response.statusText}`);
+              setAvailableServices([]);
+              setLoadingServices(false);
+              return;
+            }
+            
             const data = await response.json();
+            console.log(`📦 [STEP 4] API Response:`, data);
 
             // IMPORTANT: Verify we're still on the same category (user might have changed it)
             if (formData.serviceCategory !== currentCategory) {
@@ -128,7 +156,15 @@ const JourneyPlanner = () => {
               
               // Log all services received for debugging
               if (data.services.length > 0) {
-                console.log(`✅ [STEP 4] Services received:`, data.services.map(s => `${s.title} (${s.category})`));
+                console.log(`✅ [STEP 4] Services received:`, data.services.map(s => ({
+                  title: s.title,
+                  category: s.category,
+                  region: s.region,
+                  district: s.district,
+                  area: s.area
+                })));
+              } else {
+                console.warn(`⚠️ [STEP 4] No services found for category="${currentCategory}" in region="${formData.region}"`);
               }
 
               // Transform services - trust backend filtering
@@ -161,11 +197,13 @@ const JourneyPlanner = () => {
               setAvailableServices(transformedServices);
               console.log(`✅ [STEP 4] Set ${transformedServices.length} services to state`);
             } else {
-              console.log(`⚠️ [STEP 4] No services returned from API`);
+              console.log(`⚠️ [STEP 4] No services returned from API or API error`);
+              console.log(`⚠️ [STEP 4] Response data:`, data);
               setAvailableServices([]);
             }
           } catch (error) {
             console.error('❌ [STEP 4] Error fetching services:', error);
+            console.error('❌ [STEP 4] Error details:', error.message, error.stack);
             setAvailableServices([]);
           } finally {
             setLoadingServices(false);
@@ -173,6 +211,17 @@ const JourneyPlanner = () => {
         };
 
         fetchServices();
+      } else {
+        console.log(`ℹ️ [STEP 4] No fetch needed - already have data for category: ${currentCategory}`);
+      }
+    } else {
+      if (step === 4) {
+        if (!currentCategory) {
+          console.warn(`⚠️ [STEP 4] No category selected`);
+        }
+        if (!hasLocation) {
+          console.warn(`⚠️ [STEP 4] No location selected`);
+        }
       }
     }
   }, [step, formData.serviceCategory, formData.sublocation, formData.district, formData.region, lastFetchedCategory]);
@@ -889,7 +938,10 @@ const JourneyPlanner = () => {
                                 {(service.location || service.region || service.district) && (
                                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                                     <Icon name="MapPin" size={12} />
-                                    <span>{service.location || service.district || service.region}</span>
+                                    <span>
+                                      {/* Show most specific location: area > district > region */}
+                                      {service.area || service.district || service.region || service.location}
+                                    </span>
                                   </div>
                                 )}
                               </div>
