@@ -79,10 +79,14 @@ router.get('/', validateLocationParams, async (req, res) => {
       console.log(`👤 [GET SERVICES] Provider filter: ${filteredServices.length} services`);
     }
     
-    // Filter by category - STRICT (must match exactly)
+    // Filter by category - CASE-INSENSITIVE (must match)
     if (category) {
       const beforeCategoryFilter = filteredServices.length;
-      filteredServices = filteredServices.filter(s => s.category === category);
+      const categoryLower = category.toLowerCase().trim();
+      filteredServices = filteredServices.filter(s => {
+        const serviceCategory = (s.category || '').toLowerCase().trim();
+        return serviceCategory === categoryLower;
+      });
       console.log(`🏷️ [GET SERVICES] Category filter "${category}": ${beforeCategoryFilter} -> ${filteredServices.length} services`);
     }
     
