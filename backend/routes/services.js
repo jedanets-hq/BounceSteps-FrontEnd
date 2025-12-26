@@ -79,7 +79,7 @@ router.get('/', validateLocationParams, async (req, res) => {
       console.log(`👤 [GET SERVICES] Provider filter: ${filteredServices.length} services`);
     }
     
-    // Filter by category - CASE-INSENSITIVE (must match)
+    // Filter by category - CASE-INSENSITIVE (must match exactly)
     if (category) {
       const beforeCategoryFilter = filteredServices.length;
       const categoryLower = category.toLowerCase().trim();
@@ -88,6 +88,12 @@ router.get('/', validateLocationParams, async (req, res) => {
         return serviceCategory === categoryLower;
       });
       console.log(`🏷️ [GET SERVICES] Category filter "${category}": ${beforeCategoryFilter} -> ${filteredServices.length} services`);
+      
+      // Log debug info if no results
+      if (filteredServices.length === 0) {
+        const uniqueCategories = [...new Set(services.map(s => s.category))];
+        console.log(`   ⚠️ No services found for category "${category}". Available categories:`, uniqueCategories.join(', '));
+      }
     }
     
     // Filter by location - STRICT HIERARCHICAL MATCHING
@@ -108,8 +114,7 @@ router.get('/', validateLocationParams, async (req, res) => {
         // HANDLE MISMATCHED DATA: Exclude services without region
         // Services without region cannot be properly filtered by location
         if (!serviceRegion) {
-          console.warn(`   ⚠️ Service "${s.title}" (ID: ${s.id}) has no region set - excluding from location-filtered results`);
-          return false;
+          return false; // Silently exclude services without region
         }
         
         // Get search parameters (normalized)
@@ -122,13 +127,12 @@ router.get('/', validateLocationParams, async (req, res) => {
           return true;
         }
         
-        // STRICT MATCHING RULES:
+        // HIERARCHICAL MATCHING RULES (case-insensitive):
         
-        // Rule 1: If region is provided, service.region MUST match EXACTLY
+        // Rule 1: If region is provided, service.region MUST match
         // This is the PRIMARY filter - services from different regions are NEVER shown
         if (searchRegion) {
           if (serviceRegion !== searchRegion) {
-            console.log(`   ❌ Service "${s.title}" rejected: region mismatch (service="${serviceRegion}", search="${searchRegion}")`);
             return false;
           }
         }
@@ -140,7 +144,6 @@ router.get('/', validateLocationParams, async (req, res) => {
           const regionLevelService = !serviceDistrict; // Service has no district = region-level
           
           if (!districtMatch && !regionLevelService) {
-            console.log(`   ❌ Service "${s.title}" rejected: district mismatch (service="${serviceDistrict}", search="${searchDistrict}")`);
             return false;
           }
         }
@@ -153,29 +156,29 @@ router.get('/', validateLocationParams, async (req, res) => {
           const regionLevelService = !serviceArea && !serviceDistrict;
           
           if (!areaMatch && !districtLevelService && !regionLevelService) {
-            console.log(`   ❌ Service "${s.title}" rejected: area mismatch (service="${serviceArea}", search="${searchArea}")`);
             return false;
           }
         }
         
-        console.log(`   ✅ Service "${s.title}" MATCHED (region="${serviceRegion}", district="${serviceDistrict}", area="${serviceArea}")`);
         return true;
       });
       
       locationFilterApplied = true;
-      console.log(`📍 STRICT Location filter applied:`);
-      console.log(`   - Region param: "${region || 'none'}"`);
-      console.log(`   - District param: "${district || 'none'}"`);
-      console.log(`   - Area/Location param: "${location || 'none'}"`);
-      console.log(`   - Before: ${beforeLocationFilter} services`);
-      console.log(`   - After: ${filteredServices.length} services`);
+      console.log(`📍 Location filter applied:`);
+      console.log(`   - Region: "${region || 'ANY'}", District: "${district || 'ANY'}", Area: "${location || 'ANY'}"`);
+      console.log(`   - Results: ${beforeLocationFilter} → ${filteredServices.length} services`);
       
-      // If no services found, log helpful info for debugging
+      // If no services found, log helpful debug info
       if (filteredServices.length === 0) {
-        console.log(`   ⚠️ No services found for this location. Available services in DB:`);
-        services.slice(0, 10).forEach(s => {
-          console.log(`      - "${s.title}": region="${s.region}", district="${s.district}", area="${s.area}", category="${s.category}"`);
-        });
+        console.log(`   ⚠️ No services found. Checking available services in region "${region}"...`);
+        const inRegion = services.filter(s => normalize(s.region) === normalize(region));
+        console.log(`   - Services in region: ${inRegion.length}`);
+        if (inRegion.length > 0) {
+          const uniqueDistricts = [...new Set(inRegion.map(s => s.district).filter(Boolean))];
+          const uniqueCategories = [...new Set(inRegion.map(s => s.category))];
+          console.log(`   - Available districts: ${uniqueDistricts.join(', ') || 'None'}`);
+          console.log(`   - Available categories: ${uniqueCategories.join(', ')}`);
+        }
       }
     }
     if (minPrice) {
