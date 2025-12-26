@@ -7,17 +7,34 @@
   const APP_VERSION_KEY = 'isafari_app_version';
   const LAST_CACHE_CLEAR_KEY = 'isafari_last_cache_clear';
   
-  // Get current version from build
+  // Get current version from build with aggressive cache bypass
   const getCurrentVersion = async () => {
     try {
-      const response = await fetch('/version.json?t=' + Date.now(), {
-        cache: 'no-store'
+      // Use multiple cache-busting techniques
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const url = `/version.json?v=${timestamp}&r=${random}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
       const data = await response.json();
-      return data.version + '_' + data.buildHash;
+      return data.version + '_' + data.buildHash + '_' + data.buildTime;
     } catch (error) {
       console.warn('Could not fetch version info:', error);
-      return null;
+      // Return timestamp as fallback version
+      return 'v_' + Date.now();
     }
   };
   
@@ -66,7 +83,8 @@
     const currentVersion = await getCurrentVersion();
     
     if (!currentVersion) {
-      console.log('ℹ️ Could not determine app version');
+      console.log('ℹ️ Could not determine app version, forcing cache clear');
+      await clearAllCaches();
       return;
     }
     
@@ -78,15 +96,21 @@
     // 1. Version changed
     // 2. Never cleared before
     // 3. Last clear was more than 24 hours ago
+    // 4. URL has force_reload parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceReload = urlParams.get('force_reload') === '1';
+    
     const shouldClear = 
+      forceReload ||
       !storedVersion || 
       storedVersion !== currentVersion ||
       !lastCacheClear ||
       (now - parseInt(lastCacheClear)) > 24 * 60 * 60 * 1000;
     
     if (shouldClear) {
-      console.log('🔄 New version detected or cache expired');
-      console.log('   Old version:', storedVersion);
+      console.log('🔄 Cache clearing triggered:');
+      console.log('   Reason:', forceReload ? 'Force reload requested' : 'Version change or cache expired');
+      console.log('   Old version:', storedVersion || 'none');
       console.log('   New version:', currentVersion);
       
       const cleared = await clearAllCaches();
@@ -98,41 +122,54 @@
         
         // Show notification to user
         if (storedVersion && storedVersion !== currentVersion) {
-          const notification = document.createElement('div');
-          notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            z-index: 9999;
-            font-family: system-ui, -apple-system, sans-serif;
-            font-size: 14px;
-            animation: slideIn 0.3s ease-out;
-          `;
-          notification.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-              </svg>
-              <span>App updated to latest version!</span>
-            </div>
-          `;
-          
-          document.body.appendChild(notification);
-          
-          setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease-in';
-            setTimeout(() => notification.remove(), 300);
-          }, 3000);
+          showUpdateNotification();
+        }
+        
+        // If force reload was requested, remove the parameter and reload
+        if (forceReload) {
+          const newUrl = window.location.pathname + window.location.hash;
+          window.history.replaceState({}, document.title, newUrl);
+          setTimeout(() => window.location.reload(true), 500);
         }
       }
     } else {
-      console.log('✅ App is up to date (version: ' + currentVersion + ')');
+      console.log('✅ App is up to date');
+      console.log('   Current version:', currentVersion);
     }
+  };
+  
+  // Show update notification
+  const showUpdateNotification = () => {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 9999;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      animation: slideIn 0.3s ease-out;
+    `;
+    notification.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>✅ App updated to latest version!</span>
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease-in';
+      setTimeout(() => notification.remove(), 300);
+    }, 4000);
   };
   
   // Add CSS animations
@@ -168,8 +205,15 @@
     checkAndClearCache();
   }
   
-  // Also expose globally for manual clearing
+  // Expose globally for manual clearing and force reload
   window.clearAppCache = clearAllCaches;
+  window.forceAppReload = () => {
+    clearAllCaches().then(() => {
+      window.location.href = window.location.pathname + '?force_reload=1';
+    });
+  };
   
-  console.log('💡 Tip: Run window.clearAppCache() to manually clear cache');
+  console.log('💡 Cache Management Functions:');
+  console.log('   - window.clearAppCache() - Clear cache manually');
+  console.log('   - window.forceAppReload() - Force reload with cache clear');
 })();

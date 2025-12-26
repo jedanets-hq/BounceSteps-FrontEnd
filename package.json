@@ -67,7 +67,10 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "deploy": "npm run build:prod && npm run preview",
-    "verify": "node verify-deployment.js"
+    "verify": "node verify-deployment.js",
+    "verify:live": "node verify-deployment-live.js",
+    "post-deploy": "node post-deploy.js",
+    "deploy:full": "npm run build:prod && git add dist && git commit -m 'Production build' && git push && npm run verify:live"
   },
   "eslintConfig": {
     "extends": [
