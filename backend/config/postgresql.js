@@ -18,7 +18,7 @@ if (process.env.DATABASE_URL) {
   console.log('  Connection string starts with:', process.env.DATABASE_URL.substring(0, 30) + '...');
   poolConfig = {
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 30000,

@@ -79,7 +79,7 @@ router.post('/add', authenticateJWT, async (req, res) => {
       INSERT INTO cart_items (user_id, service_id, quantity)
       VALUES ($1, $2, $3)
       ON CONFLICT (user_id, service_id) 
-      DO UPDATE SET quantity = quantity + $3, updated_at = CURRENT_TIMESTAMP
+      DO UPDATE SET quantity = cart_items.quantity + $3, updated_at = CURRENT_TIMESTAMP
       RETURNING *
     `;
 
