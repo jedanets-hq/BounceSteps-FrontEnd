@@ -1018,6 +1018,22 @@ const JourneyPlanner = () => {
                               </div>
                             )}
                             
+                            {/* Select Service Button - Top Priority */}
+                            <div className="mb-3">
+                              <Button
+                                variant={isSelected ? "default" : "outline"}
+                                size="sm"
+                                className="w-full"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleServiceToggle(service.id);
+                                }}
+                              >
+                                <Icon name={isSelected ? "CheckCircle" : "Plus"} size={14} />
+                                {isSelected ? 'Selected ✓' : 'Select Service'}
+                              </Button>
+                            </div>
+
                             {/* View Details Button */}
                             <div className="mb-3">
                               <Button
@@ -1155,10 +1171,10 @@ const JourneyPlanner = () => {
                           ))}
                         </div>
                         <div className="mt-2 text-lg font-semibold text-foreground">
-                          Total: ${Object.values(servicesByCategory).flat().reduce((total, service) => total + service.price, 0) * formData.travelers}
+                          Total: TZS {(Object.values(servicesByCategory).flat().reduce((total, service) => total + service.price, 0) * formData.travelers).toLocaleString()}
                           {formData.travelers > 1 && (
                             <span className="text-sm font-normal text-muted-foreground ml-2">
-                              (${Object.values(servicesByCategory).flat().reduce((total, service) => total + service.price, 0)} × {formData.travelers} travelers)
+                              (TZS {Object.values(servicesByCategory).flat().reduce((total, service) => total + service.price, 0).toLocaleString()} × {formData.travelers} travelers)
                             </span>
                           )}
                         </div>

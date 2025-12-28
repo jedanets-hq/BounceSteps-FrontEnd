@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { PlansProvider } from './contexts/PlansContext';
+import { FavoritesProvider } from './contexts/FavoritesContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import VersionChecker from './components/VersionChecker';
@@ -30,30 +32,34 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <CartProvider>
-              <VersionChecker />
-              <div className="App">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/auth/callback" element={<OAuthCallback />} />
-              <Route path="/test-dashboard" element={<TestDashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/traveler-dashboard" element={<TravelerDashboard />} />
-              <Route path="/service-provider-dashboard" element={<ServiceProviderDashboard />} />
-              <Route path="/provider-partnership-portal" element={<ProviderPartnershipPortal />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/destination-discovery" element={<DestinationDiscovery />} />
-              <Route path="/service-booking" element={<ServiceBooking />} />
-              <Route path="/services" element={<ServiceBooking />} />
-              <Route path="/journey-planner" element={<JourneyPlannerEnhanced />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/admin-portal" element={<AdminPortal />} />
-              <Route path="/provider/:providerId" element={<ProviderProfile />} />
-              {/* Redirect /cart to traveler dashboard with cart tab */}
-              <Route path="/cart" element={<Navigate to="/traveler-dashboard" state={{ tab: 'cart' }} replace />} />
-              </Routes>
-              </div>
+              <PlansProvider>
+                <FavoritesProvider>
+                  <VersionChecker />
+                  <div className="App">
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/auth/callback" element={<OAuthCallback />} />
+                  <Route path="/test-dashboard" element={<TestDashboard />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/traveler-dashboard" element={<TravelerDashboard />} />
+                  <Route path="/service-provider-dashboard" element={<ServiceProviderDashboard />} />
+                  <Route path="/provider-partnership-portal" element={<ProviderPartnershipPortal />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/destination-discovery" element={<DestinationDiscovery />} />
+                  <Route path="/service-booking" element={<ServiceBooking />} />
+                  <Route path="/services" element={<ServiceBooking />} />
+                  <Route path="/journey-planner" element={<JourneyPlannerEnhanced />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/admin-portal" element={<AdminPortal />} />
+                  <Route path="/provider/:providerId" element={<ProviderProfile />} />
+                  {/* Redirect /cart to traveler dashboard with cart tab */}
+                  <Route path="/cart" element={<Navigate to="/traveler-dashboard" state={{ tab: 'cart' }} replace />} />
+                  </Routes>
+                  </div>
+                </FavoritesProvider>
+              </PlansProvider>
             </CartProvider>
           </AuthProvider>
         </ThemeProvider>

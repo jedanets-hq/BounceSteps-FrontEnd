@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { cartAPI } from '../utils/api';
 
 const CartContext = createContext();
 
@@ -12,109 +13,171 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Load cart from localStorage on mount
+  // Load cart from database on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('isafari_cart');
-    if (savedCart) {
-      try {
-        setCartItems(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
-      }
-    }
+    loadCartFromDatabase();
   }, []);
 
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('isafari_cart', JSON.stringify(cartItems));
-  }, [cartItems]);
-
-  const addToCart = (service) => {
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === service.id);
+  const loadCartFromDatabase = async () => {
+    try {
+      setLoading(true);
+      const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       
-      if (existingItem) {
-        // If item exists, increase quantity
-        return prevItems.map(item =>
-          item.id === service.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      } else {
-        // Add new item with quantity 1
-        return [...prevItems, { ...service, quantity: service.quantity || 1 }];
+      if (!user.token) {
+        console.warn('User not logged in - cannot load cart from database');
+        setCartItems([]);
+        return;
       }
-    });
-  };
 
-  const addMultipleToCart = (services) => {
-    setCartItems(prevItems => {
-      const newItems = [...prevItems];
-      
-      services.forEach(service => {
-        const existingIndex = newItems.findIndex(item => item.id === service.id);
-        
-        if (existingIndex >= 0) {
-          // Update existing item
-          newItems[existingIndex] = {
-            ...newItems[existingIndex],
-            quantity: service.quantity || newItems[existingIndex].quantity
-          };
-        } else {
-          // Add new item
-          newItems.push({ ...service, quantity: service.quantity || 1 });
-        }
-      });
-      
-      return newItems;
-    });
-  };
-
-  const removeFromCart = (serviceId) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== serviceId));
-  };
-
-  const updateQuantity = (serviceId, newQuantity) => {
-    if (newQuantity <= 0) {
-      removeFromCart(serviceId);
-      return;
+      const response = await cartAPI.getCart();
+      if (response.success && response.cartItems) {
+        setCartItems(response.cartItems);
+      } else {
+        setCartItems([]);
+      }
+    } catch (error) {
+      console.error('Error loading cart from database:', error);
+      setCartItems([]);
+    } finally {
+      setLoading(false);
     }
-
-    setCartItems(prevItems =>
-      prevItems.map(item =>
-        item.id === serviceId
-          ? { ...item, quantity: newQuantity }
-          : item
-      )
-    );
   };
 
-  const clearCart = () => {
-    setCartItems([]);
+  const addToCart = async (service) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      
+      if (!user.token) {
+        console.warn('User not logged in - cannot save to database');
+        return;
+      }
+
+      // ALWAYS save to database - never use localStorage fallback
+      const response = await cartAPI.addToCart(service.id, 1);
+      if (response.success) {
+        await loadCartFromDatabase();
+      } else {
+        console.error('Failed to add to cart:', response.message);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
+  };
+
+  const addMultipleToCart = async (services) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      
+      if (!user.token) {
+        console.warn('User not logged in - cannot save to database');
+        return;
+      }
+
+      // ALWAYS save to database - never use localStorage fallback
+      for (const service of services) {
+        await cartAPI.addToCart(service.id, service.quantity || 1);
+      }
+      await loadCartFromDatabase();
+    } catch (error) {
+      console.error('Error adding multiple to cart:', error);
+    }
+  };
+
+  const removeFromCart = async (serviceId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      
+      if (!user.token) {
+        console.warn('User not logged in - cannot remove from database');
+        return;
+      }
+
+      // ALWAYS remove from database
+      const cartItem = cartItems.find(item => item.service_id === serviceId);
+      if (cartItem) {
+        const response = await cartAPI.removeFromCart(cartItem.id);
+        if (response.success) {
+          await loadCartFromDatabase();
+        }
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+    }
+  };
+
+  const updateQuantity = async (serviceId, newQuantity) => {
+    try {
+      if (newQuantity <= 0) {
+        await removeFromCart(serviceId);
+        return;
+      }
+
+      const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      
+      if (!user.token) {
+        console.warn('User not logged in - cannot update in database');
+        return;
+      }
+
+      // ALWAYS update in database
+      const cartItem = cartItems.find(item => item.service_id === serviceId);
+      if (cartItem) {
+        const response = await cartAPI.updateCartItem(cartItem.id, newQuantity);
+        if (response.success) {
+          await loadCartFromDatabase();
+        }
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      
+      if (!user.token) {
+        console.warn('User not logged in - cannot clear database');
+        return;
+      }
+
+      // ALWAYS clear from database
+      const response = await cartAPI.clearCart();
+      if (response.success) {
+        setCartItems([]);
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+    }
   };
 
   const getCartTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => {
+      const price = item.price || 0;
+      const quantity = item.quantity || 1;
+      return total + (price * quantity);
+    }, 0);
   };
 
   const getCartCount = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
+    return cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
   };
 
   const isInCart = (serviceId) => {
-    return cartItems.some(item => item.id === serviceId);
+    return cartItems.some(item => item.service_id === serviceId || item.id === serviceId);
   };
 
   const getItemQuantity = (serviceId) => {
-    const item = cartItems.find(item => item.id === serviceId);
+    const item = cartItems.find(item => item.service_id === serviceId || item.id === serviceId);
     return item ? item.quantity : 0;
   };
 
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
   const value = {
     cartItems,
+    loading,
     addToCart,
     addMultipleToCart,
     removeFromCart,
@@ -126,7 +189,8 @@ export const CartProvider = ({ children }) => {
     getItemQuantity,
     isCartOpen,
     setIsCartOpen,
-    setCartItems
+    setCartItems,
+    loadCartFromDatabase
   };
 
   return (

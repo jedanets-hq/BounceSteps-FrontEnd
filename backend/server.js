@@ -2,12 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
+const path = require('path');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const { Pool } = require('pg');
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from .env file
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Import PostgreSQL connection
 const { connectPostgreSQL } = require('./config/postgresql');
@@ -28,6 +29,9 @@ const notificationRoutes = require('./routes/notifications');
 const travelerStoriesRoutes = require('./routes/travelerStories');
 const providersRoutes = require('./routes/providers');
 const adminRoutes = require('./routes/admin-fixed');
+const cartRoutes = require('./routes/cart');
+const plansRoutes = require('./routes/plans');
+const favoritesRoutes = require('./routes/favorites');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -154,6 +158,9 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/traveler-stories', travelerStoriesRoutes);
 app.use('/api/providers', providersRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/plans', plansRoutes);
+app.use('/api/favorites', favoritesRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

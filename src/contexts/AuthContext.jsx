@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI, userAPI } from '../utils/api';
+import migrateLocalStorageToDatabase from '../utils/migrateLocalStorage';
 
 const AuthContext = createContext();
 
@@ -111,6 +112,14 @@ export const AuthProvider = ({ children }) => {
         const userWithToken = { ...response.user, token: response.token };
         setUser(userWithToken);
         localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
+        
+        // Migrate localStorage data to database
+        setTimeout(() => {
+          migrateLocalStorageToDatabase().catch(err => 
+            console.error('Migration error (non-blocking):', err)
+          );
+        }, 500);
+        
         return { success: true, user: userWithToken };
       } else {
         setErrorWithTimeout(response.message || 'Invalid email or password');
@@ -153,6 +162,14 @@ export const AuthProvider = ({ children }) => {
         const userWithToken = { ...response.user, token: response.token };
         setUser(userWithToken);
         localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
+        
+        // Migrate localStorage data to database
+        setTimeout(() => {
+          migrateLocalStorageToDatabase().catch(err => 
+            console.error('Migration error (non-blocking):', err)
+          );
+        }, 500);
+        
         return { success: true, user: userWithToken };
       } else {
         setErrorWithTimeout(response.message || 'Registration completion failed');

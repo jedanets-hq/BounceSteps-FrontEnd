@@ -230,6 +230,102 @@ export const bookingsAPI = {
   },
 };
 
+// Cart API functions
+export const cartAPI = {
+  getCart: async () => {
+    return apiRequest('/cart');
+  },
+
+  addToCart: async (serviceId, quantity = 1) => {
+    return apiRequest('/cart/add', {
+      method: 'POST',
+      body: JSON.stringify({ serviceId, quantity }),
+    });
+  },
+
+  updateCartItem: async (cartItemId, quantity) => {
+    return apiRequest(`/cart/${cartItemId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity }),
+    });
+  },
+
+  removeFromCart: async (cartItemId) => {
+    return apiRequest(`/cart/${cartItemId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  clearCart: async () => {
+    return apiRequest('/cart', {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Plans API functions
+export const plansAPI = {
+  getPlans: async () => {
+    return apiRequest('/plans');
+  },
+
+  addToPlan: async (serviceId, planDate, notes) => {
+    return apiRequest('/plans/add', {
+      method: 'POST',
+      body: JSON.stringify({ serviceId, planDate, notes }),
+    });
+  },
+
+  updatePlan: async (planId, planDate, notes) => {
+    return apiRequest(`/plans/${planId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ planDate, notes }),
+    });
+  },
+
+  removeFromPlan: async (planId) => {
+    return apiRequest(`/plans/${planId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  clearPlans: async () => {
+    return apiRequest('/plans', {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Favorites API functions
+export const favoritesAPI = {
+  getFavorites: async () => {
+    return apiRequest('/favorites');
+  },
+
+  checkFavorite: async (providerId) => {
+    return apiRequest(`/favorites/check/${providerId}`);
+  },
+
+  addToFavorites: async (providerId) => {
+    return apiRequest('/favorites/add', {
+      method: 'POST',
+      body: JSON.stringify({ providerId }),
+    });
+  },
+
+  removeFromFavorites: async (providerId) => {
+    return apiRequest(`/favorites/${providerId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  clearFavorites: async () => {
+    return apiRequest('/favorites', {
+      method: 'DELETE',
+    });
+  },
+};
+
 // Payments API functions
 export const paymentsAPI = {
   getAll: async () => {
@@ -358,6 +454,9 @@ export default {
   userAPI,
   servicesAPI,
   bookingsAPI,
+  cartAPI,
+  plansAPI,
+  favoritesAPI,
   paymentsAPI,
   notificationsAPI,
   adminAPI,

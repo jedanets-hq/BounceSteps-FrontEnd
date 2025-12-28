@@ -188,7 +188,7 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
                         
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold text-primary">
-                            ${service.price}
+                            TZS {parseFloat(service.price || 0).toLocaleString()}
                           </span>
                           {service.duration_days && (
                             <span className="text-sm text-muted-foreground">
@@ -196,6 +196,20 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
                             </span>
                           )}
                         </div>
+                        
+                        {/* SELECT SERVICE Button */}
+                        <Button
+                          variant={isSelected ? "default" : "outline"}
+                          size="sm"
+                          className="w-full mt-3"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleServiceSelection(service);
+                          }}
+                        >
+                          <Icon name={isSelected ? "CheckCircle" : "Plus"} size={14} />
+                          {isSelected ? 'Selected ✓' : 'Select Service'}
+                        </Button>
                       </div>
                     );
                   })}

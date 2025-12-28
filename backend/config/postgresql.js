@@ -244,6 +244,38 @@ const initQueries = [
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`,
 
+  // Cart table - for temporary shopping cart items
+  `CREATE TABLE IF NOT EXISTS cart_items (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    service_id INTEGER REFERENCES services(id) ON DELETE CASCADE NOT NULL,
+    quantity INTEGER DEFAULT 1 NOT NULL,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, service_id)
+  )`,
+
+  // Plans table - for trip planning (services user wants to visit)
+  `CREATE TABLE IF NOT EXISTS trip_plans (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    service_id INTEGER REFERENCES services(id) ON DELETE CASCADE NOT NULL,
+    plan_date DATE,
+    notes TEXT,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, service_id)
+  )`,
+
+  // Favorites table - for favorite service providers
+  `CREATE TABLE IF NOT EXISTS favorites (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    provider_id INTEGER REFERENCES service_providers(id) ON DELETE CASCADE NOT NULL,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, provider_id)
+  )`,
+
   // Add payment_methods and contact_info columns to services table if they don't exist
   `ALTER TABLE services ADD COLUMN IF NOT EXISTS payment_methods JSONB DEFAULT '{}'`,
   `ALTER TABLE services ADD COLUMN IF NOT EXISTS contact_info JSONB DEFAULT '{}'`,
@@ -286,6 +318,20 @@ const initQueries = [
   `CREATE INDEX IF NOT EXISTS idx_service_promotions_expires ON service_promotions(expires_at)`,
   `CREATE INDEX IF NOT EXISTS idx_service_promotions_type ON service_promotions(promotion_type)`,
 
+  // Indexes for cart items
+  `CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON cart_items(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_cart_items_service_id ON cart_items(service_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_cart_items_added_at ON cart_items(added_at DESC)`,
+
+  // Indexes for trip plans
+  `CREATE INDEX IF NOT EXISTS idx_trip_plans_user_id ON trip_plans(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_trip_plans_service_id ON trip_plans(service_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_trip_plans_plan_date ON trip_plans(plan_date)`,
+
+  // Indexes for favorites
+  `CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_favorites_provider_id ON favorites(provider_id)`,
+
   // Create function to update updated_at timestamp
   `CREATE OR REPLACE FUNCTION update_updated_at_column()
   RETURNS TRIGGER AS $$
@@ -315,7 +361,15 @@ const initQueries = [
   `CREATE TRIGGER update_traveler_stories_updated_at BEFORE UPDATE ON traveler_stories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`,
   
   `DROP TRIGGER IF EXISTS update_story_comments_updated_at ON story_comments`,
-  `CREATE TRIGGER update_story_comments_updated_at BEFORE UPDATE ON story_comments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`
+  `CREATE TRIGGER update_story_comments_updated_at BEFORE UPDATE ON story_comments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`,
+
+  // Triggers for cart items
+  `DROP TRIGGER IF EXISTS update_cart_items_updated_at ON cart_items`,
+  `CREATE TRIGGER update_cart_items_updated_at BEFORE UPDATE ON cart_items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`,
+
+  // Triggers for trip plans
+  `DROP TRIGGER IF EXISTS update_trip_plans_updated_at ON trip_plans`,
+  `CREATE TRIGGER update_trip_plans_updated_at BEFORE UPDATE ON trip_plans FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()`
 ];
 
 // Initialize database tables

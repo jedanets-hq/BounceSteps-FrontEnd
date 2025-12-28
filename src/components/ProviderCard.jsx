@@ -2,6 +2,7 @@ import React from 'react';
 import Icon from './AppIcon';
 import Button from './ui/Button';
 import VerifiedBadge from './ui/VerifiedBadge';
+import { bookingsAPI } from '../utils/api';
 
 const ProviderCard = ({ provider, onViewProfile, onSelect, isSelected }) => {
   return (

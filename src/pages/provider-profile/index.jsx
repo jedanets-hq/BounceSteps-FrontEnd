@@ -9,7 +9,7 @@ import CartSidebar from '../../components/CartSidebar';
 import { PaymentModal, BookingConfirmation } from '../../components/PaymentSystem';
 import ServiceDetailsModal from '../../components/ServiceDetailsModal';
 import { useCart } from '../../contexts/CartContext';
-import { API_URL } from '../../utils/api';
+import { API_URL, bookingsAPI } from '../../utils/api';
 
 const ProviderProfile = () => {
   const { providerId } = useParams();
@@ -174,6 +174,16 @@ const ProviderProfile = () => {
     
     addToCart(bookingItem);
     alert(`${service.title} added to cart!`);
+  };
+
+  const handleServiceToggle = (serviceId) => {
+    setSelectedServices(prev => {
+      if (prev.includes(serviceId)) {
+        return prev.filter(id => id !== serviceId);
+      } else {
+        return [...prev, serviceId];
+      }
+    });
   };
 
   // Get unique categories from services
@@ -552,60 +562,72 @@ const ProviderProfile = () => {
                           <Icon name="Eye" size={16} />
                           View Details
                         </Button>
-                        <Button 
-                          onClick={() => {
-                            const savedUser = localStorage.getItem('isafari_user');
-                            if (!savedUser) {
-                              navigate('/login?redirect=/provider/' + providerId);
-                              return;
-                            }
-                            
-                            // Add service to journey plan
-                            const journeyPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
-                            const currentPlan = journeyPlans.find(p => p.status === 'building') || {
-                              id: Date.now(),
-                              status: 'building',
-                              services: [],
-                              created_at: new Date().toISOString()
-                            };
-                            
-                            // Check if service already added
-                            const alreadyAdded = currentPlan.services.find(s => s.id === service.id);
-                            if (!alreadyAdded) {
-                              currentPlan.services.push({
-                                id: service.id,
-                                service_id: service.id,
-                                title: service.title,
-                                name: service.title,
-                                category: service.category,
-                                price: service.price,
-                                provider_id: service.provider_id || providerId,
-                                provider_name: service.business_name || provider?.business_name,
-                                location: service.location,
-                                image: service.images?.[0],
-                                description: service.description
-                              });
-                              
-                              // Update or add plan
-                              const planIndex = journeyPlans.findIndex(p => p.id === currentPlan.id);
-                              if (planIndex >= 0) {
-                                journeyPlans[planIndex] = currentPlan;
-                              } else {
-                                journeyPlans.push(currentPlan);
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={async () => {
+                              const savedUser = localStorage.getItem('isafari_user');
+                              if (!savedUser) {
+                                navigate('/login');
+                                return;
                               }
                               
-                              localStorage.setItem('journey_plans', JSON.stringify(journeyPlans));
-                              alert('✅ Added to Plan! Continue planning or view in Dashboard > My Trips');
-                            } else {
-                              alert('Service already in your plan!');
-                            }
-                          }}
-                          size="sm"
-                          className="w-full"
-                        >
-                          <Icon name="Plus" size={14} />
-                          Add to Plan
-                        </Button>
+                              try {
+                                const result = await bookingsAPI.create({
+                                  serviceId: service.id,
+                                  bookingDate: new Date().toISOString().split('T')[0],
+                                  participants: 1,
+                                  specialRequests: 'Added to cart'
+                                });
+                                
+                                if (result.success) {
+                                  alert('✅ Added to cart!');
+                                } else {
+                                  alert('❌ ' + (result.message || 'Failed to add to cart'));
+                                }
+                              } catch (error) {
+                                console.error('Error adding to cart:', error);
+                                alert('❌ Error adding to cart');
+                              }
+                            }}
+                          >
+                            <Icon name="ShoppingBag" size={14} />
+                            Add to Cart
+                          </Button>
+                          <Button 
+                            size="sm"
+                            className="flex-1"
+                            onClick={async () => {
+                              const savedUser = localStorage.getItem('isafari_user');
+                              if (!savedUser) {
+                                navigate('/login');
+                                return;
+                              }
+                              
+                              try {
+                                const result = await bookingsAPI.create({
+                                  serviceId: service.id,
+                                  bookingDate: new Date().toISOString().split('T')[0],
+                                  participants: 1
+                                });
+                                
+                                if (result.success) {
+                                  window.location.href = '/traveler-dashboard?tab=cart&openPayment=true';
+                                } else {
+                                  alert('❌ ' + (result.message || 'Failed to create booking'));
+                                }
+                              } catch (error) {
+                                console.error('Error booking:', error);
+                                alert('❌ Error processing booking');
+                              }
+                            }}
+                          >
+                            <Icon name="CreditCard" size={14} />
+                            Book Now
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -763,10 +785,6 @@ const ProviderProfile = () => {
         isOpen={showServiceDetailsModal}
         onClose={() => setShowServiceDetailsModal(false)}
         service={selectedServiceForDetails}
-        onAddToPlan={(service) => {
-          handleAddToCart(service);
-          setShowServiceDetailsModal(false);
-        }}
       />
     </div>
   );

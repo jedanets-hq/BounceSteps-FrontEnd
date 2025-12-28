@@ -1,15 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Icon from './AppIcon';
 import Button from './ui/Button';
 import VerifiedBadge from './ui/VerifiedBadge';
+import { bookingsAPI } from '../utils/api';
 
-const ServiceDetailsModal = ({ isOpen, onClose, service, onAddToPlan }) => {
+const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
   if (!isOpen || !service) return null;
-
-  const handleAddToPlan = () => {
-    onAddToPlan(service);
-    onClose();
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -201,20 +197,117 @@ const ServiceDetailsModal = ({ isOpen, onClose, service, onAddToPlan }) => {
           )}
         </div>
 
-        {/* Footer with Add to Plan Button */}
-        <div className="sticky bottom-0 bg-card border-t border-border px-6 py-4 flex items-center justify-between">
+        {/* Footer with Action Buttons */}
+        <div className="sticky bottom-0 bg-card border-t border-border px-6 py-4 flex items-center justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Total Price</p>
             <p className="text-2xl font-bold text-primary">TZS {service.price?.toLocaleString()}</p>
           </div>
-          <Button
-            onClick={handleAddToPlan}
-            size="lg"
-            className="flex items-center gap-2"
-          >
-            <Icon name="Plus" size={20} />
-            Add to Plan
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const savedUser = localStorage.getItem('isafari_user');
+                if (!savedUser) {
+                  window.location.href = '/login';
+                  return;
+                }
+                
+                try {
+                  // Create booking with status 'plan'
+                  const result = await bookingsAPI.create({
+                    serviceId: service.id,
+                    bookingDate: new Date().toISOString().split('T')[0],
+                    participants: 1,
+                    specialRequests: 'Added to trip plan'
+                  });
+                  
+                  if (result.success) {
+                    alert('✅ Added to your trip plan!');
+                    onClose();
+                    window.location.href = '/traveler-dashboard?tab=trips';
+                  } else {
+                    alert('❌ ' + (result.message || 'Failed to add to trip plan'));
+                  }
+                } catch (error) {
+                  console.error('Error adding to plan:', error);
+                  alert('❌ Error adding to trip plan');
+                }
+              }}
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              <Icon name="Plus" size={20} />
+              Add to Plan
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const savedUser = localStorage.getItem('isafari_user');
+                if (!savedUser) {
+                  window.location.href = '/login';
+                  return;
+                }
+                
+                try {
+                  // Create booking with status 'cart'
+                  const result = await bookingsAPI.create({
+                    serviceId: service.id,
+                    bookingDate: new Date().toISOString().split('T')[0],
+                    participants: 1,
+                    specialRequests: 'Added to cart'
+                  });
+                  
+                  if (result.success) {
+                    alert('✅ Added to cart!');
+                    onClose();
+                  } else {
+                    alert('❌ ' + (result.message || 'Failed to add to cart'));
+                  }
+                } catch (error) {
+                  console.error('Error adding to cart:', error);
+                  alert('❌ Error adding to cart');
+                }
+              }}
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              <Icon name="ShoppingBag" size={20} />
+              Add to Cart
+            </Button>
+            <Button
+              onClick={async () => {
+                const savedUser = localStorage.getItem('isafari_user');
+                if (!savedUser) {
+                  window.location.href = '/login';
+                  return;
+                }
+                
+                try {
+                  // Create booking
+                  const result = await bookingsAPI.create({
+                    serviceId: service.id,
+                    bookingDate: new Date().toISOString().split('T')[0],
+                    participants: 1
+                  });
+                  
+                  if (result.success) {
+                    window.location.href = '/traveler-dashboard?tab=cart&openPayment=true';
+                  } else {
+                    alert('❌ ' + (result.message || 'Failed to create booking'));
+                  }
+                } catch (error) {
+                  console.error('Error booking:', error);
+                  alert('❌ Error processing booking');
+                }
+              }}
+              size="lg"
+              className="flex items-center gap-2"
+            >
+              <Icon name="CreditCard" size={20} />
+              Book Now
+            </Button>
+          </div>
         </div>
       </div>
     </div>

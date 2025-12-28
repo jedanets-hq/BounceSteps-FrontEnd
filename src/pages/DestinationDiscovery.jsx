@@ -23,47 +23,12 @@ const DestinationDiscovery = () => {
 
   // Add service to cart
   const handleAddToCart = (service) => {
-    const cartItem = {
-      id: service.id,
-      name: service.title,
-      price: parseFloat(service.price || 0),
-      quantity: 1,
-      image: service.images && service.images.length > 0 ? service.images[0] : null,
-      description: service.description,
-      duration: service.duration,
-      rating: service.average_rating,
-      type: 'service',
-      category: service.category,
-      location: service.location,
-      provider_id: service.provider_id,
-      business_name: service.business_name || service.provider_name,
-      payment_methods: service.payment_methods || {},
-      contact_info: service.contact_info || {}
-    };
-    addToCart(cartItem);
+    addToCart(service);
     navigate('/traveler-dashboard?tab=cart');
   };
 
   // Direct payment with provider's payment methods
   const handleDirectPayment = (service) => {
-    const cartItem = {
-      id: service.id,
-      name: service.title,
-      price: parseFloat(service.price || 0),
-      quantity: 1,
-      image: service.images && service.images.length > 0 ? service.images[0] : null,
-      description: service.description,
-      duration: service.duration,
-      rating: service.average_rating,
-      type: 'service',
-      category: service.category,
-      location: service.location,
-      provider_id: service.provider_id,
-      business_name: service.business_name || service.provider_name,
-      payment_methods: service.payment_methods || {},
-      contact_info: service.contact_info || {}
-    };
-    
     // Store payment info for direct payment
     localStorage.setItem('isafari_direct_payment', JSON.stringify({
       service_id: service.id,
@@ -75,7 +40,7 @@ const DestinationDiscovery = () => {
       contact_info: service.contact_info || {}
     }));
     
-    addToCart(cartItem);
+    addToCart(service);
     navigate('/traveler-dashboard?tab=cart&openPayment=true&directPay=true');
   };
 
