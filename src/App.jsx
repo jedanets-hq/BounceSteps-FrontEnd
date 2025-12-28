@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
-import { PlansProvider } from './contexts/PlansContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -32,10 +31,9 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <CartProvider>
-              <PlansProvider>
-                <FavoritesProvider>
-                  <VersionChecker />
-                  <div className="App">
+              <FavoritesProvider>
+                <VersionChecker />
+                <div className="App">
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/login" element={<LoginPage />} />
@@ -59,7 +57,6 @@ function App() {
                   </Routes>
                   </div>
                 </FavoritesProvider>
-              </PlansProvider>
             </CartProvider>
           </AuthProvider>
         </ThemeProvider>

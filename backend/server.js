@@ -30,7 +30,6 @@ const travelerStoriesRoutes = require('./routes/travelerStories');
 const providersRoutes = require('./routes/providers');
 const adminRoutes = require('./routes/admin-fixed');
 const cartRoutes = require('./routes/cart');
-const plansRoutes = require('./routes/plans');
 const favoritesRoutes = require('./routes/favorites');
 
 const app = express();
@@ -159,7 +158,6 @@ app.use('/api/traveler-stories', travelerStoriesRoutes);
 app.use('/api/providers', providersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/plans', plansRoutes);
 app.use('/api/favorites', favoritesRoutes);
 
 // Health check endpoint

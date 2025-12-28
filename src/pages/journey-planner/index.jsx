@@ -1080,18 +1080,6 @@ const JourneyPlanner = () => {
                                 <Icon name="Tag" size={12} />
                                 {service.category}
                               </span>
-                              <div className="flex items-center gap-2">
-                                {isSelected ? (
-                                  <div className="flex items-center space-x-1 text-primary font-medium">
-                                    <Icon name="CheckCircle" size={16} className="fill-primary" />
-                                    <span className="text-sm">Added to Plan</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center space-x-1 text-muted-foreground">
-                                    <Icon name="Plus" size={16} />
-                                    <span className="text-sm">Add to Plan</span>
-                                  </div>
-                                )}
                                 <Button
                                   variant="outline"
                                   size="sm"

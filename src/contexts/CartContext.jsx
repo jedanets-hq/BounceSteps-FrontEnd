@@ -52,18 +52,34 @@ export const CartProvider = ({ children }) => {
       
       if (!user.token) {
         console.warn('User not logged in - cannot save to database');
-        return;
+        throw new Error('User not logged in');
       }
 
+      // Extract service ID - handle both direct service objects and booking items
+      const serviceId = service.id || service.serviceId;
+      
+      if (!serviceId) {
+        console.error('No service ID found in:', service);
+        throw new Error('Invalid service object');
+      }
+
+      console.log('📤 Adding to cart - serviceId:', serviceId, 'token:', user.token ? 'present' : 'missing');
+
       // ALWAYS save to database - never use localStorage fallback
-      const response = await cartAPI.addToCart(service.id, 1);
+      const response = await cartAPI.addToCart(serviceId, 1);
+      
+      console.log('📥 Cart API response:', response);
+      
       if (response.success) {
+        console.log('✅ Item added to cart successfully');
         await loadCartFromDatabase();
       } else {
         console.error('Failed to add to cart:', response.message);
+        throw new Error(response.message || 'Failed to add to cart');
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
+      throw error;
     }
   };
 

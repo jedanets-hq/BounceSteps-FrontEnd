@@ -274,28 +274,33 @@ const TrendingServices = () => {
                     <Button 
                       size="sm" 
                       className="flex-1"
-                      onClick={() => {
+                      onClick={async () => {
                         // Check isafari_user not token
                         const savedUser = localStorage.getItem('isafari_user');
                         if (!savedUser) {
                           navigate('/login?redirect=/');
                         } else {
-                          // Add to cart and navigate to cart & payments with payment modal open
-                          const bookingItem = {
-                            id: service.id,
-                            name: service.title,
-                            price: parseFloat(service.price || 0),
-                            quantity: 1,
-                            image: service.images && service.images.length > 0 ? service.images[0] : null,
-                            description: service.description,
-                            type: 'service',
-                            category: service.category,
-                            location: service.location,
-                            provider_id: service.provider_id,
-                            business_name: service.business_name
-                          };
-                          addToCart(bookingItem);
-                          navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                          try {
+                            // Add to cart and navigate to cart & payments with payment modal open
+                            const bookingItem = {
+                              id: service.id,
+                              name: service.title,
+                              price: parseFloat(service.price || 0),
+                              quantity: 1,
+                              image: service.images && service.images.length > 0 ? service.images[0] : null,
+                              description: service.description,
+                              type: 'service',
+                              category: service.category,
+                              location: service.location,
+                              provider_id: service.provider_id,
+                              business_name: service.business_name
+                            };
+                            await addToCart(bookingItem);
+                            navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                          } catch (error) {
+                            console.error('Error adding to cart:', error);
+                            alert('❌ Error adding to cart: ' + error.message);
+                          }
                         }
                       }}
                     >
@@ -460,28 +465,33 @@ const TrendingServices = () => {
                 <Button 
                   variant="outline" 
                   className="flex-1"
-                  onClick={() => {
+                  onClick={async () => {
                     const savedUser = localStorage.getItem('isafari_user');
                     if (!savedUser) {
                       navigate('/login?redirect=/');
                       return;
                     }
-                    const bookingItem = {
-                      id: selectedService.id,
-                      name: selectedService.title,
-                      price: parseFloat(selectedService.price || 0),
-                      quantity: 1,
-                      image: selectedService.images && selectedService.images.length > 0 ? selectedService.images[0] : null,
-                      description: selectedService.description,
-                      type: 'service',
-                      category: selectedService.category,
-                      location: selectedService.location,
-                      provider_id: selectedService.provider_id,
-                      business_name: selectedService.business_name
-                    };
-                    addToCart(bookingItem);
-                    setSelectedService(null);
-                    navigate('/traveler-dashboard?tab=cart');
+                    try {
+                      const bookingItem = {
+                        id: selectedService.id,
+                        name: selectedService.title,
+                        price: parseFloat(selectedService.price || 0),
+                        quantity: 1,
+                        image: selectedService.images && selectedService.images.length > 0 ? selectedService.images[0] : null,
+                        description: selectedService.description,
+                        type: 'service',
+                        category: selectedService.category,
+                        location: selectedService.location,
+                        provider_id: selectedService.provider_id,
+                        business_name: selectedService.business_name
+                      };
+                      await addToCart(bookingItem);
+                      setSelectedService(null);
+                      navigate('/traveler-dashboard?tab=cart');
+                    } catch (error) {
+                      console.error('Error adding to cart:', error);
+                      alert('❌ Error adding to cart: ' + error.message);
+                    }
                   }}
                 >
                   <Icon name="ShoppingBag" size={16} />
@@ -489,28 +499,33 @@ const TrendingServices = () => {
                 </Button>
                 <Button 
                   className="flex-1"
-                  onClick={() => {
+                  onClick={async () => {
                     const savedUser = localStorage.getItem('isafari_user');
                     if (!savedUser) {
                       navigate('/login?redirect=/');
                       return;
                     }
-                    const bookingItem = {
-                      id: selectedService.id,
-                      name: selectedService.title,
-                      price: parseFloat(selectedService.price || 0),
-                      quantity: 1,
-                      image: selectedService.images && selectedService.images.length > 0 ? selectedService.images[0] : null,
-                      description: selectedService.description,
-                      type: 'service',
-                      category: selectedService.category,
-                      location: selectedService.location,
-                      provider_id: selectedService.provider_id,
-                      business_name: selectedService.business_name
-                    };
-                    addToCart(bookingItem);
-                    setSelectedService(null);
-                    navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                    try {
+                      const bookingItem = {
+                        id: selectedService.id,
+                        name: selectedService.title,
+                        price: parseFloat(selectedService.price || 0),
+                        quantity: 1,
+                        image: selectedService.images && selectedService.images.length > 0 ? selectedService.images[0] : null,
+                        description: selectedService.description,
+                        type: 'service',
+                        category: selectedService.category,
+                        location: selectedService.location,
+                        provider_id: selectedService.provider_id,
+                        business_name: selectedService.business_name
+                      };
+                      await addToCart(bookingItem);
+                      setSelectedService(null);
+                      navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                    } catch (error) {
+                      console.error('Error adding to cart:', error);
+                      alert('❌ Error adding to cart: ' + error.message);
+                    }
                   }}
                 >
                   <Icon name="CreditCard" size={16} />

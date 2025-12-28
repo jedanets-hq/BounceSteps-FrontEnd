@@ -20,12 +20,13 @@ const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
 
   const config = {
+    method: options.method || 'GET',
     headers: {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
-    ...options,
+    ...(options.body && { body: options.body }),
   };
 
   try {
@@ -295,8 +296,6 @@ export const plansAPI = {
     });
   },
 };
-
-// Favorites API functions
 export const favoritesAPI = {
   getFavorites: async () => {
     return apiRequest('/favorites');
