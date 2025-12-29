@@ -226,7 +226,7 @@ const ExperienceDesign = ({ title = "Tours & Activities", description = "Discove
                     variant="outline" 
                     size="sm"
                     className="flex-1"
-                    onClick={() => {
+                    onClick={async () => {
                       const savedUser = localStorage.getItem('isafari_user');
                       if (!savedUser) {
                         navigate('/login?redirect=/services-overview');
@@ -245,8 +245,12 @@ const ExperienceDesign = ({ title = "Tours & Activities", description = "Discove
                         provider_id: service.provider_id,
                         business_name: service.business_name
                       };
-                      addToCart(bookingItem);
-                      navigate('/traveler-dashboard?tab=cart');
+                      const result = await addToCart(bookingItem);
+                      if (result.success) {
+                        navigate('/traveler-dashboard?tab=cart');
+                      } else {
+                        alert(`❌ ${result.message}`);
+                      }
                     }}
                   >
                     <Icon name="ShoppingBag" size={16} />
@@ -256,7 +260,7 @@ const ExperienceDesign = ({ title = "Tours & Activities", description = "Discove
                     variant="default" 
                     size="sm"
                     className="flex-1"
-                    onClick={() => {
+                    onClick={async () => {
                       const savedUser = localStorage.getItem('isafari_user');
                       if (!savedUser) {
                         navigate('/login?redirect=/services-overview');
@@ -275,8 +279,12 @@ const ExperienceDesign = ({ title = "Tours & Activities", description = "Discove
                         provider_id: service.provider_id,
                         business_name: service.business_name
                       };
-                      addToCart(bookingItem);
-                      navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                      const result = await addToCart(bookingItem);
+                      if (result.success) {
+                        navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                      } else {
+                        alert(`❌ ${result.message}`);
+                      }
                     }}
                   >
                     <Icon name="CreditCard" size={16} />

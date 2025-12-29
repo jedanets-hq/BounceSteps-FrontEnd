@@ -1007,7 +1007,7 @@ const TravelerDashboard = () => {
                     <div key={item.id || index} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex-1">
-                          <h4 className="font-semibold text-foreground text-lg">{item.name}</h4>
+                          <h4 className="font-semibold text-foreground text-lg">{item.title}</h4>
                           <p className="text-sm text-muted-foreground mt-1">{item.category}</p>
                           {item.description && (
                             <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</p>

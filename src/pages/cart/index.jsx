@@ -106,7 +106,7 @@ const CartPage = () => {
                       {cartItems.map((item) => (
                         <div key={item.id} className="flex items-start space-x-4 p-4 bg-muted/30 rounded-lg">
                           <div className="flex-1">
-                            <h3 className="font-medium text-foreground">{item.name}</h3>
+                            <h3 className="font-medium text-foreground">{item.title}</h3>
                             <p className="text-sm text-muted-foreground">{item.category}</p>
                             <div className="flex items-center space-x-1 text-sm text-muted-foreground mt-1">
                               <Icon name="MapPin" size={14} />

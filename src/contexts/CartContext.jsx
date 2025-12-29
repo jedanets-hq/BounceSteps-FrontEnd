@@ -27,19 +27,28 @@ export const CartProvider = ({ children }) => {
       const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       
       if (!user.token) {
-        console.warn('User not logged in - cannot load cart from database');
+        console.warn('⚠️  [CartContext] User not logged in - cannot load cart from database');
         setCartItems([]);
         return;
       }
 
+      console.log('📥 [CartContext] Loading cart from database...');
       const response = await cartAPI.getCart();
+      
+      console.log('📦 [CartContext] Cart response received');
+      console.log('   Success:', response.success);
+      console.log('   Items count:', response.cartItems?.length || 0);
+      
       if (response.success && response.cartItems) {
+        console.log('✅ [CartContext] Cart loaded successfully');
+        console.log('   Items:', response.cartItems.map(i => ({ id: i.id, title: i.title, qty: i.quantity })));
         setCartItems(response.cartItems);
       } else {
+        console.warn('⚠️  [CartContext] No items in cart or error loading');
         setCartItems([]);
       }
     } catch (error) {
-      console.error('Error loading cart from database:', error);
+      console.error('❌ [CartContext] Error loading cart from database:', error);
       setCartItems([]);
     } finally {
       setLoading(false);
@@ -51,35 +60,51 @@ export const CartProvider = ({ children }) => {
       const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       
       if (!user.token) {
-        console.warn('User not logged in - cannot save to database');
-        throw new Error('User not logged in');
+        console.warn('❌ User not logged in - cannot save to database');
+        throw new Error('Please login to add items to cart');
       }
 
       // Extract service ID - handle both direct service objects and booking items
       const serviceId = service.id || service.serviceId;
       
       if (!serviceId) {
-        console.error('No service ID found in:', service);
-        throw new Error('Invalid service object');
+        console.error('❌ No service ID found in:', service);
+        throw new Error('Invalid service - missing ID');
       }
 
-      console.log('📤 Adding to cart - serviceId:', serviceId, 'token:', user.token ? 'present' : 'missing');
+      console.log('📤 [CartContext] Adding to cart');
+      console.log('   Service ID:', serviceId);
+      console.log('   Service Title:', service.title || service.name);
+      console.log('   User Token:', user.token ? '✅ Present' : '❌ Missing');
 
       // ALWAYS save to database - never use localStorage fallback
+      console.log('📡 Calling cartAPI.addToCart...');
       const response = await cartAPI.addToCart(serviceId, 1);
       
-      console.log('📥 Cart API response:', response);
+      console.log('📥 [CartContext] Cart API response received');
+      console.log('   Success:', response.success);
+      console.log('   Message:', response.message);
+      console.log('   Full response:', response);
       
       if (response.success) {
-        console.log('✅ Item added to cart successfully');
+        console.log('✅ [CartContext] Item added to cart successfully');
+        console.log('🔄 [CartContext] Reloading cart from database...');
         await loadCartFromDatabase();
+        console.log('✅ [CartContext] Cart reloaded. Current items:', cartItems.length);
+        return { success: true, message: 'Item added to cart' };
       } else {
-        console.error('Failed to add to cart:', response.message);
-        throw new Error(response.message || 'Failed to add to cart');
+        const errorMsg = response.message || 'Failed to add to cart';
+        console.error('❌ [CartContext] Failed to add to cart:', errorMsg);
+        throw new Error(errorMsg);
       }
     } catch (error) {
-      console.error('Error adding to cart:', error);
-      throw error;
+      console.error('❌ [CartContext] Error adding to cart:', error.message);
+      console.error('   Stack:', error.stack);
+      // Return error object instead of throwing to allow UI to handle it
+      return { 
+        success: false, 
+        message: error.message || 'Error adding to cart. Please try again.' 
+      };
     }
   };
 
@@ -102,7 +127,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const removeFromCart = async (serviceId) => {
+  const removeFromCart = async (cartItemId) => {
     try {
       const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       
@@ -111,23 +136,22 @@ export const CartProvider = ({ children }) => {
         return;
       }
 
-      // ALWAYS remove from database
-      const cartItem = cartItems.find(item => item.service_id === serviceId);
-      if (cartItem) {
-        const response = await cartAPI.removeFromCart(cartItem.id);
-        if (response.success) {
-          await loadCartFromDatabase();
-        }
+      // ALWAYS remove from database - cartItemId is the cart item's ID, not service ID
+      console.log('🗑️  [CartContext] Removing cart item:', cartItemId);
+      const response = await cartAPI.removeFromCart(cartItemId);
+      if (response.success) {
+        console.log('✅ [CartContext] Item removed, reloading cart...');
+        await loadCartFromDatabase();
       }
     } catch (error) {
       console.error('Error removing from cart:', error);
     }
   };
 
-  const updateQuantity = async (serviceId, newQuantity) => {
+  const updateQuantity = async (cartItemId, newQuantity) => {
     try {
       if (newQuantity <= 0) {
-        await removeFromCart(serviceId);
+        await removeFromCart(cartItemId);
         return;
       }
 
@@ -138,13 +162,12 @@ export const CartProvider = ({ children }) => {
         return;
       }
 
-      // ALWAYS update in database
-      const cartItem = cartItems.find(item => item.service_id === serviceId);
-      if (cartItem) {
-        const response = await cartAPI.updateCartItem(cartItem.id, newQuantity);
-        if (response.success) {
-          await loadCartFromDatabase();
-        }
+      // ALWAYS update in database - cartItemId is the cart item's ID
+      console.log('📝 [CartContext] Updating cart item:', cartItemId, 'to quantity:', newQuantity);
+      const response = await cartAPI.updateCartItem(cartItemId, newQuantity);
+      if (response.success) {
+        console.log('✅ [CartContext] Item updated, reloading cart...');
+        await loadCartFromDatabase();
       }
     } catch (error) {
       console.error('Error updating quantity:', error);
@@ -183,11 +206,11 @@ export const CartProvider = ({ children }) => {
   };
 
   const isInCart = (serviceId) => {
-    return cartItems.some(item => item.service_id === serviceId || item.id === serviceId);
+    return cartItems.some(item => item.service_id === serviceId);
   };
 
   const getItemQuantity = (serviceId) => {
-    const item = cartItems.find(item => item.service_id === serviceId || item.id === serviceId);
+    const item = cartItems.find(item => item.service_id === serviceId);
     return item ? item.quantity : 0;
   };
 

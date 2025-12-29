@@ -5,8 +5,15 @@
 // All data flows through the same local MongoDB instance
 // ═══════════════════════════════════════════════════════════════════════════
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://isafarinetworkglobal-2.onrender.com/api';
+// Use local backend in development, production backend in production
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.MODE === 'development' ? 'http://localhost:5000/api' : 'https://isafarinetworkglobal-2.onrender.com/api');
 const API_URL = API_BASE_URL;
+
+// Log API configuration for debugging
+if (import.meta.env.MODE === 'development') {
+  console.log('🔧 Development Mode - API Base URL:', API_BASE_URL);
+}
 
 // Helper function to get auth token
 const getAuthToken = () => {
@@ -234,33 +241,48 @@ export const bookingsAPI = {
 // Cart API functions
 export const cartAPI = {
   getCart: async () => {
-    return apiRequest('/cart');
+    console.log('📡 [API] GET /cart');
+    const result = await apiRequest('/cart');
+    console.log('📥 [API] GET /cart response:', result);
+    return result;
   },
 
   addToCart: async (serviceId, quantity = 1) => {
-    return apiRequest('/cart/add', {
+    console.log(`📡 [API] POST /cart/add - serviceId: ${serviceId}, quantity: ${quantity}`);
+    const result = await apiRequest('/cart/add', {
       method: 'POST',
       body: JSON.stringify({ serviceId, quantity }),
     });
+    console.log('📥 [API] POST /cart/add response:', result);
+    return result;
   },
 
   updateCartItem: async (cartItemId, quantity) => {
-    return apiRequest(`/cart/${cartItemId}`, {
+    console.log(`📡 [API] PUT /cart/${cartItemId} - quantity: ${quantity}`);
+    const result = await apiRequest(`/cart/${cartItemId}`, {
       method: 'PUT',
       body: JSON.stringify({ quantity }),
     });
+    console.log('📥 [API] PUT /cart response:', result);
+    return result;
   },
 
   removeFromCart: async (cartItemId) => {
-    return apiRequest(`/cart/${cartItemId}`, {
+    console.log(`📡 [API] DELETE /cart/${cartItemId}`);
+    const result = await apiRequest(`/cart/${cartItemId}`, {
       method: 'DELETE',
     });
+    console.log('📥 [API] DELETE /cart response:', result);
+    return result;
   },
 
   clearCart: async () => {
-    return apiRequest('/cart', {
+    console.log('📡 [API] DELETE /cart');
+    const result = await apiRequest('/cart', {
       method: 'DELETE',
     });
+    console.log('📥 [API] DELETE /cart response:', result);
+    return result;
   },
 };
 

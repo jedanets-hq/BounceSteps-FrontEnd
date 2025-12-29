@@ -473,18 +473,28 @@ const JourneyPlanner = () => {
   const nextStep = () => setStep(prev => Math.min(prev + 1, 5));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Get all selected services from all categories
     const allSelectedServices = Object.values(servicesByCategory).flat();
     
     // Add all selected services to cart
-    allSelectedServices.forEach(service => {
-      addToCart({
+    let allSuccess = true;
+    for (const service of allSelectedServices) {
+      const result = await addToCart({
         ...service,
         location: `${formData.sublocation}, ${formData.district}, ${formData.region}, ${formData.country}`,
         travelers: formData.travelers
       });
-    });
+      if (!result.success) {
+        allSuccess = false;
+        console.error(`Failed to add ${service.title}:`, result.message);
+      }
+    }
+    
+    if (!allSuccess) {
+      alert('❌ Some services failed to add to cart. Please try again.');
+      return;
+    }
     
     const journeyPlan = {
       id: Date.now(),

@@ -31,6 +31,7 @@ const providersRoutes = require('./routes/providers');
 const adminRoutes = require('./routes/admin-fixed');
 const cartRoutes = require('./routes/cart');
 const favoritesRoutes = require('./routes/favorites');
+const plansRoutes = require('./routes/plans');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -159,6 +160,7 @@ app.use('/api/providers', providersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/plans', plansRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

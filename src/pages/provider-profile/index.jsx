@@ -157,7 +157,7 @@ const ProviderProfile = () => {
     }
   };
 
-  const handleAddToCart = (service) => {
+  const handleAddToCart = async (service) => {
     const bookingItem = {
       id: service.id,
       name: service.title,
@@ -172,8 +172,12 @@ const ProviderProfile = () => {
       business_name: service.business_name || provider?.business_name
     };
     
-    addToCart(bookingItem);
-    alert(`${service.title} added to cart!`);
+    const result = await addToCart(bookingItem);
+    if (result.success) {
+      alert(`✅ ${service.title} added to cart!`);
+    } else {
+      alert(`❌ ${result.message}`);
+    }
   };
 
   const handleServiceToggle = (serviceId) => {
@@ -567,31 +571,7 @@ const ProviderProfile = () => {
                             variant="outline"
                             size="sm"
                             className="flex-1"
-                            onClick={async () => {
-                              const savedUser = localStorage.getItem('isafari_user');
-                              if (!savedUser) {
-                                navigate('/login');
-                                return;
-                              }
-                              
-                              try {
-                                const result = await bookingsAPI.create({
-                                  serviceId: service.id,
-                                  bookingDate: new Date().toISOString().split('T')[0],
-                                  participants: 1,
-                                  specialRequests: 'Added to cart'
-                                });
-                                
-                                if (result.success) {
-                                  alert('✅ Added to cart!');
-                                } else {
-                                  alert('❌ ' + (result.message || 'Failed to add to cart'));
-                                }
-                              } catch (error) {
-                                console.error('Error adding to cart:', error);
-                                alert('❌ Error adding to cart');
-                              }
-                            }}
+                            onClick={() => handleAddToCart(service)}
                           >
                             <Icon name="ShoppingBag" size={14} />
                             Add to Cart

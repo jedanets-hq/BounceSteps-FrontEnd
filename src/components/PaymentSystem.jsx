@@ -68,7 +68,7 @@ export const PaymentModal = ({ isOpen, onClose, cartItems, total, onPaymentSucce
               {cartItems.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
-                    {item.name} x{item.quantity}
+                    {item.title} x{item.quantity}
                   </span>
                   <span className="text-foreground">${(item.price * item.quantity).toFixed(2)}</span>
                 </div>

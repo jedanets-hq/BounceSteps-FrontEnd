@@ -40,7 +40,7 @@ const CartSidebar = ({ onCheckout }) => {
                   <div key={item.id} className="bg-card border border-border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <h4 className="font-medium text-foreground text-sm">{item.name}</h4>
+                        <h4 className="font-medium text-foreground text-sm">{item.title}</h4>
                         <p className="text-xs text-muted-foreground">{item.category}</p>
                         <p className="text-xs text-muted-foreground">
                           <Icon name="MapPin" size={12} className="inline mr-1" />

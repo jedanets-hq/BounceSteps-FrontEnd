@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Cart Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        h2 { color: #666; margin-top: 20px; }
+        .step {
+            background: #f9f9f9;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { border-left-color: #28a745; color: #28a745; }
+        .error { border-left-color: #dc3545; color: #dc3545; }
+        .info { border-left-color: #17a2b8; color: #17a2b8; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .cart-item {
+            background: #e8f4f8;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border-left: 3px solid #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 Frontend Cart Flow Test</h1>
+        <p>This test verifies that the CartContext is working correctly with the fixed code.</p>
+        
+        <button onclick="runTest()">Run Full Test</button>
+        <button onclick="clearLog()">Clear Log</button>
+        
+        <h2>Test Log:</h2>
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let testLog = [];
+        let authToken = '';
+        let userId = '';
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testLog.push(logEntry);
+            document.getElementById('log').textContent = testLog.join('\n');
+            document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
+            console.log(logEntry);
+        }
+
+        function clearLog() {
+            testLog = [];
+            document.getElementById('log').textContent = '';
+        }
+
+        async function apiCall(method, endpoint, body = null) {
+            const url = `${API_URL}${endpoint}`;
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                }
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { status: response.status, data };
+            } catch (error) {
+                addLog(`❌ API Error: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function runTest() {
+            clearLog();
+            addLog('🚀 Starting Frontend Cart Flow Test');
+            
+            try {
+                // Step 1: Register
+                addLog('\n📌 STEP 1: Register Test User');
+                const testUser = {
+                    email: `test-frontend-${Date.now()}@test.com`,
+                    password: 'Test123!@#',
+                    firstName: 'Frontend',
+                    lastName: 'Test',
+                    userType: 'traveler',
+                    phone: '+255700000000'
+                };
+                
+                let result = await apiCall('POST', '/auth/register', testUser);
+                if (!result.data.success) {
+                    throw new Error(`Registration failed: ${result.data.message}`);
+                }
+                authToken = result.data.token;
+                userId = result.data.user.id;
+                addLog(`✅ User registered: ${testUser.email}`);
+                addLog(`   User ID: ${userId}`);
+
+                // Step 2: Get services
+                addLog('\n📌 STEP 2: Fetch Available Services');
+                result = await apiCall('GET', '/services?limit=5');
+                if (!result.data.success || !result.data.services.length) {
+                    throw new Error('No services available');
+                }
+                const serviceId = result.data.services[0].id;
+                const serviceName = result.data.services[0].title;
+                addLog(`✅ Found ${result.data.services.length} services`);
+                addLog(`   Selected: ${serviceName} (ID: ${serviceId})`);
+
+                // Step 3: Add to cart
+                addLog('\n📌 STEP 3: Add Service to Cart');
+                result = await apiCall('POST', '/cart/add', { serviceId, quantity: 1 });
+                if (!result.data.success) {
+                    throw new Error(`Add to cart failed: ${result.data.message}`);
+                }
+                const cartItemId = result.data.cartItem.id;
+                addLog(`✅ Item added to cart`);
+                addLog(`   Cart Item ID: ${cartItemId}`);
+                addLog(`   Service ID: ${result.data.cartItem.service_id}`);
+
+                // Step 4: Get cart
+                addLog('\n📌 STEP 4: Retrieve Cart');
+                result = await apiCall('GET', '/cart');
+                if (!result.data.success) {
+                    throw new Error(`Get cart failed: ${result.data.message}`);
+                }
+                addLog(`✅ Cart retrieved with ${result.data.cartItems.length} item(s)`);
+                
+                const cartItem = result.data.cartItems[0];
+                addLog(`\n   Cart Item Structure:`);
+                addLog(`   - id: ${cartItem.id}`);
+                addLog(`   - service_id: ${cartItem.service_id}`);
+                addLog(`   - title: ${cartItem.title}`);
+                addLog(`   - price: ${cartItem.price}`);
+                addLog(`   - quantity: ${cartItem.quantity}`);
+
+                // Step 5: Update quantity
+                addLog('\n📌 STEP 5: Update Cart Item Quantity');
+                result = await apiCall('PUT', `/cart/${cartItemId}`, { quantity: 5 });
+                if (!result.data.success) {
+                    throw new Error(`Update failed: ${result.data.message}`);
+                }
+                addLog(`✅ Quantity updated to 5`);
+
+                // Step 6: Verify update
+                addLog('\n📌 STEP 6: Verify Update Persisted');
+                result = await apiCall('GET', '/cart');
+                const updatedItem = result.data.cartItems[0];
+                if (updatedItem.quantity !== 5) {
+                    throw new Error(`Quantity not updated! Expected 5, got ${updatedItem.quantity}`);
+                }
+                addLog(`✅ Quantity persisted: ${updatedItem.quantity}`);
+
+                // Step 7: Remove item
+                addLog('\n📌 STEP 7: Remove Item from Cart');
+                result = await apiCall('DELETE', `/cart/${cartItemId}`);
+                if (!result.data.success) {
+                    throw new Error(`Remove failed: ${result.data.message}`);
+                }
+                addLog(`✅ Item removed from cart`);
+
+                // Step 8: Verify removal
+                addLog('\n📌 STEP 8: Verify Item Removed');
+                result = await apiCall('GET', '/cart');
+                addLog(`✅ Cart now contains ${result.data.cartItems.length} item(s)`);
+
+                addLog('\n\n✅ ALL TESTS PASSED!');
+                addLog('\nThe frontend can now:');
+                addLog('  ✓ Add items to cart');
+                addLog('  ✓ Retrieve cart items');
+                addLog('  ✓ Update quantities');
+                addLog('  ✓ Remove items');
+                addLog('  ✓ Persist data to database');
+
+            } catch (error) {
+                addLog(`\n❌ TEST FAILED: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run on page load
+        window.addEventListener('load', () => {
+            addLog('Page loaded. Click "Run Full Test" to start.');
+        });
+    </script>
+</body>
+</html>

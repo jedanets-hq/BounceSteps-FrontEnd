@@ -1,7 +1,9 @@
 const { Pool } = require('pg');
 const dotenv = require('dotenv');
+const path = require('path');
 
-dotenv.config();
+// Load .env from backend directory
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // Debug: Log all database-related env vars
 console.log('🔍 Environment Check:');
@@ -27,6 +29,13 @@ if (process.env.DATABASE_URL) {
   // Local development: Use individual environment variables
   console.log('🔗 Using individual DB env vars for connection (DATABASE_URL not found)');
   console.log('  DB_HOST:', process.env.DB_HOST || 'localhost (default)');
+  console.log('  DB_PASSWORD:', process.env.DB_PASSWORD ? '✅ Present' : '❌ Missing');
+  
+  if (!process.env.DB_PASSWORD) {
+    console.error('❌ CRITICAL: DB_PASSWORD not set in environment variables!');
+    throw new Error('DB_PASSWORD environment variable is required');
+  }
+  
   poolConfig = {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,

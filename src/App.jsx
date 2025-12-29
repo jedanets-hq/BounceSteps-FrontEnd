@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
+import { TripsProvider } from './contexts/TripsContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import VersionChecker from './components/VersionChecker';
@@ -32,8 +33,9 @@ function App() {
           <AuthProvider>
             <CartProvider>
               <FavoritesProvider>
-                <VersionChecker />
-                <div className="App">
+                <TripsProvider>
+                  <VersionChecker />
+                  <div className="App">
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/login" element={<LoginPage />} />
@@ -56,7 +58,8 @@ function App() {
                   <Route path="/cart" element={<Navigate to="/traveler-dashboard" state={{ tab: 'cart' }} replace />} />
                   </Routes>
                   </div>
-                </FavoritesProvider>
+                </TripsProvider>
+              </FavoritesProvider>
             </CartProvider>
           </AuthProvider>
         </ThemeProvider>
