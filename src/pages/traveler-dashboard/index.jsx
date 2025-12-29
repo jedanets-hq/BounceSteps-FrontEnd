@@ -23,6 +23,8 @@ const TravelerDashboard = () => {
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [favoriteProviders, setFavoriteProviders] = useState([]);
+  const [tripPlans, setTripPlans] = useState([]);
+  const [loadingTripPlans, setLoadingTripPlans] = useState(false);
   
   // Profile editing states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -285,11 +287,147 @@ const TravelerDashboard = () => {
     }
   }, [user]);
 
-  // Load favorite providers from localStorage
+  // Load cart from database when cart tab is active
   useEffect(() => {
-    const savedFavorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
-    setFavoriteProviders(savedFavorites);
+    if (activeTab === 'cart') {
+      loadCartFromDatabase();
+    }
   }, [activeTab]);
+
+  // Load cart from database
+  const loadCartFromDatabase = async () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      const token = userData.token;
+
+      if (!token) {
+        console.warn('User not logged in - cannot load cart from database');
+        return;
+      }
+
+      console.log('📥 [DASHBOARD] Loading cart from database...');
+      const response = await fetch(`${API_URL}/cart`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      console.log('📦 [DASHBOARD] Cart response:', data);
+      
+      if (data.success && data.cartItems) {
+        console.log('✅ [DASHBOARD] Cart loaded:', data.cartItems.length, 'items');
+        setCartItems(data.cartItems);
+      } else {
+        console.warn('⚠️ [DASHBOARD] No cart items or error');
+        setCartItems([]);
+      }
+    } catch (error) {
+      console.error('❌ [DASHBOARD] Error loading cart:', error);
+      setCartItems([]);
+    }
+  };
+
+  // Load favorite providers from database
+  useEffect(() => {
+    if (activeTab === 'favorites') {
+      loadFavoritesFromDatabase();
+    }
+  }, [activeTab]);
+
+  // Load favorites from database
+  const loadFavoritesFromDatabase = async () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      const token = userData.token;
+
+      if (!token) {
+        console.warn('User not logged in - cannot load favorites from database');
+        return;
+      }
+
+      console.log('📥 [DASHBOARD] Loading favorites from database...');
+      const response = await fetch(`${API_URL}/favorites`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      console.log('📦 [DASHBOARD] Favorites response:', data);
+      
+      if (data.success && data.favorites) {
+        console.log('✅ [DASHBOARD] Favorites loaded:', data.favorites.length, 'items');
+        setFavoriteProviders(data.favorites);
+      } else {
+        console.warn('⚠️ [DASHBOARD] No favorites or error');
+        setFavoriteProviders([]);
+      }
+    } catch (error) {
+      console.error('❌ [DASHBOARD] Error loading favorites:', error);
+      setFavoriteProviders([]);
+    }
+  };
+
+  // Load favorite providers from localStorage (fallback)
+  useEffect(() => {
+    if (activeTab !== 'favorites') {
+      const savedFavorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
+      setFavoriteProviders(savedFavorites);
+    }
+  }, [activeTab]);
+
+  // Load trip plans from database when trips tab is active
+  useEffect(() => {
+    if (activeTab === 'trips') {
+      loadTripPlansFromDatabase();
+    }
+  }, [activeTab]);
+
+  // Load trip plans from database
+  const loadTripPlansFromDatabase = async () => {
+    try {
+      setLoadingTripPlans(true);
+      const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      const token = userData.token;
+
+      if (!token) {
+        console.warn('User not logged in - cannot load trip plans from database');
+        // Fallback to localStorage
+        const savedPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
+        setTripPlans(savedPlans);
+        setLoadingTripPlans(false);
+        return;
+      }
+
+      console.log('📥 [DASHBOARD] Loading trip plans from database...');
+      const response = await fetch(`${API_URL}/plans`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      console.log('📦 [DASHBOARD] Trip plans response:', data);
+      
+      if (data.success && data.plans) {
+        console.log('✅ [DASHBOARD] Trip plans loaded:', data.plans.length, 'items');
+        setTripPlans(data.plans);
+      } else {
+        console.warn('⚠️ [DASHBOARD] No trip plans or error');
+        // Fallback to localStorage
+        const savedPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
+        setTripPlans(savedPlans);
+      }
+    } catch (error) {
+      console.error('❌ [DASHBOARD] Error loading trip plans:', error);
+      // Fallback to localStorage
+      const savedPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
+      setTripPlans(savedPlans);
+    } finally {
+      setLoadingTripPlans(false);
+    }
+  };
 
   // Handler functions for new modals
   const handleViewTripDetails = (trip) => {
@@ -601,8 +739,8 @@ const TravelerDashboard = () => {
         );
 
       case 'trips':
-        // Get saved journey plans from localStorage
-        const savedJourneyPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
+        // Get saved journey plans from state (loaded from database)
+        const savedJourneyPlans = tripPlans.length > 0 ? tripPlans : JSON.parse(localStorage.getItem('journey_plans') || '[]');
         
         // Group bookings by trip/date to create trip cards
         const groupedTrips = myBookings.reduce((acc, booking) => {

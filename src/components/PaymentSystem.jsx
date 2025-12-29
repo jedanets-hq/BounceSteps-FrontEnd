@@ -25,27 +25,79 @@ export const PaymentModal = ({ isOpen, onClose, cartItems, total, onPaymentSucce
   const handlePayment = async () => {
     setIsProcessing(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Create booking record
-    const booking = {
-      id: Date.now(),
-      items: cartItems,
-      total: total,
-      paymentMethod: paymentMethod,
-      status: 'confirmed',
-      bookingDate: new Date().toISOString(),
-      bookingReference: `ISG-${Date.now().toString().slice(-6)}`
-    };
-    
-    // Save booking to localStorage
-    const existingBookings = JSON.parse(localStorage.getItem('isafari_bookings') || '[]');
-    localStorage.setItem('isafari_bookings', JSON.stringify([...existingBookings, booking]));
-    
-    setIsProcessing(false);
-    onPaymentSuccess(booking);
-    onClose();
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Get user token
+      const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      const token = userData.token;
+      
+      if (!token) {
+        alert('Please login to complete payment');
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Create bookings for each cart item
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 
+        (import.meta.env.MODE === 'development' ? 'http://localhost:5000/api' : 'https://isafarinetworkglobal-2.onrender.com/api');
+      
+      console.log('💳 [PAYMENT] Processing payment for', cartItems.length, 'items');
+      
+      // Create booking for each service in cart
+      for (const item of cartItems) {
+        console.log('📝 Creating booking for service:', item.id);
+        
+        const bookingResponse = await fetch(`${API_URL}/bookings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            serviceId: item.id || item.service_id,
+            bookingDate: new Date().toISOString().split('T')[0],
+            participants: item.journey_details?.travelers || 1,
+            specialRequests: `Payment Method: ${paymentMethod}`
+          })
+        });
+        
+        const bookingData = await bookingResponse.json();
+        console.log('📥 Booking response:', bookingData);
+        
+        if (!bookingData.success) {
+          console.error('❌ Failed to create booking:', bookingData.message);
+          alert('Error creating booking: ' + bookingData.message);
+          setIsProcessing(false);
+          return;
+        }
+      }
+      
+      // Create booking record for UI
+      const booking = {
+        id: Date.now(),
+        items: cartItems,
+        total: total,
+        paymentMethod: paymentMethod,
+        status: 'confirmed',
+        bookingDate: new Date().toISOString(),
+        bookingReference: `ISG-${Date.now().toString().slice(-6)}`
+      };
+      
+      // Save booking to localStorage as backup
+      const existingBookings = JSON.parse(localStorage.getItem('isafari_bookings') || '[]');
+      localStorage.setItem('isafari_bookings', JSON.stringify([...existingBookings, booking]));
+      
+      console.log('✅ Payment processed successfully');
+      setIsProcessing(false);
+      onPaymentSuccess(booking);
+      onClose();
+    } catch (error) {
+      console.error('❌ Payment error:', error);
+      alert('Payment failed: ' + error.message);
+      setIsProcessing(false);
+    }
   };
 
   if (!isOpen) return null;
