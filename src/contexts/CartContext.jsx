@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { cartAPI } from '../utils/api';
 
 const CartContext = createContext();
@@ -17,8 +17,15 @@ export const CartProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Refs to prevent infinite loops and duplicate calls
+  const isLoadingRef = useRef(false);
+  const lastLoadTimeRef = useRef(0);
+  const loadAttemptRef = useRef(0);
+  const MAX_LOAD_ATTEMPTS = 3;
+  const MIN_LOAD_INTERVAL = 5000; // 5 seconds between loads
 
-  // Load cart from database on mount AND when user changes
+  // Load cart from database on mount only ONCE
   useEffect(() => {
     const initializeCart = async () => {
       console.log('🔄 [CartContext] Initializing...');
@@ -28,20 +35,34 @@ export const CartProvider = ({ children }) => {
     };
     
     initializeCart();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run once on mount
 
-  // Also reload when user logs in/out
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
-    if (user.token) {
-      loadCartFromDatabase();
-    } else {
-      setCartItems([]);
+  const loadCartFromDatabase = useCallback(async (forceLoad = false) => {
+    // Prevent concurrent loads
+    if (isLoadingRef.current) {
+      console.log('⏳ [CartContext] Load already in progress, skipping...');
+      return;
     }
-  }, []);
+    
+    // Prevent too frequent loads (unless forced)
+    const now = Date.now();
+    if (!forceLoad && (now - lastLoadTimeRef.current) < MIN_LOAD_INTERVAL) {
+      console.log('⏳ [CartContext] Too soon since last load, skipping...');
+      return;
+    }
+    
+    // Prevent infinite retry loops
+    if (!forceLoad && loadAttemptRef.current >= MAX_LOAD_ATTEMPTS) {
+      console.log('⚠️  [CartContext] Max load attempts reached, stopping retries');
+      return;
+    }
 
-  const loadCartFromDatabase = async () => {
     try {
+      isLoadingRef.current = true;
+      loadAttemptRef.current += 1;
+      lastLoadTimeRef.current = now;
+      
       setLoading(true);
       setError(null); // Clear previous errors
       const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
@@ -49,12 +70,12 @@ export const CartProvider = ({ children }) => {
       if (!user.token) {
         console.warn('⚠️  [CartContext] User not logged in - cannot load cart from database');
         setCartItems([]);
+        loadAttemptRef.current = 0; // Reset on intentional skip
         return;
       }
 
-      console.log('📥 [CartContext] Loading cart from PRODUCTION database...');
+      console.log('📥 [CartContext] Loading cart from PRODUCTION database... (attempt', loadAttemptRef.current, ')');
       console.log('   Backend: https://isafarinetworkglobal-2.onrender.com/api');
-      console.log('   Database: Production PostgreSQL on Render');
       const response = await cartAPI.getCart();
       
       console.log('📦 [CartContext] Cart response received from PRODUCTION');
@@ -94,6 +115,7 @@ export const CartProvider = ({ children }) => {
         console.log('   Items:', response.data.map(i => ({ id: i.id, title: i.title, qty: i.quantity })));
         setCartItems(response.data);
         setError(null); // Clear any previous errors
+        loadAttemptRef.current = 0; // Reset on success
       } else {
         // Missing success field or data field
         const errorMsg = 'Response missing required fields';
@@ -102,7 +124,7 @@ export const CartProvider = ({ children }) => {
         setCartItems([]);
       }
     } catch (error) {
-      // Network or other error - don't crash the app
+      // Network or other error - don't crash the app, don't retry infinitely
       const errorMsg = error.message || 'Failed to load cart';
       console.error('❌ [CartContext] Error loading cart from PRODUCTION database:', error);
       console.error('   Error type:', error.name);
@@ -111,8 +133,9 @@ export const CartProvider = ({ children }) => {
       setCartItems([]); // Always set to empty array, never undefined
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
-  };
+  }, []);
 
   const addToCart = async (service) => {
     try {

@@ -1,19 +1,21 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// 🔧 DEVELOPMENT MODE - Connect to LOCAL backend
+// 🌐 PRODUCTION BACKEND - Connect to Render PostgreSQL
 // ═══════════════════════════════════════════════════════════════════════════
-// This ensures Service Provider → Traveller → Admin workflow works correctly
-// All data flows through the same local MongoDB instance
+// Frontend ALWAYS connects to production backend on Render
+// All data (cart, favorites, plans, bookings) saves to production PostgreSQL
+// Backend URL is set in .env file: VITE_API_BASE_URL
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Use local backend in development, production backend in production
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.MODE === 'development' ? 'http://localhost:5000/api' : 'https://isafarinetworkglobal-2.onrender.com/api');
+// ALWAYS use production backend from .env (no local fallback)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://isafarinetworkglobal-2.onrender.com/api';
 const API_URL = API_BASE_URL;
 
-// Log API configuration for debugging
-if (import.meta.env.MODE === 'development') {
-  console.log('🔧 Development Mode - API Base URL:', API_BASE_URL);
-}
+// Log API configuration for verification
+console.log('🌐 API Configuration:');
+console.log('   Backend URL:', API_BASE_URL);
+console.log('   Environment:', import.meta.env.MODE);
+console.log('   Database: Production PostgreSQL on Render');
+console.log('   ✅ All data saves to PRODUCTION database');
 
 // Helper function to get auth token
 const getAuthToken = () => {
@@ -38,6 +40,16 @@ const apiRequest = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(url, config);
+
+    // Handle 404 specifically - endpoint not found
+    if (response.status === 404) {
+      console.warn(`⚠️ [API] 404 Not Found: ${endpoint}`);
+      return {
+        success: false,
+        message: 'API endpoint not available. Please try again later.',
+        status: 404
+      };
+    }
 
     // Check if response has content
     const contentType = response.headers.get('content-type');
