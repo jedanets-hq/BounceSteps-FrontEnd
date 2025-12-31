@@ -14,16 +14,36 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load cart from database on mount
+  // Load cart from database on mount AND when user changes
   useEffect(() => {
-    loadCartFromDatabase();
+    const initializeCart = async () => {
+      console.log('🔄 [CartContext] Initializing...');
+      await loadCartFromDatabase();
+      setIsInitialized(true);
+      console.log('✅ [CartContext] Initialization complete');
+    };
+    
+    initializeCart();
+  }, []);
+
+  // Also reload when user logs in/out
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+    if (user.token) {
+      loadCartFromDatabase();
+    } else {
+      setCartItems([]);
+    }
   }, []);
 
   const loadCartFromDatabase = async () => {
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
       const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       
       if (!user.token) {
@@ -32,24 +52,63 @@ export const CartProvider = ({ children }) => {
         return;
       }
 
-      console.log('📥 [CartContext] Loading cart from database...');
+      console.log('📥 [CartContext] Loading cart from PRODUCTION database...');
+      console.log('   Backend: https://isafarinetworkglobal-2.onrender.com/api');
+      console.log('   Database: Production PostgreSQL on Render');
       const response = await cartAPI.getCart();
       
-      console.log('📦 [CartContext] Cart response received');
-      console.log('   Success:', response.success);
-      console.log('   Items count:', response.cartItems?.length || 0);
+      console.log('📦 [CartContext] Cart response received from PRODUCTION');
+      console.log('   Success:', response?.success);
+      console.log('   Items count:', response?.data?.length || 0);
       
-      if (response.success && response.cartItems) {
-        console.log('✅ [CartContext] Cart loaded successfully');
-        console.log('   Items:', response.cartItems.map(i => ({ id: i.id, title: i.title, qty: i.quantity })));
-        setCartItems(response.cartItems);
+      // Defensive checks for response
+      if (!response || typeof response !== 'object') {
+        const errorMsg = 'Invalid response format from server';
+        console.warn('⚠️  [CartContext]', errorMsg);
+        setError(errorMsg);
+        setCartItems([]);
+        return;
+      }
+
+      // Check for explicit failure
+      if (response.success === false) {
+        const errorMsg = response.message || response.error || 'Failed to load cart';
+        console.warn('⚠️  [CartContext] Cart API returned error:', errorMsg);
+        setError(errorMsg);
+        setCartItems([]);
+        return;
+      }
+
+      // Check for success with data
+      if (response.success === true && response.data) {
+        // Ensure data is an array
+        if (!Array.isArray(response.data)) {
+          const errorMsg = 'Cart data is not in expected format';
+          console.warn('⚠️  [CartContext]', errorMsg, '- got:', typeof response.data);
+          setError(errorMsg);
+          setCartItems([]);
+          return;
+        }
+
+        console.log('✅ [CartContext] Cart loaded successfully from PRODUCTION database');
+        console.log('   Items:', response.data.map(i => ({ id: i.id, title: i.title, qty: i.quantity })));
+        setCartItems(response.data);
+        setError(null); // Clear any previous errors
       } else {
-        console.warn('⚠️  [CartContext] No items in cart or error loading');
+        // Missing success field or data field
+        const errorMsg = 'Response missing required fields';
+        console.warn('⚠️  [CartContext]', errorMsg);
+        setError(errorMsg);
         setCartItems([]);
       }
     } catch (error) {
-      console.error('❌ [CartContext] Error loading cart from database:', error);
-      setCartItems([]);
+      // Network or other error - don't crash the app
+      const errorMsg = error.message || 'Failed to load cart';
+      console.error('❌ [CartContext] Error loading cart from PRODUCTION database:', error);
+      console.error('   Error type:', error.name);
+      console.error('   Error message:', error.message);
+      setError(errorMsg);
+      setCartItems([]); // Always set to empty array, never undefined
     } finally {
       setLoading(false);
     }
@@ -72,33 +131,37 @@ export const CartProvider = ({ children }) => {
         throw new Error('Invalid service - missing ID');
       }
 
-      console.log('📤 [CartContext] Adding to cart');
+      console.log('📤 [CartContext] Adding to PRODUCTION cart');
       console.log('   Service ID:', serviceId);
       console.log('   Service Title:', service.title || service.name);
-      console.log('   User Token:', user.token ? '✅ Present' : '❌ Missing');
+      console.log('   Backend: https://isafarinetworkglobal-2.onrender.com/api');
+      console.log('   Database: Production PostgreSQL on Render');
 
-      // ALWAYS save to database - never use localStorage fallback
-      console.log('📡 Calling cartAPI.addToCart...');
+      // ALWAYS save to PRODUCTION database - never use localStorage fallback
+      console.log('📡 Calling cartAPI.addToCart (PRODUCTION)...');
       const response = await cartAPI.addToCart(serviceId, 1);
       
-      console.log('📥 [CartContext] Cart API response received');
+      console.log('📥 [CartContext] Cart API response received from PRODUCTION');
       console.log('   Success:', response.success);
       console.log('   Message:', response.message);
-      console.log('   Full response:', response);
       
-      if (response.success) {
-        console.log('✅ [CartContext] Item added to cart successfully');
-        console.log('🔄 [CartContext] Reloading cart from database...');
+      if (response && response.success) {
+        console.log('✅ [CartContext] Item added to PRODUCTION cart successfully');
+        console.log('🔄 [CartContext] Reloading cart from PRODUCTION database...');
         await loadCartFromDatabase();
-        console.log('✅ [CartContext] Cart reloaded. Current items:', cartItems.length);
+        console.log('✅ [CartContext] Cart reloaded from PRODUCTION. Current items:', cartItems.length);
         return { success: true, message: 'Item added to cart' };
       } else {
-        const errorMsg = response.message || 'Failed to add to cart';
-        console.error('❌ [CartContext] Failed to add to cart:', errorMsg);
-        throw new Error(errorMsg);
+        const errorMsg = response?.message || 'Failed to add to cart';
+        console.error('❌ [CartContext] Failed to add to PRODUCTION cart:', errorMsg);
+        // Return error instead of throwing to prevent crashes
+        return { 
+          success: false, 
+          message: errorMsg 
+        };
       }
     } catch (error) {
-      console.error('❌ [CartContext] Error adding to cart:', error.message);
+      console.error('❌ [CartContext] Error adding to PRODUCTION cart:', error.message);
       console.error('   Stack:', error.stack);
       // Return error object instead of throwing to allow UI to handle it
       return { 
@@ -215,8 +278,10 @@ export const CartProvider = ({ children }) => {
   };
 
   const value = {
-    cartItems,
+    cartItems: cartItems || [], // Always provide array, never undefined
     loading,
+    error,
+    isInitialized,
     addToCart,
     addMultipleToCart,
     removeFromCart,

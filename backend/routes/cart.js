@@ -3,11 +3,47 @@ const passport = require('passport');
 const { pool } = require('../config/postgresql');
 
 const router = express.Router();
-const authenticateJWT = passport.authenticate('jwt', { session: false });
+
+// Custom JWT authentication with better error handling
+const authenticateJWT = (req, res, next) => {
+  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+    if (err) {
+      console.error('❌ [Cart Routes] JWT authentication error:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Authentication error'
+      });
+    }
+    
+    if (!user) {
+      console.warn('⚠️  [Cart Routes] Authentication failed:', info?.message || 'No user');
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required. Please login.'
+      });
+    }
+    
+    req.user = user;
+    next();
+  })(req, res, next);
+};
+
+// Log when cart routes are loaded
+console.log('📦 [Cart Routes] Module loaded successfully');
+
+// Test endpoint to verify routes are working (no auth required)
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Cart routes are working',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Get user's cart
 router.get('/', authenticateJWT, async (req, res) => {
   try {
+    console.log('📥 [Cart Routes] GET / - User:', req.user?.id);
     const userId = req.user.id;
 
     const query = `
@@ -36,8 +72,7 @@ router.get('/', authenticateJWT, async (req, res) => {
     
     res.json({
       success: true,
-      cartItems: result.rows,
-      total: result.rows.length
+      data: result.rows
     });
   } catch (error) {
     console.error('❌ Error fetching cart:', error);
@@ -51,6 +86,7 @@ router.get('/', authenticateJWT, async (req, res) => {
 // Add item to cart
 router.post('/add', authenticateJWT, async (req, res) => {
   try {
+    console.log('📥 [Cart Routes] POST /add - User:', req.user?.id, 'Body:', req.body);
     const userId = req.user.id;
     const { serviceId, quantity = 1 } = req.body;
 
@@ -87,8 +123,8 @@ router.post('/add', authenticateJWT, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Item added to cart',
-      cartItem: result.rows[0]
+      data: result.rows[0],
+      message: 'Item added to cart'
     });
   } catch (error) {
     console.error('❌ Error adding to cart:', error);
@@ -131,8 +167,8 @@ router.put('/:cartItemId', authenticateJWT, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Cart item updated',
-      cartItem: result.rows[0]
+      data: result.rows[0],
+      message: 'Cart item updated'
     });
   } catch (error) {
     console.error('❌ Error updating cart item:', error);
