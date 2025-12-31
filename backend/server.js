@@ -223,7 +223,12 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     message: 'iSafari Global API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    routes: {
+      cart: !!cartRoutes,
+      favorites: !!favoritesRoutes,
+      plans: !!plansRoutes
+    }
   });
 });
 
