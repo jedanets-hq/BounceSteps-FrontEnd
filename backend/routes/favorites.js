@@ -1,9 +1,17 @@
 const express = require('express');
-const passport = require('passport');
 const { pool } = require('../config/postgresql');
+const { authenticateJWT } = require('../middleware/jwtAuth');
 
 const router = express.Router();
-const authenticateJWT = passport.authenticate('jwt', { session: false });
+
+// Test endpoint - no auth required
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Favorites API is working',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Get user's favorite providers
 router.get('/', authenticateJWT, async (req, res) => {
