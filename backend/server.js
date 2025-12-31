@@ -31,9 +31,31 @@ const notificationRoutes = require('./routes/notifications');
 const travelerStoriesRoutes = require('./routes/travelerStories');
 const providersRoutes = require('./routes/providers');
 const adminRoutes = require('./routes/admin-fixed');
-const cartRoutes = require('./routes/cart');
-const favoritesRoutes = require('./routes/favorites');
-const plansRoutes = require('./routes/plans');
+// Load cart, favorites, and plans routes with error handling
+let cartRoutes, favoritesRoutes, plansRoutes;
+try {
+  cartRoutes = require('./routes/cart');
+  console.log('✅ Cart routes module loaded');
+} catch (error) {
+  console.error('❌ Failed to load cart routes:', error.message);
+  throw error;
+}
+
+try {
+  favoritesRoutes = require('./routes/favorites');
+  console.log('✅ Favorites routes module loaded');
+} catch (error) {
+  console.error('❌ Failed to load favorites routes:', error.message);
+  throw error;
+}
+
+try {
+  plansRoutes = require('./routes/plans');
+  console.log('✅ Plans routes module loaded');
+} catch (error) {
+  console.error('❌ Failed to load plans routes:', error.message);
+  throw error;
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -126,6 +148,20 @@ const passport = require('./config/passport');
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`📨 [${timestamp}] ${req.method} ${req.path}`);
+  
+  // Log cart-related requests with more detail
+  if (req.path.startsWith('/api/cart')) {
+    console.log(`   🛒 Cart request detected`);
+    console.log(`   Auth:`, req.headers.authorization ? 'Has Token' : 'No Token');
+  }
+  
+  next();
+});
+
 // Static files for uploads
 app.use('/uploads', express.static('uploads'));
 
@@ -160,9 +196,27 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/traveler-stories', travelerStoriesRoutes);
 app.use('/api/providers', providersRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Mount cart, favorites, and plans routes with verification
+console.log('🔧 Mounting cart, favorites, and plans routes...');
 app.use('/api/cart', cartRoutes);
+console.log('✅ Cart routes mounted at /api/cart');
+
 app.use('/api/favorites', favoritesRoutes);
+console.log('✅ Favorites routes mounted at /api/favorites');
+
 app.use('/api/plans', plansRoutes);
+console.log('✅ Plans routes mounted at /api/plans');
+
+// Verify cart routes loaded
+console.log('\n📋 Cart API Endpoints:');
+console.log('   - GET    /api/cart          (Get user cart)');
+console.log('   - GET    /api/cart/test     (Test endpoint)');
+console.log('   - POST   /api/cart/add      (Add to cart)');
+console.log('   - PUT    /api/cart/:id      (Update quantity)');
+console.log('   - DELETE /api/cart/:id      (Remove item)');
+console.log('   - DELETE /api/cart          (Clear cart)');
+console.log('');
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
