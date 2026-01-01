@@ -4,21 +4,89 @@ import Icon from "./AppIcon";
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { 
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      errorType: 'unknown'
+    };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true };
+    // Detect error type
+    let errorType = 'unknown';
+    if (error.message && error.message.includes('must be used within')) {
+      errorType = 'context';
+    } else if (error.message && error.message.includes('Network')) {
+      errorType = 'network';
+    } else if (error.message && error.message.includes('auth')) {
+      errorType = 'auth';
+    }
+    
+    return { 
+      hasError: true,
+      errorType
+    };
   }
 
   componentDidCatch(error, errorInfo) {
     error.__ErrorBoundary = true;
     window.__COMPONENT_ERROR__?.(error, errorInfo);
-    console.log("Error caught by ErrorBoundary:", error, errorInfo);
+    
+    // Enhanced logging with error details
+    console.group('🚨 Error caught by ErrorBoundary');
+    console.error('Error:', error);
+    console.error('Error Message:', error.message);
+    console.error('Error Stack:', error.stack);
+    console.error('Component Stack:', errorInfo.componentStack);
+    console.groupEnd();
+    
+    // Store error details in state
+    this.setState({
+      error,
+      errorInfo
+    });
   }
+
+  handleReload = () => {
+    // Clear any cached state
+    sessionStorage.clear();
+    window.location.reload();
+  };
+
+  handleGoHome = () => {
+    // Clear any cached state
+    sessionStorage.clear();
+    window.location.href = "/";
+  };
 
   render() {
     if (this.state?.hasError) {
+      const { errorType, error } = this.state;
+      
+      // Context-specific error message
+      let errorTitle = "Something went wrong";
+      let errorMessage = "We encountered an unexpected error while processing your request.";
+      let actionText = "Try Again";
+      let actionHandler = this.handleReload;
+      
+      if (errorType === 'context') {
+        errorTitle = "Application Error";
+        errorMessage = "There was a problem loading the application. This might be due to a configuration issue. Please try refreshing the page or logging in again.";
+        actionText = "Reload Page";
+        actionHandler = this.handleReload;
+      } else if (errorType === 'network') {
+        errorTitle = "Connection Error";
+        errorMessage = "Unable to connect to the server. Please check your internet connection and try again.";
+        actionText = "Retry";
+        actionHandler = this.handleReload;
+      } else if (errorType === 'auth') {
+        errorTitle = "Authentication Error";
+        errorMessage = "Your session may have expired. Please log in again.";
+        actionText = "Go to Login";
+        actionHandler = () => window.location.href = "/login";
+      }
+      
       return (
         <div className="min-h-screen flex items-center justify-center bg-neutral-50">
           <div className="text-center p-8 max-w-md">
@@ -31,22 +99,39 @@ class ErrorBoundary extends React.Component {
               </svg>
             </div>
             <div className="flex flex-col gap-1 text-center">
-              <h1 className="text-2xl font-medium text-neutral-800">Something went wrong</h1>
-              <p className="text-neutral-600 text-base w w-8/12 mx-auto">We encountered an unexpected error while processing your request.</p>
+              <h1 className="text-2xl font-medium text-neutral-800">{errorTitle}</h1>
+              <p className="text-neutral-600 text-base w-10/12 mx-auto">{errorMessage}</p>
             </div>
-            <div className="flex justify-center items-center mt-6">
+            <div className="flex justify-center items-center gap-3 mt-6">
               <button
-                onClick={() => {
-                  window.location.href = "/";
-                }}
+                onClick={this.handleGoHome}
+                className="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded flex items-center gap-2 transition-colors duration-200 shadow-sm"
+              >
+                <Icon name="Home" size={18} color="#fff" />
+                Home
+              </button>
+              <button
+                onClick={actionHandler}
                 className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded flex items-center gap-2 transition-colors duration-200 shadow-sm"
               >
-                <Icon name="ArrowLeft" size={18} color="#fff" />
-                Back
+                <Icon name="RefreshCw" size={18} color="#fff" />
+                {actionText}
               </button>
             </div>
-          </div >
-        </div >
+            {process.env.NODE_ENV === 'development' && error && (
+              <details className="mt-6 text-left bg-red-50 p-4 rounded border border-red-200">
+                <summary className="cursor-pointer text-red-800 font-medium">
+                  Error Details (Development Only)
+                </summary>
+                <pre className="mt-2 text-xs text-red-700 overflow-auto">
+                  {error.toString()}
+                  {'\n\n'}
+                  {error.stack}
+                </pre>
+              </details>
+            )}
+          </div>
+        </div>
       );
     }
 

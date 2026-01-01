@@ -16,6 +16,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState(null);
   
   // Get navigate hook safely
@@ -30,20 +31,26 @@ export const AuthProvider = ({ children }) => {
   // Check for existing user session on app load
   useEffect(() => {
     const initializeAuth = () => {
+      console.log('🔄 [AuthContext] Initializing...');
       // Check if user is already logged in
       const savedUser = localStorage.getItem('isafari_user');
       if (savedUser) {
         try {
           const userData = JSON.parse(savedUser);
           if (userData && userData.token) {
+            console.log('✅ [AuthContext] User session restored:', userData.email);
             setUser(userData);
           }
         } catch (error) {
-          console.error('Error parsing saved user:', error);
+          console.error('❌ [AuthContext] Error parsing saved user:', error);
           localStorage.removeItem('isafari_user');
         }
+      } else {
+        console.log('ℹ️ [AuthContext] No saved user session');
       }
       setIsLoading(false);
+      setIsInitialized(true);
+      console.log('✅ [AuthContext] Initialization complete');
     };
 
     initializeAuth();
@@ -274,6 +281,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     isLoading,
+    isInitialized,
     error,
     register,
     login,

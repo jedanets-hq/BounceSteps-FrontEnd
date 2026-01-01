@@ -41,6 +41,19 @@ const apiRequest = async (endpoint, options = {}) => {
   try {
     const response = await fetch(url, config);
 
+    // Handle 401 specifically - authentication failed (check BEFORE 404)
+    if (response.status === 401) {
+      console.warn(`⚠️ [API] 401 Unauthorized: ${endpoint}`);
+      // Try to parse error details from response
+      const data = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        message: data.message || 'Authentication required. Please login.',
+        status: 401,
+        code: data.code || 'AUTH_REQUIRED'
+      };
+    }
+
     // Handle 404 specifically - endpoint not found
     if (response.status === 404) {
       console.warn(`⚠️ [API] 404 Not Found: ${endpoint}`);
@@ -48,6 +61,17 @@ const apiRequest = async (endpoint, options = {}) => {
         success: false,
         message: 'API endpoint not available. Please try again later.',
         status: 404
+      };
+    }
+
+    // Handle 500 specifically - server error
+    if (response.status === 500) {
+      console.error(`❌ [API] 500 Server Error: ${endpoint}`);
+      const data = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        message: data.message || 'Server error. Please try again later.',
+        status: 500
       };
     }
 
@@ -79,7 +103,7 @@ const apiRequest = async (endpoint, options = {}) => {
     // If response is not ok but has success:false, return the data with error message
     if (!response.ok) {
       if (data.success === false && data.message) {
-        return data; // Return the error response from backend
+        return { ...data, status: response.status }; // Return the error response from backend with status
       }
       throw new Error(data.message || 'API request failed');
     }

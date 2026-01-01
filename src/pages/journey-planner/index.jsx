@@ -9,6 +9,7 @@ import VerifiedBadge from '../../components/ui/VerifiedBadge';
 import CartSidebar from '../../components/CartSidebar';
 import { PaymentModal, BookingConfirmation } from '../../components/PaymentSystem';
 import ServiceDetailsModal from '../../components/ServiceDetailsModal';
+import MultiTripModal from '../../components/MultiTripModal';
 import { locationData, serviceCategories } from '../../data/locations';
 import { API_URL } from '../../utils/api';
 
@@ -18,6 +19,13 @@ const JourneyPlanner = () => {
   const navigate = useNavigate();
   const [showPayment, setShowPayment] = useState(false);
   const [booking, setBooking] = useState(null);
+
+  // Multi-trip state
+  const [isMultiTripEnabled, setIsMultiTripEnabled] = useState(false);
+  const [showMultiTripModal, setShowMultiTripModal] = useState(false);
+  const [multiTripCount, setMultiTripCount] = useState(2);
+  const [multiTripDestinations, setMultiTripDestinations] = useState([]);
+  const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
 
   // Redirect to login if not authenticated or not a traveler
   useEffect(() => {
@@ -61,26 +69,98 @@ const JourneyPlanner = () => {
   // Track the last fetched category to prevent duplicate fetches
   const [lastFetchedCategory, setLastFetchedCategory] = useState('');
 
+  // Initialize multi-trip destinations when enabled
+  const handleEnableMultiTrip = (count) => {
+    setMultiTripCount(count);
+    setIsMultiTripEnabled(true);
+    // Initialize empty destinations
+    const emptyDestinations = Array.from({ length: count }, (_, i) => ({
+      index: i,
+      country: '',
+      region: '',
+      district: '',
+      sublocation: '',
+      availableRegions: [],
+      availableDistricts: [],
+      availableSublocations: [],
+      isStartingPoint: i === 0,
+      isEndingPoint: i === count - 1
+    }));
+    setMultiTripDestinations(emptyDestinations);
+    setCurrentDestinationIndex(0);
+  };
+
+  // Disable multi-trip and reset
+  const handleDisableMultiTrip = () => {
+    setIsMultiTripEnabled(false);
+    setMultiTripCount(2);
+    setMultiTripDestinations([]);
+    setCurrentDestinationIndex(0);
+  };
+
+  // Handle multi-trip destination change
+  const handleMultiTripDestinationChange = (destIndex, field, value) => {
+    setMultiTripDestinations(prev => {
+      const updated = [...prev];
+      updated[destIndex] = { ...updated[destIndex], [field]: value };
+      
+      // Handle cascading selections
+      if (field === 'country') {
+        const regions = locationData[value] ? Object.keys(locationData[value].regions) : [];
+        updated[destIndex].availableRegions = regions;
+        updated[destIndex].availableDistricts = [];
+        updated[destIndex].availableSublocations = [];
+        updated[destIndex].region = '';
+        updated[destIndex].district = '';
+        updated[destIndex].sublocation = '';
+      }
+      
+      if (field === 'region' && updated[destIndex].country) {
+        const districts = locationData[updated[destIndex].country]?.regions[value] ? 
+          Object.keys(locationData[updated[destIndex].country].regions[value].districts) : [];
+        updated[destIndex].availableDistricts = districts;
+        updated[destIndex].availableSublocations = [];
+        updated[destIndex].district = '';
+        updated[destIndex].sublocation = '';
+      }
+      
+      if (field === 'district' && updated[destIndex].country && updated[destIndex].region) {
+        const sublocations = locationData[updated[destIndex].country]?.regions[updated[destIndex].region]?.districts[value]?.sublocations || [];
+        updated[destIndex].availableSublocations = sublocations;
+        updated[destIndex].sublocation = '';
+      }
+      
+      return updated;
+    });
+  };
+
+  // Check if all multi-trip destinations are complete
+  const areAllDestinationsComplete = () => {
+    if (!isMultiTripEnabled) return true;
+    return multiTripDestinations.every(dest => dest.sublocation);
+  };
+
   // CRITICAL FIX: Re-fetch services when entering step 4 OR when category changes
   // This prevents showing services from wrong categories
   useEffect(() => {
     // Use formData.serviceCategory as the source of truth for category
     const currentCategory = formData.serviceCategory;
     
-    // FIXED: Fetch if we're on step 4 AND have a category AND have at least region selected
-    // Don't require sublocation - region is enough for filtering
-    const hasLocation = formData.region || formData.district || formData.sublocation;
+    // For multi-trip, check if any destination has location
+    // For single trip, check formData location
+    const hasLocation = isMultiTripEnabled 
+      ? multiTripDestinations.some(d => d.region)
+      : (formData.region || formData.district || formData.sublocation);
     
     if (step === 4 && currentCategory && hasLocation) {
       // Check if we need to fetch (category changed or first time on step 4)
       const needsFetch = currentCategory !== lastFetchedCategory;
       
       console.log(`🔄 [STEP 4] Check: currentCategory="${currentCategory}", lastFetched="${lastFetchedCategory}", needsFetch=${needsFetch}`);
-      console.log(`🔄 [STEP 4] Location: region="${formData.region}", district="${formData.district}", sublocation="${formData.sublocation}"`);
+      console.log(`🔄 [STEP 4] Multi-trip enabled: ${isMultiTripEnabled}`);
       
       if (needsFetch) {
         console.log(`🔄 [STEP 4 FETCH] Fetching services for category: ${currentCategory}`);
-        console.log(`📍 [STEP 4 FETCH] Location: region="${formData.region}", district="${formData.district}", sublocation="${formData.sublocation}"`);
         
         // Clear any stale services IMMEDIATELY
         setAvailableServices([]);
@@ -96,79 +176,55 @@ const JourneyPlanner = () => {
           try {
             setLoadingServices(true);
             
-            const params = new URLSearchParams();
-            params.append('category', currentCategory);
-            params.append('limit', '100');
-            
-            // CRITICAL: ALWAYS send region as primary filter
-            // Backend requires region for proper filtering
-            if (formData.region) {
-              params.append('region', formData.region);
-              console.log(`📍 [STEP 4 FETCH] Adding region filter: ${formData.region}`);
-            } else {
-              console.error(`❌ [STEP 4 FETCH] ERROR: No region provided! Cannot fetch services.`);
-              setLoadingServices(false);
-              return;
-            }
-            
-            // Optional: Add district and sublocation for more specific filtering
-            if (formData.district) {
-              params.append('district', formData.district);
-              console.log(`📍 [STEP 4 FETCH] Adding district filter: ${formData.district}`);
-            }
-            if (formData.sublocation) {
-              params.append('location', formData.sublocation);
-              console.log(`📍 [STEP 4 FETCH] Adding sublocation filter: ${formData.sublocation}`);
-            }
-
-            const apiUrl = `${API_URL}/services?${params.toString()}`;
-            console.log(`🌐 [STEP 4] API Request: ${apiUrl}`);
-            console.log(`🌐 [STEP 4] Timestamp: ${new Date().toISOString()}`);
-
-            const response = await fetch(apiUrl, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache'
-              }
-            });
-            
-            if (!response.ok) {
-              console.error(`❌ [STEP 4] API Error: ${response.status} ${response.statusText}`);
-              setAvailableServices([]);
-              setLoadingServices(false);
-              return;
-            }
-            
-            const data = await response.json();
-            console.log(`📦 [STEP 4] API Response:`, data);
-
-            // IMPORTANT: Verify we're still on the same category (user might have changed it)
-            if (formData.serviceCategory !== currentCategory) {
-              console.log(`⚠️ [STEP 4] Category changed during fetch, discarding results`);
-              return;
-            }
-
-            if (data.success && data.services) {
-              console.log(`✅ [STEP 4] Category: ${currentCategory}`);
-              console.log(`✅ [STEP 4] Services from API: ${data.services.length}`);
+            // For multi-trip, fetch from all destinations
+            if (isMultiTripEnabled && multiTripDestinations.length > 0) {
+              console.log(`🌐 [MULTI-TRIP] Fetching services from ${multiTripDestinations.length} destinations`);
               
-              // Log all services received for debugging
-              if (data.services.length > 0) {
-                console.log(`✅ [STEP 4] Services received:`, data.services.map(s => ({
-                  title: s.title,
-                  category: s.category,
-                  region: s.region,
-                  district: s.district,
-                  area: s.area
-                })));
-              } else {
-                console.warn(`⚠️ [STEP 4] No services found for category="${currentCategory}" in region="${formData.region}"`);
+              const allServices = [];
+              const seenServiceIds = new Set();
+              
+              for (const dest of multiTripDestinations) {
+                if (!dest.region) continue;
+                
+                const params = new URLSearchParams();
+                params.append('category', currentCategory);
+                params.append('limit', '100');
+                params.append('region', dest.region);
+                if (dest.district) params.append('district', dest.district);
+                if (dest.sublocation) params.append('location', dest.sublocation);
+                
+                console.log(`📍 [MULTI-TRIP] Fetching from: ${dest.sublocation || dest.district || dest.region}`);
+                
+                const response = await fetch(`${API_URL}/services?${params.toString()}`, {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate'
+                  }
+                });
+                
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.success && data.services) {
+                    // Add destination info to each service and avoid duplicates
+                    data.services.forEach(service => {
+                      if (!seenServiceIds.has(service.id)) {
+                        seenServiceIds.add(service.id);
+                        allServices.push({
+                          ...service,
+                          fromDestination: dest.sublocation || dest.district || dest.region,
+                          destinationIndex: dest.index
+                        });
+                      }
+                    });
+                  }
+                }
               }
-
-              // Transform services - trust backend filtering
-              const transformedServices = data.services.map(service => ({
+              
+              console.log(`✅ [MULTI-TRIP] Total unique services: ${allServices.length}`);
+              
+              // Transform services
+              const transformedServices = allServices.map(service => ({
                 id: service.id,
                 name: service.title,
                 title: service.title,
@@ -191,19 +247,90 @@ const JourneyPlanner = () => {
                 rating: service.provider_rating || 0,
                 provider_verified: service.provider_verified || false,
                 payment_methods: service.payment_methods || {},
-                contact_info: service.contact_info || {}
+                contact_info: service.contact_info || {},
+                fromDestination: service.fromDestination,
+                destinationIndex: service.destinationIndex
               }));
-
+              
               setAvailableServices(transformedServices);
-              console.log(`✅ [STEP 4] Set ${transformedServices.length} services to state`);
             } else {
-              console.log(`⚠️ [STEP 4] No services returned from API or API error`);
-              console.log(`⚠️ [STEP 4] Response data:`, data);
-              setAvailableServices([]);
+              // Single destination fetch (original logic)
+              const params = new URLSearchParams();
+              params.append('category', currentCategory);
+              params.append('limit', '100');
+              
+              if (formData.region) {
+                params.append('region', formData.region);
+              } else {
+                console.error(`❌ [STEP 4 FETCH] ERROR: No region provided!`);
+                setLoadingServices(false);
+                return;
+              }
+              
+              if (formData.district) params.append('district', formData.district);
+              if (formData.sublocation) params.append('location', formData.sublocation);
+
+              const apiUrl = `${API_URL}/services?${params.toString()}`;
+              console.log(`🌐 [STEP 4] API Request: ${apiUrl}`);
+
+              const response = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  'Pragma': 'no-cache'
+                }
+              });
+              
+              if (!response.ok) {
+                console.error(`❌ [STEP 4] API Error: ${response.status}`);
+                setAvailableServices([]);
+                setLoadingServices(false);
+                return;
+              }
+              
+              const data = await response.json();
+
+              if (formData.serviceCategory !== currentCategory) {
+                console.log(`⚠️ [STEP 4] Category changed during fetch, discarding results`);
+                return;
+              }
+
+              if (data.success && data.services) {
+                const transformedServices = data.services.map(service => ({
+                  id: service.id,
+                  name: service.title,
+                  title: service.title,
+                  description: service.description,
+                  price: parseFloat(service.price),
+                  category: service.category,
+                  location: service.location,
+                  region: service.region,
+                  district: service.district,
+                  area: service.area,
+                  images: service.images || [],
+                  provider_id: service.provider_id,
+                  provider: {
+                    id: service.provider_id,
+                    name: service.business_name,
+                    rating: service.provider_rating || 0,
+                    verified: service.provider_verified || false
+                  },
+                  businessName: service.business_name,
+                  rating: service.provider_rating || 0,
+                  provider_verified: service.provider_verified || false,
+                  payment_methods: service.payment_methods || {},
+                  contact_info: service.contact_info || {}
+                }));
+
+                setAvailableServices(transformedServices);
+                console.log(`✅ [STEP 4] Set ${transformedServices.length} services to state`);
+              } else {
+                setAvailableServices([]);
+              }
             }
           } catch (error) {
             console.error('❌ [STEP 4] Error fetching services:', error);
-            console.error('❌ [STEP 4] Error details:', error.message, error.stack);
             setAvailableServices([]);
           } finally {
             setLoadingServices(false);
@@ -224,7 +351,7 @@ const JourneyPlanner = () => {
         }
       }
     }
-  }, [step, formData.serviceCategory, formData.sublocation, formData.district, formData.region, lastFetchedCategory]);
+  }, [step, formData.serviceCategory, formData.sublocation, formData.district, formData.region, lastFetchedCategory, isMultiTripEnabled, multiTripDestinations]);
 
   // CRITICAL: Reset lastFetchedCategory when user goes back to step 3
   // This ensures fresh fetch when they return to step 4
@@ -559,86 +686,281 @@ const JourneyPlanner = () => {
           <div className="bg-card rounded-lg shadow-lg p-8">
             {step === 1 && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-semibold text-foreground mb-6">Select Your Destination</h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Country *
-                    </label>
-                    <select
-                      value={formData.country}
-                      onChange={(e) => handleInputChange('country', e.target.value)}
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    >
-                      <option value="">Select a country</option>
-                      {Object.keys(locationData).map(country => (
-                        <option key={country} value={country}>{country}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Region/State *
-                    </label>
-                    <select
-                      value={formData.region}
-                      onChange={(e) => handleInputChange('region', e.target.value)}
-                      disabled={!formData.country}
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted disabled:cursor-not-allowed"
-                    >
-                      <option value="">Select a region</option>
-                      {availableRegions.map(region => (
-                        <option key={region} value={region}>{region}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      District/City *
-                    </label>
-                    <select
-                      value={formData.district}
-                      onChange={(e) => handleInputChange('district', e.target.value)}
-                      disabled={!formData.region}
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted disabled:cursor-not-allowed"
-                    >
-                      <option value="">Select a district</option>
-                      {availableDistricts.map(district => (
-                        <option key={district} value={district}>{district}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Area/Neighborhood *
-                    </label>
-                    <select
-                      value={formData.sublocation}
-                      onChange={(e) => handleInputChange('sublocation', e.target.value)}
-                      disabled={!formData.district}
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted disabled:cursor-not-allowed"
-                    >
-                      <option value="">Select an area</option>
-                      {availableSublocations.map(sublocation => (
-                        <option key={sublocation} value={sublocation}>{sublocation}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-semibold text-foreground">Select Your Destination</h2>
+                  
+                  {/* Multiple Destinations Toggle */}
+                  <button
+                    onClick={() => {
+                      if (isMultiTripEnabled) {
+                        handleDisableMultiTrip();
+                      } else {
+                        setShowMultiTripModal(true);
+                      }
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
+                      isMultiTripEnabled 
+                        ? 'border-primary bg-primary/10 text-primary' 
+                        : 'border-border hover:border-primary/50 text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Icon name="Route" size={18} />
+                    <span className="text-sm font-medium">
+                      {isMultiTripEnabled ? `${multiTripCount} Destinations` : 'Multiple Destinations'}
+                    </span>
+                    {isMultiTripEnabled && (
+                      <Icon name="X" size={14} className="ml-1" />
+                    )}
+                  </button>
                 </div>
 
-                {formData.sublocation && (
-                  <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                    <div className="flex items-center space-x-2 text-primary">
-                      <Icon name="MapPin" size={20} />
-                      <span className="font-medium">Selected Location:</span>
+                {/* Multi-Trip Info Banner */}
+                {isMultiTripEnabled && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <Icon name="Route" size={20} className="text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">Multi-Destination Trip</p>
+                        <p className="text-sm text-muted-foreground">
+                          Planning {multiTripCount} destinations • Fill in all locations below
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        {multiTripDestinations.map((dest, i) => (
+                          <div 
+                            key={i}
+                            className={`w-3 h-3 rounded-full ${
+                              dest.sublocation ? 'bg-green-500' : 'bg-muted'
+                            }`}
+                            title={dest.sublocation || `Destination ${i + 1}`}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <p className="text-foreground mt-1">
-                      {formData.sublocation}, {formData.district}, {formData.region}, {formData.country}
-                    </p>
+                  </div>
+                )}
+
+                {/* Single Destination Form (default) */}
+                {!isMultiTripEnabled && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Country *
+                        </label>
+                        <select
+                          value={formData.country}
+                          onChange={(e) => handleInputChange('country', e.target.value)}
+                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        >
+                          <option value="">Select a country</option>
+                          {Object.keys(locationData).map(country => (
+                            <option key={country} value={country}>{country}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Region/State *
+                        </label>
+                        <select
+                          value={formData.region}
+                          onChange={(e) => handleInputChange('region', e.target.value)}
+                          disabled={!formData.country}
+                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted disabled:cursor-not-allowed"
+                        >
+                          <option value="">Select a region</option>
+                          {availableRegions.map(region => (
+                            <option key={region} value={region}>{region}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          District/City *
+                        </label>
+                        <select
+                          value={formData.district}
+                          onChange={(e) => handleInputChange('district', e.target.value)}
+                          disabled={!formData.region}
+                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted disabled:cursor-not-allowed"
+                        >
+                          <option value="">Select a district</option>
+                          {availableDistricts.map(district => (
+                            <option key={district} value={district}>{district}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          Area/Neighborhood *
+                        </label>
+                        <select
+                          value={formData.sublocation}
+                          onChange={(e) => handleInputChange('sublocation', e.target.value)}
+                          disabled={!formData.district}
+                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted disabled:cursor-not-allowed"
+                        >
+                          <option value="">Select an area</option>
+                          {availableSublocations.map(sublocation => (
+                            <option key={sublocation} value={sublocation}>{sublocation}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {formData.sublocation && (
+                      <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                        <div className="flex items-center space-x-2 text-primary">
+                          <Icon name="MapPin" size={20} />
+                          <span className="font-medium">Selected Location:</span>
+                        </div>
+                        <p className="text-foreground mt-1">
+                          {formData.sublocation}, {formData.district}, {formData.region}, {formData.country}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Multi-Trip Destination Forms */}
+                {isMultiTripEnabled && (
+                  <div className="space-y-6">
+                    {multiTripDestinations.map((dest, index) => (
+                      <div 
+                        key={index} 
+                        className={`p-5 rounded-lg border-2 transition-all ${
+                          dest.sublocation 
+                            ? 'border-green-500/50 bg-green-50/50 dark:bg-green-900/10' 
+                            : 'border-border'
+                        }`}
+                      >
+                        {/* Destination Header */}
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            index === 0 ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 
+                            index === multiTripCount - 1 ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : 
+                            'bg-primary/10 text-primary'
+                          }`}>
+                            <Icon 
+                              name={index === 0 ? 'Play' : index === multiTripCount - 1 ? 'Flag' : 'MapPin'} 
+                              size={16} 
+                            />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-foreground">
+                              {index === 0 ? 'Starting Point' : index === multiTripCount - 1 ? 'Final Destination' : `Stop ${index}`}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              Destination {index + 1} of {multiTripCount}
+                            </p>
+                          </div>
+                          {dest.sublocation && (
+                            <div className="ml-auto flex items-center gap-1 text-green-600">
+                              <Icon name="CheckCircle" size={16} />
+                              <span className="text-sm font-medium">Complete</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Location Selects */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">Country</label>
+                            <select
+                              value={dest.country}
+                              onChange={(e) => handleMultiTripDestinationChange(index, 'country', e.target.value)}
+                              className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                            >
+                              <option value="">Select country</option>
+                              {Object.keys(locationData).map(country => (
+                                <option key={country} value={country}>{country}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">Region</label>
+                            <select
+                              value={dest.region}
+                              onChange={(e) => handleMultiTripDestinationChange(index, 'region', e.target.value)}
+                              disabled={!dest.country}
+                              className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted disabled:cursor-not-allowed"
+                            >
+                              <option value="">Select region</option>
+                              {dest.availableRegions.map(region => (
+                                <option key={region} value={region}>{region}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">District</label>
+                            <select
+                              value={dest.district}
+                              onChange={(e) => handleMultiTripDestinationChange(index, 'district', e.target.value)}
+                              disabled={!dest.region}
+                              className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted disabled:cursor-not-allowed"
+                            >
+                              <option value="">Select district</option>
+                              {dest.availableDistricts.map(district => (
+                                <option key={district} value={district}>{district}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-medium text-muted-foreground mb-1">Area</label>
+                            <select
+                              value={dest.sublocation}
+                              onChange={(e) => handleMultiTripDestinationChange(index, 'sublocation', e.target.value)}
+                              disabled={!dest.district}
+                              className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted disabled:cursor-not-allowed"
+                            >
+                              <option value="">Select area</option>
+                              {dest.availableSublocations.map(sublocation => (
+                                <option key={sublocation} value={sublocation}>{sublocation}</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Selected Location Display */}
+                        {dest.sublocation && (
+                          <div className="mt-3 p-2 bg-white/50 dark:bg-black/20 rounded text-sm text-muted-foreground">
+                            <Icon name="MapPin" size={14} className="inline mr-1" />
+                            {dest.sublocation}, {dest.district}, {dest.region}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* Multi-Trip Summary */}
+                    {areAllDestinationsComplete() && (
+                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div className="flex items-center gap-2 text-green-700 dark:text-green-400 mb-2">
+                          <Icon name="CheckCircle" size={20} />
+                          <span className="font-semibold">All Destinations Set!</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {multiTripDestinations.map((dest, i) => (
+                            <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-black/20 rounded text-sm">
+                              <Icon 
+                                name={i === 0 ? 'Play' : i === multiTripCount - 1 ? 'Flag' : 'MapPin'} 
+                                size={12} 
+                                className={i === 0 ? 'text-green-500' : i === multiTripCount - 1 ? 'text-red-500' : 'text-primary'}
+                              />
+                              {dest.sublocation}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -721,10 +1043,16 @@ const JourneyPlanner = () => {
               <div className="space-y-6">
                 <h2 className="text-2xl font-semibold text-foreground mb-6">Select Service Category</h2>
                 
-                {!formData.sublocation ? (
+                {/* Check if location is set - for multi-trip check destinations, for single check formData */}
+                {(isMultiTripEnabled ? !areAllDestinationsComplete() : !formData.sublocation) ? (
                   <div className="text-center p-8 bg-muted/50 rounded-lg">
                     <Icon name="MapPin" size={48} className="text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Please complete location selection in Step 1 first</p>
+                    <p className="text-muted-foreground">
+                      {isMultiTripEnabled 
+                        ? 'Please complete all destination selections in Step 1 first'
+                        : 'Please complete location selection in Step 1 first'
+                      }
+                    </p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -781,11 +1109,21 @@ const JourneyPlanner = () => {
                 {/* Location and Category Info */}
                 <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg mb-4">
                   <div className="flex flex-wrap items-center gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Icon name="MapPin" size={16} className="text-primary" />
-                      <span className="font-medium">Location:</span>
-                      <span className="text-muted-foreground">{formData.sublocation}, {formData.district}, {formData.region}</span>
-                    </div>
+                    {isMultiTripEnabled ? (
+                      <div className="flex items-center gap-2">
+                        <Icon name="Route" size={16} className="text-primary" />
+                        <span className="font-medium">Multi-Trip:</span>
+                        <span className="text-muted-foreground">
+                          {multiTripDestinations.map(d => d.sublocation || d.district).filter(Boolean).join(' → ')}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Icon name="MapPin" size={16} className="text-primary" />
+                        <span className="font-medium">Location:</span>
+                        <span className="text-muted-foreground">{formData.sublocation}, {formData.district}, {formData.region}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Icon name="Tag" size={16} className="text-primary" />
                       <span className="font-medium">Category:</span>
@@ -793,6 +1131,42 @@ const JourneyPlanner = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Multi-Trip Destination Filter Tabs */}
+                {isMultiTripEnabled && availableServices.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <button
+                      onClick={() => setCurrentDestinationIndex(-1)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        currentDestinationIndex === -1
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      }`}
+                    >
+                      All Destinations ({availableServices.length})
+                    </button>
+                    {multiTripDestinations.map((dest, i) => {
+                      const count = availableServices.filter(s => s.destinationIndex === i).length;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => setCurrentDestinationIndex(i)}
+                          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1 ${
+                            currentDestinationIndex === i
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                          }`}
+                        >
+                          <Icon 
+                            name={i === 0 ? 'Play' : i === multiTripCount - 1 ? 'Flag' : 'MapPin'} 
+                            size={12} 
+                          />
+                          {dest.sublocation || dest.district || `Stop ${i + 1}`} ({count})
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 
                 {/* Search Bar */}
                 <div className="relative">
@@ -915,22 +1289,30 @@ const JourneyPlanner = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {availableServices
-                        // Trust backend filtering - just apply search filter
-                        .filter(service => 
-                          !serviceSearchTerm || 
-                          service.title?.toLowerCase().includes(serviceSearchTerm.toLowerCase()) ||
-                          service.businessName?.toLowerCase().includes(serviceSearchTerm.toLowerCase()) ||
-                          service.description?.toLowerCase().includes(serviceSearchTerm.toLowerCase())
-                        )
+                        // Apply search filter and multi-trip destination filter
+                        .filter(service => {
+                          // Search filter
+                          const matchesSearch = !serviceSearchTerm || 
+                            service.title?.toLowerCase().includes(serviceSearchTerm.toLowerCase()) ||
+                            service.businessName?.toLowerCase().includes(serviceSearchTerm.toLowerCase()) ||
+                            service.description?.toLowerCase().includes(serviceSearchTerm.toLowerCase());
+                          
+                          // Multi-trip destination filter
+                          const matchesDestination = !isMultiTripEnabled || 
+                            currentDestinationIndex === -1 || 
+                            service.destinationIndex === currentDestinationIndex;
+                          
+                          return matchesSearch && matchesDestination;
+                        })
                         .map((service) => {
-                        const isSelected = servicesByCategory[formData.serviceCategory]?.some(s => s.id === service.id) || false;
-                        return (
-                          <div
-                            key={service.id}
-                            className={`p-3 sm:p-5 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                              isSelected
-                                ? 'border-primary bg-primary/5 shadow-sm'
-                                : 'border-border hover:border-primary/50'
+                          const isSelected = servicesByCategory[formData.serviceCategory]?.some(s => s.id === service.id) || false;
+                          return (
+                            <div
+                              key={service.id}
+                              className={`p-3 sm:p-5 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                                isSelected
+                                  ? 'border-primary bg-primary/5 shadow-sm'
+                                  : 'border-border hover:border-primary/50'
                             }`}
                             onClick={() => handleServiceToggle(service.id)}
                           >
@@ -1172,7 +1554,7 @@ const JourneyPlanner = () => {
                           Total: TZS {(Object.values(servicesByCategory).flat().reduce((total, service) => total + service.price, 0) * formData.travelers).toLocaleString()}
                           {formData.travelers > 1 && (
                             <span className="text-sm font-normal text-muted-foreground ml-2">
-                              (TZS {Object.values(servicesByCategory).flat().reduce((total, service) => total + service.price, 0).toLocaleString()} × {formData.travelers} travelers)
+                              {'('}TZS {Object.values(servicesByCategory).flat().reduce((total, service) => total + service.price, 0).toLocaleString()} × {formData.travelers} travelers{')'}
                             </span>
                           )}
                         </div>
@@ -1188,14 +1570,38 @@ const JourneyPlanner = () => {
                 <h2 className="text-2xl font-semibold text-foreground mb-6">Your Trip Summary</h2>
                 
                 <div className="space-y-4">
+                  {/* Destination(s) */}
                   <div className="p-4 bg-muted rounded-lg">
-                    <h3 className="font-semibold text-foreground mb-2">Destination</h3>
-                    <p className="text-muted-foreground">
-                      {formData.sublocation ? 
-                        `${formData.sublocation}, ${formData.district}, ${formData.region}, ${formData.country}` : 
-                        'Not specified'
-                      }
-                    </p>
+                    <h3 className="font-semibold text-foreground mb-2">
+                      {isMultiTripEnabled ? 'Destinations' : 'Destination'}
+                    </h3>
+                    {isMultiTripEnabled ? (
+                      <div className="space-y-2">
+                        {multiTripDestinations.map((dest, i) => (
+                          <div key={i} className="flex items-center gap-2 text-muted-foreground">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                              i === 0 ? 'bg-green-100 text-green-600' : 
+                              i === multiTripCount - 1 ? 'bg-red-100 text-red-600' : 
+                              'bg-primary/10 text-primary'
+                            }`}>
+                              {i + 1}
+                            </div>
+                            <span className={i === 0 ? 'text-green-600 font-medium' : i === multiTripCount - 1 ? 'text-red-600 font-medium' : ''}>
+                              {dest.sublocation}, {dest.district}, {dest.region}
+                            </span>
+                            {i === 0 && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Start</span>}
+                            {i === multiTripCount - 1 && <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">End</span>}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        {formData.sublocation ? 
+                          `${formData.sublocation}, ${formData.district}, ${formData.region}, ${formData.country}` : 
+                          'Not specified'
+                        }
+                      </p>
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1226,7 +1632,14 @@ const JourneyPlanner = () => {
                               <div className="space-y-1 ml-4">
                                 {services.map(service => (
                                   <div key={service.id} className="flex justify-between items-center">
-                                    <span className="text-muted-foreground text-sm">{service.name}</span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-muted-foreground text-sm">{service.name}</span>
+                                      {service.fromDestination && (
+                                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                          {service.fromDestination}
+                                        </span>
+                                      )}
+                                    </div>
                                     <span className="text-foreground font-medium">TZS {service.price.toLocaleString()}</span>
                                   </div>
                                 ))}
@@ -1252,7 +1665,7 @@ const JourneyPlanner = () => {
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => {
+                    onClick={async () => {
                       // Save plan to My Trips only (no cart)
                       const allSelectedServices = Object.values(servicesByCategory).flat();
                       
@@ -1263,6 +1676,20 @@ const JourneyPlanner = () => {
                       
                       const journeyPlan = {
                         id: Date.now(),
+                        isMultiTrip: isMultiTripEnabled,
+                        destinations: isMultiTripEnabled ? multiTripDestinations.map(d => ({
+                          country: d.country,
+                          region: d.region,
+                          district: d.district,
+                          sublocation: d.sublocation,
+                          isStartingPoint: d.isStartingPoint,
+                          isEndingPoint: d.isEndingPoint
+                        })) : [{
+                          country: formData.country,
+                          region: formData.region,
+                          district: formData.district,
+                          sublocation: formData.sublocation
+                        }],
                         country: formData.country,
                         region: formData.region,
                         district: formData.district,
@@ -1275,6 +1702,39 @@ const JourneyPlanner = () => {
                         status: 'saved',
                         createdAt: new Date().toISOString()
                       };
+
+                      // Save to database if multi-trip
+                      if (isMultiTripEnabled && user) {
+                        try {
+                          const token = JSON.parse(localStorage.getItem('isafari_user'))?.token;
+                          const response = await fetch(`${API_URL}/multi-trip/create`, {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                              journeyName: `Multi-Trip ${new Date().toLocaleDateString()}`,
+                              destinations: multiTripDestinations.map(d => ({
+                                country: d.country,
+                                region: d.region,
+                                district: d.district,
+                                sublocation: d.sublocation
+                              })),
+                              startDate: formData.startDate,
+                              endDate: formData.endDate,
+                              travelers: formData.travelers,
+                              budget: formData.budget
+                            })
+                          });
+                          const data = await response.json();
+                          if (data.success) {
+                            console.log('✅ Multi-trip saved to database:', data.journey);
+                          }
+                        } catch (error) {
+                          console.error('Error saving multi-trip to database:', error);
+                        }
+                      }
                       
                       const existingPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
                       localStorage.setItem('journey_plans', JSON.stringify([...existingPlans, journeyPlan]));
@@ -1394,6 +1854,13 @@ const JourneyPlanner = () => {
         onClose={() => setShowServiceDetailsModal(false)}
         service={selectedServiceForDetails}
         onAddToPlan={handleAddToPlanFromModal}
+      />
+
+      {/* Multi-Trip Modal */}
+      <MultiTripModal
+        isOpen={showMultiTripModal}
+        onClose={() => setShowMultiTripModal(false)}
+        onConfirm={handleEnableMultiTrip}
       />
     </div>
   );

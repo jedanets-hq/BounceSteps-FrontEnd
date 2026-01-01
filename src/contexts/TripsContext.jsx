@@ -14,10 +14,18 @@ export const useTrips = () => {
 export const TripsProvider = ({ children }) => {
   const [tripPlans, setTripPlans] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Load trip plans from database on mount
   useEffect(() => {
-    loadTripsFromDatabase();
+    const initializeTrips = async () => {
+      console.log('🔄 [TripsContext] Initializing...');
+      await loadTripsFromDatabase();
+      setIsInitialized(true);
+      console.log('✅ [TripsContext] Initialization complete');
+    };
+    
+    initializeTrips();
   }, []);
 
   const loadTripsFromDatabase = async () => {
@@ -174,6 +182,7 @@ export const TripsProvider = ({ children }) => {
   const value = {
     tripPlans,
     loading,
+    isInitialized,
     addToPlan,
     updatePlan,
     removeFromPlan,

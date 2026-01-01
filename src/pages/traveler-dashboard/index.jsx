@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { useFavorites } from '../../contexts/FavoritesContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
@@ -47,7 +48,8 @@ const TravelerDashboard = () => {
   const fileInputRef = useRef(null);
   
   const { user, logout, isLoading, updateProfile } = useAuth();
-  const { cartItems: contextCartItems, removeFromCart, getCartTotal, clearCart, addToCart } = useCart();
+  const { cartItems: contextCartItems, removeFromCart, getCartTotal, clearCart, addToCart, loadCartFromDatabase } = useCart();
+  const { favorites: contextFavorites } = useFavorites();
   const navigate = useNavigate();
 
   // Redirect to login if not authenticated
@@ -253,10 +255,30 @@ const TravelerDashboard = () => {
     setIsEditingProfile(false);
   };
 
-  // Sync cart items from CartContext
+  // Sync cart items from CartContext - THIS IS THE SINGLE SOURCE OF TRUTH
   useEffect(() => {
+    console.log('🔄 [DASHBOARD] Syncing cart from CartContext:', contextCartItems.length, 'items');
     setCartItems(contextCartItems);
-  }, [contextCartItems, activeTab]);
+  }, [contextCartItems]);
+
+  // Load cart from database when dashboard loads
+  useEffect(() => {
+    if (user?.id && loadCartFromDatabase) {
+      console.log('📥 [DASHBOARD] Dashboard loaded - loading cart via CartContext');
+      loadCartFromDatabase().then(() => {
+        console.log('✅ [DASHBOARD] Cart loaded from database');
+      });
+    }
+  }, [user?.id, loadCartFromDatabase]);
+
+  // Load cart from CartContext when cart tab becomes active
+  useEffect(() => {
+    if (activeTab === 'cart' && user?.id && loadCartFromDatabase) {
+      console.log('📥 [DASHBOARD] Cart tab active - reloading from database via CartContext');
+      // Force reload from database through CartContext
+      loadCartFromDatabase();
+    }
+  }, [activeTab, user?.id, loadCartFromDatabase]);
 
   // Update current time
   useEffect(() => {
@@ -289,100 +311,29 @@ const TravelerDashboard = () => {
 
   // Load cart from database when cart tab is active
   useEffect(() => {
-    if (activeTab === 'cart') {
+    if (activeTab === 'cart' && loadCartFromDatabase) {
       loadCartFromDatabase();
     }
-  }, [activeTab]);
+  }, [activeTab, loadCartFromDatabase]);
 
-  // Load cart from database
-  const loadCartFromDatabase = async () => {
-    try {
-      const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
-      const token = userData.token;
+  // Load cart from database when dashboard loads - USE CARTCONTEXT
+  // (Removed duplicate - already handled above)
 
-      if (!token) {
-        console.warn('User not logged in - cannot load cart from database');
-        return;
-      }
-
-      console.log('📥 [DASHBOARD] Loading cart from database...');
-      const response = await fetch(`${API_URL}/cart`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      console.log('📦 [DASHBOARD] Cart response:', data);
-      
-      if (data.success && data.cartItems) {
-        console.log('✅ [DASHBOARD] Cart loaded:', data.cartItems.length, 'items');
-        setCartItems(data.cartItems);
-      } else {
-        console.warn('⚠️ [DASHBOARD] No cart items or error');
-        setCartItems([]);
-      }
-    } catch (error) {
-      console.error('❌ [DASHBOARD] Error loading cart:', error);
-      setCartItems([]);
-    }
-  };
-
-  // Load favorite providers from database
+  // Sync favorites from FavoritesContext - NO NEED TO CALL loadFavoritesFromDatabase
+  // The context already loads favorites on mount, just sync the local state
   useEffect(() => {
-    if (activeTab === 'favorites') {
-      loadFavoritesFromDatabase();
+    if (contextFavorites) {
+      console.log('🔄 [DASHBOARD] Syncing favorites from context:', contextFavorites.length, 'items');
+      setFavoriteProviders(contextFavorites);
     }
-  }, [activeTab]);
+  }, [contextFavorites]);
 
-  // Load favorites from database
-  const loadFavoritesFromDatabase = async () => {
-    try {
-      const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
-      const token = userData.token;
-
-      if (!token) {
-        console.warn('User not logged in - cannot load favorites from database');
-        return;
-      }
-
-      console.log('📥 [DASHBOARD] Loading favorites from database...');
-      const response = await fetch(`${API_URL}/favorites`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      console.log('📦 [DASHBOARD] Favorites response:', data);
-      
-      if (data.success && data.favorites) {
-        console.log('✅ [DASHBOARD] Favorites loaded:', data.favorites.length, 'items');
-        setFavoriteProviders(data.favorites);
-      } else {
-        console.warn('⚠️ [DASHBOARD] No favorites or error');
-        setFavoriteProviders([]);
-      }
-    } catch (error) {
-      console.error('❌ [DASHBOARD] Error loading favorites:', error);
-      setFavoriteProviders([]);
-    }
-  };
-
-  // Load favorite providers from localStorage (fallback)
+  // Load trip plans from database when dashboard loads - USE PLANSAPI
   useEffect(() => {
-    if (activeTab !== 'favorites') {
-      const savedFavorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
-      setFavoriteProviders(savedFavorites);
-    }
-  }, [activeTab]);
-
-  // Load trip plans from database when trips tab is active
-  useEffect(() => {
-    if (activeTab === 'trips') {
+    if (user?.id) {
       loadTripPlansFromDatabase();
     }
-  }, [activeTab]);
+  }, [user?.id]);
 
   // Load trip plans from database
   const loadTripPlansFromDatabase = async () => {
@@ -392,7 +343,7 @@ const TravelerDashboard = () => {
       const token = userData.token;
 
       if (!token) {
-        console.warn('User not logged in - cannot load trip plans from database');
+        console.warn('[DASHBOARD] User not logged in - cannot load trip plans from database');
         // Fallback to localStorage
         const savedPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
         setTripPlans(savedPlans);
