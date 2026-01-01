@@ -2,14 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const passport = require('passport');
 const { pool } = require('../config/postgresql');
-const { Booking, Service, ServiceProvider, User } = require('../models');
-const { 
-  serializeDocument,
-  serializeDocuments,
-  isValidObjectId,
-  toObjectId,
-  getPagination
-} = require('../utils/pg-helpers');
+const { Booking, Service, ServiceProvider } = require('../models');
 
 const router = express.Router();
 const authenticateJWT = passport.authenticate('jwt', { session: false });
@@ -176,21 +169,74 @@ router.get('/', authenticateJWT, async (req, res) => {
 // Get booking by ID
 router.get('/:id', authenticateJWT, async (req, res) => {
   try {
-    if (!isValidObjectId(req.params.id)) {
+    const bookingId = parseInt(req.params.id);
+    if (isNaN(bookingId)) {
       return res.status(400).json({ success: false, message: 'Invalid booking ID' });
     }
 
-    const booking = await Booking.findById(req.params.id)
-      .populate('service_id')
-      .populate('provider_id')
-      .populate('traveler_id')
-      .lean();
+    const query = `
+      SELECT 
+        b.*,
+        s.title as service_title,
+        s.category,
+        s.price,
+        s.location as service_location,
+        s.images,
+        sp.business_name,
+        sp.location as provider_location,
+        u.first_name,
+        u.last_name,
+        u.email,
+        u.phone
+      FROM bookings b
+      LEFT JOIN services s ON b.service_id = s.id
+      LEFT JOIN service_providers sp ON b.provider_id = sp.id
+      LEFT JOIN users u ON b.traveler_id = u.id
+      WHERE b.id = $1
+    `;
 
-    if (!booking) {
+    const result = await pool.query(query, [bookingId]);
+
+    if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Booking not found' });
     }
 
-    res.json({ success: true, booking: serializeDocument(booking) });
+    const b = result.rows[0];
+    const booking = {
+      id: b.id,
+      traveler_id: b.traveler_id,
+      service_id: b.service_id,
+      provider_id: b.provider_id,
+      booking_date: b.booking_date,
+      start_time: b.start_time,
+      end_time: b.end_time,
+      participants: b.participants,
+      total_amount: b.total_amount,
+      status: b.status,
+      payment_status: b.payment_status,
+      special_requests: b.special_requests,
+      created_at: b.created_at,
+      updated_at: b.updated_at,
+      service: {
+        title: b.service_title,
+        category: b.category,
+        price: b.price,
+        location: b.service_location,
+        images: b.images
+      },
+      provider: {
+        business_name: b.business_name,
+        location: b.provider_location
+      },
+      traveler: {
+        first_name: b.first_name,
+        last_name: b.last_name,
+        email: b.email,
+        phone: b.phone
+      }
+    };
+
+    res.json({ success: true, booking });
   } catch (error) {
     console.error('❌ GET BOOKING Error:', error);
     res.status(500).json({ success: false, message: 'Error fetching booking' });
@@ -267,26 +313,38 @@ router.patch('/:id/status', authenticateJWT, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
-    if (!isValidObjectId(req.params.id)) {
+    const bookingId = parseInt(req.params.id);
+    if (isNaN(bookingId)) {
       return res.status(400).json({ success: false, message: 'Invalid booking ID' });
     }
 
-    const provider = await ServiceProvider.findOne({ user_id: parseInt(req.user.id) });
-    if (!provider) {
+    // Get provider
+    const providerResult = await pool.query(
+      'SELECT id FROM service_providers WHERE user_id = $1',
+      [parseInt(req.user.id)]
+    );
+    
+    if (providerResult.rows.length === 0) {
       return res.status(403).json({ success: false, message: 'Only providers can update booking status' });
     }
 
-    const booking = await Booking.findOne({ _id: parseInt(req.params.id), provider_id: provider.id });
-    if (!booking) {
+    const providerId = providerResult.rows[0].id;
+
+    // Update booking
+    const updateResult = await pool.query(
+      `UPDATE bookings SET status = $1, updated_at = NOW() 
+       WHERE id = $2 AND provider_id = $3 
+       RETURNING *`,
+      [status, bookingId, providerId]
+    );
+
+    if (updateResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Booking not found' });
     }
 
-    booking.status = status;
-    await booking.save();
+    console.log('✅ Booking status updated:', bookingId, '→', status);
 
-    console.log('✅ Booking status updated:', booking.id, '→', status);
-
-    res.json({ success: true, message: 'Booking status updated', booking: serializeDocument(booking) });
+    res.json({ success: true, message: 'Booking status updated', booking: updateResult.rows[0] });
   } catch (error) {
     console.error('❌ UPDATE BOOKING STATUS Error:', error);
     res.status(500).json({ success: false, message: 'Error updating booking status' });
@@ -296,23 +354,32 @@ router.patch('/:id/status', authenticateJWT, async (req, res) => {
 // Cancel booking (traveler only)
 router.delete('/:id', authenticateJWT, async (req, res) => {
   try {
-    if (!isValidObjectId(req.params.id)) {
+    const bookingId = parseInt(req.params.id);
+    if (isNaN(bookingId)) {
       return res.status(400).json({ success: false, message: 'Invalid booking ID' });
     }
 
-    const booking = await Booking.findOne({ _id: parseInt(req.params.id), traveler_id: parseInt(req.user.id) });
-    if (!booking) {
+    // Check if booking exists and belongs to user
+    const checkResult = await pool.query(
+      'SELECT id, status FROM bookings WHERE id = $1 AND traveler_id = $2',
+      [bookingId, parseInt(req.user.id)]
+    );
+
+    if (checkResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Booking not found' });
     }
 
-    if (booking.status === 'completed') {
+    if (checkResult.rows[0].status === 'completed') {
       return res.status(400).json({ success: false, message: 'Cannot cancel completed booking' });
     }
 
-    booking.status = 'cancelled';
-    await booking.save();
+    // Update status to cancelled
+    await pool.query(
+      `UPDATE bookings SET status = 'cancelled', updated_at = NOW() WHERE id = $1`,
+      [bookingId]
+    );
 
-    console.log('✅ Booking cancelled:', booking.id);
+    console.log('✅ Booking cancelled:', bookingId);
 
     res.json({ success: true, message: 'Booking cancelled successfully' });
   } catch (error) {
@@ -326,62 +393,68 @@ router.get('/recent-activity', async (req, res) => {
   try {
     const { limit = 10 } = req.query;
 
-    // Get recent bookings
-    const recentBookings = await Booking.find({ 
-      status: { $in: ['confirmed', 'completed'] } 
-    })
-      .populate('service_id', 'title category location')
-      .populate('traveler_id', 'first_name last_name')
-      .sort({ created_at: -1 })
-      .limit(parseInt(limit))
-      .lean();
+    // Get recent bookings with PostgreSQL
+    const recentBookingsQuery = `
+      SELECT 
+        b.id,
+        b.status,
+        b.created_at,
+        s.title as service_title,
+        s.category,
+        s.location,
+        u.first_name,
+        u.last_name
+      FROM bookings b
+      LEFT JOIN services s ON b.service_id = s.id
+      LEFT JOIN users u ON b.traveler_id = u.id
+      WHERE b.status IN ('confirmed', 'completed')
+      ORDER BY b.created_at DESC
+      LIMIT $1
+    `;
+    
+    const recentBookingsResult = await pool.query(recentBookingsQuery, [parseInt(limit)]);
 
     // Format activities
-    const activities = recentBookings.map(booking => {
-      const firstName = booking.traveler_id?.first_name || 'Anonymous';
-      const lastName = booking.traveler_id?.last_name?.[0] || '';
+    const activities = recentBookingsResult.rows.map(booking => {
+      const firstName = booking.first_name || 'Anonymous';
+      const lastName = booking.last_name?.[0] || '';
       
       return {
         id: booking.id,
         type: 'booking',
         user: `${firstName} ${lastName}.`,
-        action: `booked ${booking.service_id?.title || 'a service'}`,
-        location: booking.service_id?.location || 'Unknown location',
+        action: `booked ${booking.service_title || 'a service'}`,
+        location: booking.location || 'Unknown location',
         timestamp: booking.created_at,
-        category: booking.service_id?.category || 'general'
+        category: booking.category || 'general'
       };
     });
 
-    // Get stats
+    // Get stats with PostgreSQL
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    const [weeklyBookings, totalBookings, activeServices] = await Promise.all([
-      Booking.countDocuments({ 
-        created_at: { $gte: weekAgo },
-        status: { $in: ['confirmed', 'completed'] }
-      }),
-      Booking.countDocuments({ status: { $in: ['confirmed', 'completed'] } }),
-      Service.countDocuments({ is_active: true })
-    ]);
-
-    // Get active travelers (users who booked in last 30 days)
     const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const activeTravelers = await Booking.distinct('traveler_id', {
-      created_at: { $gte: monthAgo }
-    });
 
-    // Get unique destinations
-    const destinations = await Service.distinct('location', { is_active: true });
+    const statsQuery = `
+      SELECT 
+        (SELECT COUNT(*) FROM bookings WHERE created_at >= $1 AND status IN ('confirmed', 'completed')) as weekly_bookings,
+        (SELECT COUNT(*) FROM bookings WHERE status IN ('confirmed', 'completed')) as total_bookings,
+        (SELECT COUNT(*) FROM services WHERE is_active = true) as active_services,
+        (SELECT COUNT(DISTINCT traveler_id) FROM bookings WHERE created_at >= $2) as active_travelers,
+        (SELECT COUNT(DISTINCT location) FROM services WHERE is_active = true) as destinations
+    `;
+    
+    const statsResult = await pool.query(statsQuery, [weekAgo.toISOString(), monthAgo.toISOString()]);
+    const stats = statsResult.rows[0];
 
     res.json({
       success: true,
       activities,
       stats: {
-        weeklyBookings,
-        activeTravelers: activeTravelers.length,
-        destinations: destinations.length,
-        totalServices: activeServices
+        weeklyBookings: parseInt(stats.weekly_bookings) || 0,
+        activeTravelers: parseInt(stats.active_travelers) || 0,
+        destinations: parseInt(stats.destinations) || 0,
+        totalServices: parseInt(stats.active_services) || 0
       }
     });
   } catch (error) {
@@ -400,10 +473,16 @@ router.get('/provider-analytics', authenticateJWT, async (req, res) => {
     const { timeRange = '30days' } = req.query;
 
     // Get provider
-    const provider = await ServiceProvider.findOne({ user_id: parseInt(userId) });
-    if (!provider) {
+    const providerResult = await pool.query(
+      'SELECT id FROM service_providers WHERE user_id = $1',
+      [parseInt(userId)]
+    );
+    
+    if (providerResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Provider profile not found' });
     }
+
+    const providerId = providerResult.rows[0].id;
 
     // Calculate date range
     const now = new Date();
@@ -422,36 +501,52 @@ router.get('/provider-analytics', authenticateJWT, async (req, res) => {
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
 
-    // Get bookings
-    const bookings = await Booking.find({
-      provider_id: provider.id,
-      created_at: { $gte: startDate }
-    })
-      .populate('service_id', 'title category price')
-      .populate('traveler_id', 'first_name last_name country')
-      .lean();
+    // Get bookings with PostgreSQL
+    const bookingsQuery = `
+      SELECT 
+        b.*,
+        s.title as service_title,
+        s.category,
+        s.price,
+        u.first_name,
+        u.last_name,
+        u.country
+      FROM bookings b
+      LEFT JOIN services s ON b.service_id = s.id
+      LEFT JOIN users u ON b.traveler_id = u.id
+      WHERE b.provider_id = $1 AND b.created_at >= $2
+      ORDER BY b.created_at DESC
+    `;
+    
+    const bookingsResult = await pool.query(bookingsQuery, [providerId, startDate.toISOString()]);
+    const bookings = bookingsResult.rows;
 
     // Calculate metrics
     const confirmedBookings = bookings.filter(b => ['confirmed', 'completed'].includes(b.status));
-    const totalRevenue = confirmedBookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
+    const totalRevenue = confirmedBookings.reduce((sum, b) => sum + parseFloat(b.total_amount || 0), 0);
     const totalBookings = confirmedBookings.length;
-    const uniqueCustomers = [...new Set(bookings.map(b => b.traveler_id?.id?.toString()).filter(Boolean))].length;
+    
+    // Unique customers
+    const uniqueCustomerIds = [...new Set(bookings.map(b => b.traveler_id).filter(Boolean))];
+    const uniqueCustomers = uniqueCustomerIds.length;
 
     // Calculate average rating
     const reviewedBookings = bookings.filter(b => b.rating);
     const averageRating = reviewedBookings.length > 0
-      ? (reviewedBookings.reduce((sum, b) => sum + b.rating, 0) / reviewedBookings.length).toFixed(1)
+      ? (reviewedBookings.reduce((sum, b) => sum + parseFloat(b.rating), 0) / reviewedBookings.length).toFixed(1)
       : 0;
 
-    // Calculate growth
+    // Calculate growth (previous period)
     const previousStartDate = new Date(startDate.getTime() - (now.getTime() - startDate.getTime()));
-    const previousBookings = await Booking.find({
-      provider_id: provider.id,
-      created_at: { $gte: previousStartDate, $lt: startDate },
-      status: { $in: ['confirmed', 'completed'] }
-    }).lean();
-
-    const previousRevenue = previousBookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
+    const previousBookingsQuery = `
+      SELECT total_amount FROM bookings 
+      WHERE provider_id = $1 AND created_at >= $2 AND created_at < $3 
+      AND status IN ('confirmed', 'completed')
+    `;
+    const previousResult = await pool.query(previousBookingsQuery, [providerId, previousStartDate.toISOString(), startDate.toISOString()]);
+    const previousBookings = previousResult.rows;
+    const previousRevenue = previousBookings.reduce((sum, b) => sum + parseFloat(b.total_amount || 0), 0);
+    
     const revenueGrowth = previousRevenue > 0 ? (((totalRevenue - previousRevenue) / previousRevenue) * 100).toFixed(1) : 0;
     const bookingsGrowth = previousBookings.length > 0 ? (((totalBookings - previousBookings.length) / previousBookings.length) * 100).toFixed(1) : 0;
 
@@ -459,18 +554,18 @@ router.get('/provider-analytics', authenticateJWT, async (req, res) => {
     const serviceStats = {};
     confirmedBookings.forEach(booking => {
       if (!booking.service_id) return;
-      const sid = booking.service_id.id.toString();
+      const sid = booking.service_id.toString();
       if (!serviceStats[sid]) {
         serviceStats[sid] = {
-          name: booking.service_id.title,
+          name: booking.service_title || 'Unknown Service',
           bookings: 0,
           revenue: 0,
           ratings: []
         };
       }
       serviceStats[sid].bookings++;
-      serviceStats[sid].revenue += booking.total_price || 0;
-      if (booking.rating) serviceStats[sid].ratings.push(booking.rating);
+      serviceStats[sid].revenue += parseFloat(booking.total_amount || 0);
+      if (booking.rating) serviceStats[sid].ratings.push(parseFloat(booking.rating));
     });
 
     const topServices = Object.values(serviceStats)
@@ -483,18 +578,18 @@ router.get('/provider-analytics', authenticateJWT, async (req, res) => {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
 
-    // Customer insights
+    // Customer insights by country
     const countryStats = {};
     bookings.forEach(b => {
-      const country = b.traveler_id?.country || 'Unknown';
+      const country = b.country || 'Unknown';
       countryStats[country] = (countryStats[country] || 0) + 1;
     });
 
     const topCountries = Object.entries(countryStats)
-      .map(([country, bookings]) => ({
+      .map(([country, count]) => ({
         country,
-        bookings,
-        percentage: totalBookings > 0 ? Math.round((bookings / totalBookings) * 100) : 0
+        bookings: count,
+        percentage: totalBookings > 0 ? Math.round((count / totalBookings) * 100) : 0
       }))
       .sort((a, b) => b.bookings - a.bookings)
       .slice(0, 5);
@@ -512,7 +607,7 @@ router.get('/provider-analytics', authenticateJWT, async (req, res) => {
 
       monthlyData.push({
         month: monthStart.toLocaleDateString('en-US', { month: 'short' }),
-        revenue: monthBookings.reduce((sum, b) => sum + (b.total_price || 0), 0),
+        revenue: monthBookings.reduce((sum, b) => sum + parseFloat(b.total_amount || 0), 0),
         bookings: monthBookings.length
       });
     }
