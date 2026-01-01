@@ -57,6 +57,16 @@ try {
   throw error;
 }
 
+// Multi-trip routes
+let multiTripRoutes;
+try {
+  multiTripRoutes = require('./routes/multiTrip');
+  console.log('✅ Multi-trip routes module loaded');
+} catch (error) {
+  console.error('❌ Failed to load multi-trip routes:', error.message);
+  throw error;
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -207,6 +217,9 @@ console.log('✅ Favorites routes mounted at /api/favorites');
 
 app.use('/api/plans', plansRoutes);
 console.log('✅ Plans routes mounted at /api/plans');
+
+app.use('/api/multi-trip', multiTripRoutes);
+console.log('✅ Multi-trip routes mounted at /api/multi-trip');
 
 // Verify cart routes loaded
 console.log('\n📋 Cart API Endpoints:');

@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const passport = require('passport');
+const { pool } = require('../config/postgresql');
 const { Booking, Service, ServiceProvider, User } = require('../models');
 const { 
   serializeDocument,
@@ -65,45 +66,107 @@ router.get('/public/recent-activity', async (req, res) => {
 router.get('/', authenticateJWT, async (req, res) => {
   try {
     const userId = req.user.id;
-    const userType = req.user.userType;
+    const userType = req.user.user_type || req.user.userType;
     const { status, page = 1, limit = 10 } = req.query;
 
     console.log('📋 [GET BOOKINGS] User:', userId, 'Type:', userType);
 
-    const { skip, limit: pageLimit } = getPagination(page, limit);
-    let query = {};
+    const offset = (page - 1) * limit;
+    let whereConditions = [];
+    let queryParams = [];
+    let paramIndex = 1;
 
     if (userType === 'traveler') {
-      query.traveler_id = parseInt(userId);
+      whereConditions.push(`b.traveler_id = $${paramIndex++}`);
+      queryParams.push(parseInt(userId));
     } else if (userType === 'service_provider') {
-      const provider = await ServiceProvider.findOne({ user_id: parseInt(userId) });
-      if (!provider) {
+      // Get provider ID first
+      const providerResult = await pool.query(
+        'SELECT id FROM service_providers WHERE user_id = $1',
+        [parseInt(userId)]
+      );
+      
+      if (providerResult.rows.length === 0) {
         return res.status(404).json({ success: false, message: 'Provider profile not found' });
       }
-      query.provider_id = provider.id;
+      
+      whereConditions.push(`b.provider_id = $${paramIndex++}`);
+      queryParams.push(providerResult.rows[0].id);
     }
 
-    if (status) query.status = status;
+    if (status) {
+      whereConditions.push(`b.status = $${paramIndex++}`);
+      queryParams.push(status);
+    }
 
-    const bookings = await Booking.find(query)
-      .populate('service_id', 'title category price location images')
-      .populate('provider_id', 'business_name location')
-      .populate('traveler_id', 'first_name last_name email phone')
-      .sort({ created_at: -1 })
-      .skip(skip)
-      .limit(pageLimit)
-      .lean();
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
-    const total = await Booking.countDocuments(query);
+    // Get bookings with joined data
+    const query = `
+      SELECT 
+        b.*,
+        s.title as service_title,
+        s.category,
+        s.price,
+        s.location,
+        s.images,
+        sp.business_name,
+        sp.location as provider_location,
+        u.first_name,
+        u.last_name,
+        u.email,
+        u.phone
+      FROM bookings b
+      LEFT JOIN services s ON b.service_id = s.id
+      LEFT JOIN service_providers sp ON b.provider_id = sp.id
+      LEFT JOIN users u ON b.traveler_id = u.id
+      ${whereClause}
+      ORDER BY b.created_at DESC
+      LIMIT $${paramIndex++} OFFSET $${paramIndex}
+    `;
 
-    const enrichedBookings = bookings.map(b => ({
-      ...serializeDocument(b),
-      service_title: b.service_id?.title,
-      business_name: b.provider_id?.business_name,
-      traveler_name: `${b.traveler_id?.first_name} ${b.traveler_id?.last_name}`
+    queryParams.push(parseInt(limit), offset);
+
+    const result = await pool.query(query, queryParams);
+
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM bookings b
+      ${whereClause}
+    `;
+    const countResult = await pool.query(countQuery, queryParams.slice(0, -2)); // Remove limit and offset
+    const total = parseInt(countResult.rows[0].total);
+
+    const enrichedBookings = result.rows.map(b => ({
+      id: b.id,
+      traveler_id: b.traveler_id,
+      service_id: b.service_id,
+      provider_id: b.provider_id,
+      booking_date: b.booking_date,
+      start_time: b.start_time,
+      end_time: b.end_time,
+      participants: b.participants,
+      total_amount: b.total_amount,
+      status: b.status,
+      payment_status: b.payment_status,
+      special_requests: b.special_requests,
+      created_at: b.created_at,
+      updated_at: b.updated_at,
+      service_title: b.service_title,
+      business_name: b.business_name,
+      traveler_name: `${b.first_name || ''} ${b.last_name || ''}`.trim()
     }));
 
-    res.json({ success: true, bookings: enrichedBookings, total, page: parseInt(page), totalPages: Math.ceil(total / pageLimit) });
+    console.log('✅ [GET BOOKINGS] Found:', enrichedBookings.length, 'bookings');
+
+    res.json({ 
+      success: true, 
+      bookings: enrichedBookings, 
+      total, 
+      page: parseInt(page), 
+      totalPages: Math.ceil(total / limit) 
+    });
   } catch (error) {
     console.error('❌ GET BOOKINGS Error:', error);
     res.status(500).json({ success: false, message: 'Error fetching bookings' });

@@ -1,9 +1,8 @@
 const express = require('express');
-const passport = require('passport');
 const { pool } = require('../config/postgresql');
+const { authenticateJWT } = require('../middleware/jwtAuth');
 
 const router = express.Router();
-const authenticateJWT = passport.authenticate('jwt', { session: false });
 
 // Get user's trip plans
 router.get('/', authenticateJWT, async (req, res) => {

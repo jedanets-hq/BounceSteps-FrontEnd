@@ -276,6 +276,48 @@ const initQueries = [
     UNIQUE(user_id, service_id)
   )`,
 
+  // Multi-Trip Journeys table - for multi-destination trip planning
+  `CREATE TABLE IF NOT EXISTS multi_trip_journeys (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    journey_name VARCHAR(255),
+    total_destinations INTEGER DEFAULT 1,
+    start_date DATE,
+    end_date DATE,
+    travelers INTEGER DEFAULT 1,
+    budget VARCHAR(50),
+    total_cost DECIMAL(12, 2) DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'draft',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`,
+
+  // Multi-Trip Destinations table
+  `CREATE TABLE IF NOT EXISTS multi_trip_destinations (
+    id SERIAL PRIMARY KEY,
+    journey_id INTEGER REFERENCES multi_trip_journeys(id) ON DELETE CASCADE NOT NULL,
+    destination_order INTEGER NOT NULL,
+    country VARCHAR(100),
+    region VARCHAR(100),
+    district VARCHAR(100),
+    sublocation VARCHAR(100),
+    is_starting_point BOOLEAN DEFAULT FALSE,
+    is_ending_point BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )`,
+
+  // Multi-Trip Services table
+  `CREATE TABLE IF NOT EXISTS multi_trip_services (
+    id SERIAL PRIMARY KEY,
+    journey_id INTEGER REFERENCES multi_trip_journeys(id) ON DELETE CASCADE NOT NULL,
+    destination_id INTEGER REFERENCES multi_trip_destinations(id) ON DELETE CASCADE,
+    service_id INTEGER REFERENCES services(id) ON DELETE CASCADE NOT NULL,
+    quantity INTEGER DEFAULT 1,
+    price DECIMAL(12, 2),
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(journey_id, destination_id, service_id)
+  )`,
+
   // Favorites table - for favorite service providers
   `CREATE TABLE IF NOT EXISTS favorites (
     id SERIAL PRIMARY KEY,
@@ -336,6 +378,15 @@ const initQueries = [
   `CREATE INDEX IF NOT EXISTS idx_trip_plans_user_id ON trip_plans(user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_trip_plans_service_id ON trip_plans(service_id)`,
   `CREATE INDEX IF NOT EXISTS idx_trip_plans_plan_date ON trip_plans(plan_date)`,
+
+  // Indexes for multi-trip journeys
+  `CREATE INDEX IF NOT EXISTS idx_multi_trip_journeys_user_id ON multi_trip_journeys(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_multi_trip_journeys_status ON multi_trip_journeys(status)`,
+  `CREATE INDEX IF NOT EXISTS idx_multi_trip_destinations_journey_id ON multi_trip_destinations(journey_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_multi_trip_destinations_order ON multi_trip_destinations(destination_order)`,
+  `CREATE INDEX IF NOT EXISTS idx_multi_trip_services_journey_id ON multi_trip_services(journey_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_multi_trip_services_destination_id ON multi_trip_services(destination_id)`,
+
 
   // Indexes for favorites
   `CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id)`,

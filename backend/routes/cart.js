@@ -1,32 +1,8 @@
 const express = require('express');
-const passport = require('passport');
 const { pool } = require('../config/postgresql');
+const { authenticateJWT } = require('../middleware/jwtAuth');
 
 const router = express.Router();
-
-// Custom JWT authentication with better error handling
-const authenticateJWT = (req, res, next) => {
-  passport.authenticate('jwt', { session: false }, (err, user, info) => {
-    if (err) {
-      console.error('❌ [Cart Routes] JWT authentication error:', err);
-      return res.status(500).json({
-        success: false,
-        message: 'Authentication error'
-      });
-    }
-    
-    if (!user) {
-      console.warn('⚠️  [Cart Routes] Authentication failed:', info?.message || 'No user');
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication required. Please login.'
-      });
-    }
-    
-    req.user = user;
-    next();
-  })(req, res, next);
-};
 
 // Log when cart routes are loaded
 console.log('📦 [Cart Routes] Module loaded successfully');
