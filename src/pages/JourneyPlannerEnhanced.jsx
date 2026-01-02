@@ -8,6 +8,7 @@ import Icon from '../components/AppIcon';
 import LocationSelector from '../components/LocationSelector';
 import ProviderCard from '../components/ProviderCard';
 import ProviderProfileModal from '../components/ProviderProfileModal';
+import MultiTripModal from '../components/MultiTripModal';
 import { tanzaniaRegions, destinations } from '../data/tanzaniaData';
 import { getAccommodationsByType, getTransportByRegion } from '../data/accommodationData';
 import { API_URL } from '../utils/api';
@@ -53,6 +54,14 @@ const JourneyPlannerEnhanced = () => {
   const [savedJourneys, setSavedJourneys] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+  
+  // Multi-trip state
+  const [isMultiTripEnabled, setIsMultiTripEnabled] = useState(false);
+  const [showMultiTripModal, setShowMultiTripModal] = useState(false);
+  const [multiTripCount, setMultiTripCount] = useState(2);
+  const [multiTripDestinations, setMultiTripDestinations] = useState([]);
+  const [currentDestinationIndex, setCurrentDestinationIndex] = useState(0);
+  
   const [paymentDetails, setPaymentDetails] = useState({
     phoneNumber: '',
     bankName: '',
@@ -235,7 +244,68 @@ const JourneyPlannerEnhanced = () => {
     }));
   };
 
-  const saveJourney = () => {
+  // Save multi-trip journey to backend
+  const saveMultiTripJourney = async () => {
+    if (!isMultiTripEnabled || multiTripDestinations.length < 2) {
+      return null;
+    }
+
+    try {
+      const token = JSON.parse(localStorage.getItem('isafari_user') || '{}').token;
+      if (!token) {
+        console.log('No auth token for multi-trip save');
+        return null;
+      }
+
+      const journeyData = {
+        journeyName: `Multi-Trip to ${multiTripDestinations[0]?.region || 'Tanzania'}`,
+        destinations: multiTripDestinations.map(dest => ({
+          country: 'Tanzania',
+          region: dest.region,
+          district: dest.district,
+          sublocation: dest.ward || dest.district
+        })),
+        startDate: journeyData.checkInDate || journeyData.startDate,
+        endDate: journeyData.checkOutDate || journeyData.endDate,
+        travelers: journeyData.adults || journeyData.travelers || 1,
+        budget: calculateTotalBudget()
+      };
+
+      const response = await fetch(`${API_URL}/multi-trip/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(journeyData)
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('✅ Multi-trip journey saved to database:', data.journey);
+        return data.journey;
+      } else {
+        console.error('❌ Failed to save multi-trip:', data.message);
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ Error saving multi-trip journey:', error);
+      return null;
+    }
+  };
+
+  const saveJourney = async () => {
+    // If multi-trip is enabled, save to backend
+    if (isMultiTripEnabled) {
+      const savedJourney = await saveMultiTripJourney();
+      if (savedJourney) {
+        alert('Multi-trip journey saved successfully!');
+        return;
+      }
+    }
+
+    // Fallback to localStorage for single trips
     const journey = {
       ...journeyData,
       totalBudget: calculateTotalBudget(),
@@ -318,6 +388,44 @@ const JourneyPlannerEnhanced = () => {
     const updated = savedJourneys.filter(j => j.id !== id);
     setSavedJourneys(updated);
     localStorage.setItem(`journeys_${user.id}`, JSON.stringify(updated));
+  };
+
+  // Multi-trip handlers
+  const handleEnableMultiTrip = (count) => {
+    setMultiTripCount(count);
+    setIsMultiTripEnabled(true);
+    // Initialize empty destinations
+    const emptyDestinations = Array.from({ length: count }, (_, i) => ({
+      id: i,
+      region: '',
+      district: '',
+      ward: '',
+      street: '',
+      isStartingPoint: i === 0,
+      isEndingPoint: i === count - 1
+    }));
+    setMultiTripDestinations(emptyDestinations);
+    setCurrentDestinationIndex(0);
+  };
+
+  const handleDisableMultiTrip = () => {
+    setIsMultiTripEnabled(false);
+    setMultiTripCount(2);
+    setMultiTripDestinations([]);
+    setCurrentDestinationIndex(0);
+  };
+
+  const handleMultiTripDestinationChange = (destIndex, field, value) => {
+    setMultiTripDestinations(prev => {
+      const updated = [...prev];
+      updated[destIndex] = { ...updated[destIndex], [field]: value };
+      return updated;
+    });
+  };
+
+  const areAllDestinationsComplete = () => {
+    if (!isMultiTripEnabled) return true;
+    return multiTripDestinations.every(dest => dest.region && dest.district);
   };
 
   const nextStep = () => {
@@ -598,28 +706,111 @@ const JourneyPlannerEnhanced = () => {
 
   const renderStep1 = () => (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold mb-4">Select Location (Tanzania)</h2>
-      
-      <div className="bg-card border border-border rounded-lg p-6">
-        <LocationSelector
-          value={selectedLocation}
-          onChange={(loc) => {
-            setSelectedLocation(loc);
-            setJourneyData({
-              ...journeyData,
-              destination: `${loc.district}, ${loc.region}`
-            });
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-semibold mb-4">Select Location (Tanzania)</h2>
+        
+        {/* Multi-Trip Toggle Button */}
+        <button
+          onClick={() => {
+            if (isMultiTripEnabled) {
+              handleDisableMultiTrip();
+            } else {
+              setShowMultiTripModal(true);
+            }
           }}
-          required={true}
-          showWard={true}
-          showStreet={true}
-        />
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
+            isMultiTripEnabled 
+              ? 'border-primary bg-primary/10 text-primary' 
+              : 'border-border hover:border-primary/50 text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Icon name="Route" size={18} />
+          <span className="text-sm font-medium">
+            {isMultiTripEnabled ? `${multiTripCount} Destinations` : 'Multiple Destinations'}
+          </span>
+          {isMultiTripEnabled && (
+            <Icon name="X" size={14} className="ml-1" />
+          )}
+        </button>
       </div>
+
+      {/* Multi-Trip Info Banner */}
+      {isMultiTripEnabled && (
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-primary mb-2">
+            <Icon name="Route" size={20} />
+            <span className="font-medium">Multi-Destination Trip</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            You're planning a trip with {multiTripCount} destinations. Fill in each location below.
+          </p>
+        </div>
+      )}
+      
+      {/* Single Location or Multi-Trip Locations */}
+      {isMultiTripEnabled ? (
+        <div className="space-y-6">
+          {multiTripDestinations.map((dest, index) => (
+            <div key={dest.id} className="bg-card border border-border rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  dest.isStartingPoint ? 'bg-green-100 text-green-600' :
+                  dest.isEndingPoint ? 'bg-red-100 text-red-600' :
+                  'bg-primary/10 text-primary'
+                }`}>
+                  <Icon 
+                    name={dest.isStartingPoint ? 'Play' : dest.isEndingPoint ? 'Flag' : 'MapPin'} 
+                    size={16} 
+                  />
+                </div>
+                <span className="font-medium">
+                  {dest.isStartingPoint ? 'Starting Point' : 
+                   dest.isEndingPoint ? 'Final Destination' : 
+                   `Stop ${index}`}
+                </span>
+              </div>
+              <LocationSelector
+                value={{
+                  region: dest.region,
+                  district: dest.district,
+                  ward: dest.ward,
+                  street: dest.street
+                }}
+                onChange={(loc) => {
+                  handleMultiTripDestinationChange(index, 'region', loc.region);
+                  handleMultiTripDestinationChange(index, 'district', loc.district);
+                  handleMultiTripDestinationChange(index, 'ward', loc.ward);
+                  handleMultiTripDestinationChange(index, 'street', loc.street);
+                }}
+                required={true}
+                showWard={true}
+                showStreet={true}
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-card border border-border rounded-lg p-6">
+          <LocationSelector
+            value={selectedLocation}
+            onChange={(loc) => {
+              setSelectedLocation(loc);
+              setJourneyData({
+                ...journeyData,
+                destination: `${loc.district}, ${loc.region}`
+              });
+            }}
+            required={true}
+            showWard={true}
+            showStreet={true}
+          />
+        </div>
+      )}
 
       <div className="flex justify-end space-x-4 pt-6">
         <Button 
           onClick={nextStep} 
-          disabled={!selectedLocation.region || !selectedLocation.district}
+          disabled={isMultiTripEnabled ? !areAllDestinationsComplete() : (!selectedLocation.region || !selectedLocation.district)}
         >
           Next <Icon name="ArrowRight" size={16} />
         </Button>
@@ -1052,16 +1243,40 @@ const JourneyPlannerEnhanced = () => {
           <Button variant="outline" onClick={prevStep}>
             <Icon name="ArrowLeft" size={16} /> Back
           </Button>
-          <div className="space-x-3">
-            <Button variant="outline" onClick={() => {
-              // Save journey plan
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" onClick={async () => {
+              // Save journey plan - use API for multi-trip
+              if (isMultiTripEnabled) {
+                const savedJourney = await saveMultiTripJourney();
+                if (savedJourney) {
+                  alert('✅ Multi-trip plan saved! View it in Dashboard > My Trips');
+                  navigate('/traveler-dashboard?tab=trips');
+                  return;
+                }
+              }
+
+              // Build location string for multiple destinations
+              let locationString = '';
+              if (isMultiTripEnabled && multiTripDestinations.length > 0) {
+                locationString = multiTripDestinations
+                  .filter(dest => dest.region)
+                  .map(dest => `${dest.ward || dest.district || ''}, ${dest.district || ''}, ${dest.region}`.replace(/^, |, $/g, ''))
+                  .join(' → ');
+              } else {
+                locationString = `${selectedLocation.ward || selectedLocation.district || ''}, ${selectedLocation.district || ''}, ${selectedLocation.region}`.replace(/^, |, $/g, '');
+              }
+
+              // Fallback to localStorage for single trips
               const journeyPlan = {
                 id: Date.now(),
                 status: 'saved',
                 country: 'Tanzania',
-                region: selectedLocation.region,
-                district: selectedLocation.district,
-                area: selectedLocation.ward || selectedLocation.district,
+                region: isMultiTripEnabled ? multiTripDestinations[0]?.region : selectedLocation.region,
+                district: isMultiTripEnabled ? multiTripDestinations[0]?.district : selectedLocation.district,
+                area: isMultiTripEnabled ? (multiTripDestinations[0]?.ward || multiTripDestinations[0]?.district) : (selectedLocation.ward || selectedLocation.district),
+                locationString: locationString,
+                isMultiTrip: isMultiTripEnabled,
+                destinations: isMultiTripEnabled ? multiTripDestinations : null,
                 startDate: journeyData.checkInDate || journeyData.startDate,
                 endDate: journeyData.checkOutDate || journeyData.endDate,
                 travelers: journeyData.adults || journeyData.travelers || 1,
@@ -1091,6 +1306,70 @@ const JourneyPlannerEnhanced = () => {
               navigate('/traveler-dashboard?tab=trips');
             }}>
               <Icon name="Save" size={16} /> Save Plan
+            </Button>
+            <Button variant="secondary" onClick={async () => {
+              // Pre-Order: Create booking requests for all selected services
+              if (!journeyData.selectedServiceDetails || journeyData.selectedServiceDetails.length === 0) {
+                alert('Please select services from providers first!');
+                return;
+              }
+
+              const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+              const token = userData.token;
+
+              if (!token) {
+                alert('Please login to create pre-orders');
+                navigate('/login');
+                return;
+              }
+
+              try {
+                const bookingDate = journeyData.checkInDate || journeyData.startDate || new Date().toISOString().split('T')[0];
+                const participants = journeyData.adults || journeyData.travelers || 1;
+                
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const service of journeyData.selectedServiceDetails) {
+                  try {
+                    const response = await fetch(`${API_URL}/bookings`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                      },
+                      body: JSON.stringify({
+                        serviceId: parseInt(service.id),
+                        bookingDate: bookingDate,
+                        participants: parseInt(participants)
+                      })
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                      successCount++;
+                    } else {
+                      failCount++;
+                      console.error('Pre-order failed for service:', service.title, data.message);
+                    }
+                  } catch (error) {
+                    failCount++;
+                    console.error('Pre-order error for service:', service.title, error);
+                  }
+                }
+
+                if (successCount > 0) {
+                  alert(`✅ ${successCount} pre-order(s) created successfully!${failCount > 0 ? ` (${failCount} failed)` : ''}\n\nRedirecting to My Pre-Orders...`);
+                  navigate('/traveler-dashboard?tab=cart');
+                } else {
+                  alert('❌ Failed to create pre-orders. Please try again.');
+                }
+              } catch (error) {
+                console.error('Pre-order error:', error);
+                alert('Error creating pre-orders. Please try again.');
+              }
+            }}>
+              <Icon name="Clock" size={16} /> Pre-Order
             </Button>
             <Button onClick={() => {
               // Save trip AND add to cart
@@ -1390,6 +1669,13 @@ const JourneyPlannerEnhanced = () => {
           </div>
         </div>
       )}
+
+      {/* Multi-Trip Modal */}
+      <MultiTripModal
+        isOpen={showMultiTripModal}
+        onClose={() => setShowMultiTripModal(false)}
+        onConfirm={handleEnableMultiTrip}
+      />
     </div>
   );
 };

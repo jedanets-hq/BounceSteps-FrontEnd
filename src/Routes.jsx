@@ -7,11 +7,12 @@ import TravelerDashboard from './pages/traveler-dashboard';
 import ProviderPartnershipPortal from './pages/provider-partnership-portal';
 import ServicesOverview from './pages/services-overview';
 import Homepage from './pages/homepage';
-import JourneyPlanner from './pages/journey-planner/index';
+import JourneyPlanner from './pages/JourneyPlannerEnhanced';
 import DestinationDiscovery from './pages/destination-discovery';
 import ServiceBooking from './pages/service-booking';
 import Login from './pages/auth/login';
 import Register from './pages/auth/register';
+import ForgotPassword from './pages/auth/forgot-password';
 import Profile from './pages/profile';
 import About from './pages/about';
 import Dashboard from './pages/dashboard';
@@ -36,6 +37,7 @@ const Routes = () => {
         <Route path="/service-booking" element={<ServiceBooking />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/about" element={<About />} />
         <Route path="/dashboard" element={<Dashboard />} />

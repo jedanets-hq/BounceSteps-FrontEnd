@@ -18,7 +18,6 @@ import AboutPage from './pages/about';
 import TestDashboard from './pages/TestDashboard';
 import DestinationDiscovery from './pages/DestinationDiscovery';
 import ServiceBooking from './pages/ServiceBooking';
-import JourneyPlanner from './pages/JourneyPlanner';
 import JourneyPlannerEnhanced from './pages/JourneyPlannerEnhanced';
 import Profile from './pages/profile';
 import AdminPortal from './pages/admin-portal';

@@ -4,18 +4,21 @@ import Button from '../../../components/ui/Button';
 import VerifiedBadge from '../../../components/ui/VerifiedBadge';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
+import { useFavorites } from '../../../contexts/FavoritesContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
 import { API_URL } from '../../../utils/api';
 
 const TrendingServices = () => {
   const navigate = useNavigate();
   const { addToCart, cartItems, getCartTotal } = useCart();
+  const { favorites, addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPayment, setShowPayment] = useState(false);
   const [booking, setBooking] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
+  const [favoriteLoading, setFavoriteLoading] = useState({});
 
   useEffect(() => {
     fetchServices();
@@ -46,6 +49,47 @@ const TrendingServices = () => {
 
   // Use promoted trending services
   const trendingServices = services;
+
+  // Handle favorite toggle
+  const handleFavoriteToggle = async (e, service) => {
+    e.stopPropagation();
+    
+    // Check if user is logged in
+    const savedUser = localStorage.getItem('isafari_user');
+    if (!savedUser) {
+      navigate('/login?redirect=/');
+      return;
+    }
+
+    const providerId = service.provider_id;
+    if (!providerId) {
+      console.warn('Service has no provider_id:', service);
+      return;
+    }
+
+    // Set loading state for this specific service
+    setFavoriteLoading(prev => ({ ...prev, [service.id]: true }));
+
+    try {
+      if (isFavorite(providerId)) {
+        // Remove from favorites
+        const success = await removeFromFavorites(providerId);
+        if (success) {
+          console.log('✅ Removed from favorites:', service.title);
+        }
+      } else {
+        // Add to favorites
+        const success = await addToFavorites(providerId);
+        if (success) {
+          console.log('✅ Added to favorites:', service.title);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    } finally {
+      setFavoriteLoading(prev => ({ ...prev, [service.id]: false }));
+    }
+  };
 
   const categories = [
     { id: 'all', name: 'All Services', icon: 'Grid' },
@@ -137,8 +181,25 @@ const TrendingServices = () => {
                     )}
                   </div>
                   <div className="absolute top-4 right-4">
-                    <button className="w-8 h-8 bg-background/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-background transition-colors">
-                      <Icon name="Heart" size={16} className="text-muted-foreground" />
+                    <button 
+                      className={`w-8 h-8 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 ${
+                        isFavorite(service.provider_id) 
+                          ? 'bg-red-500 hover:bg-red-600' 
+                          : 'bg-background/80 hover:bg-background'
+                      }`}
+                      onClick={(e) => handleFavoriteToggle(e, service)}
+                      disabled={favoriteLoading[service.id]}
+                      title={isFavorite(service.provider_id) ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      {favoriteLoading[service.id] ? (
+                        <Icon name="Loader2" size={16} className="animate-spin text-muted-foreground" />
+                      ) : (
+                        <Icon 
+                          name="Heart" 
+                          size={16} 
+                          className={isFavorite(service.provider_id) ? 'text-white fill-white' : 'text-muted-foreground'} 
+                        />
+                      )}
                     </button>
                   </div>
                 </div>

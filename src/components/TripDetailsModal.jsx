@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import Icon from './AppIcon';
 import Button from './ui/Button';
+import { API_URL } from '../utils/api';
 
 const TripDetailsModal = ({ trip, isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -15,7 +16,29 @@ const TripDetailsModal = ({ trip, isOpen, onClose }) => {
   
   // For journey plans
   const services = trip.services || [];
-  const journeyLocation = trip.area ? `${trip.area}, ${trip.district}, ${trip.region}, ${trip.country}` : '';
+  
+  // Build location string - handle multiple destinations
+  let journeyLocation = '';
+  if (trip.isMultiTrip && trip.destinations && trip.destinations.length > 0) {
+    // Multiple destinations - show route
+    journeyLocation = trip.destinations
+      .filter(dest => dest.region)
+      .map(dest => {
+        const parts = [dest.ward, dest.district, dest.region].filter(Boolean);
+        return parts.join(', ');
+      })
+      .join(' → ');
+  } else if (trip.locationString) {
+    // Use pre-built location string
+    journeyLocation = trip.locationString;
+  } else if (trip.area || trip.district || trip.region) {
+    // Single destination
+    const parts = [trip.area, trip.district, trip.region, trip.country].filter(Boolean);
+    journeyLocation = parts.join(', ');
+  } else {
+    journeyLocation = 'Location not set';
+  }
+  
   const journeyDates = trip.startDate && trip.endDate ? `${trip.startDate} - ${trip.endDate}` : 'Dates not set';
   const journeyTravelers = trip.travelers || 1;
   const journeyTotalCost = trip.totalCost || 0;
@@ -95,9 +118,9 @@ const TripDetailsModal = ({ trip, isOpen, onClose }) => {
                   <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
                     journeyStatus === 'pending_payment' 
                       ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-blue-100 text-blue-700'
+                      : 'bg-green-100 text-green-700'
                   }`}>
-                    {journeyStatus === 'pending_payment' ? '💳 Pending Payment' : '📋 Saved'}
+                    {journeyStatus === 'pending_payment' ? '💳 Pending Payment' : '✅ Saved'}
                   </span>
                 </div>
               </div>
@@ -241,23 +264,102 @@ const TripDetailsModal = ({ trip, isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="p-6 border-t border-border">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-4">
             {/* Total Cost Summary */}
-            <div>
-              <p className="text-sm text-muted-foreground">Total Cost</p>
-              <p className="text-xl font-bold text-primary">
-                TZS {(isJourneyPlan ? journeyTotalCost : totalAmount).toLocaleString()}
-              </p>
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Cost</p>
+                <p className="text-xl font-bold text-primary">
+                  TZS {(isJourneyPlan ? journeyTotalCost : totalAmount).toLocaleString()}
+                </p>
+              </div>
+              
+              {/* Multi-destination indicator */}
+              {trip.isMultiTrip && trip.destinations && (
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Route</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {trip.destinations.length} destinations
+                  </p>
+                </div>
+              )}
             </div>
             
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 justify-end">
               <Button variant="outline" onClick={onClose}>
                 Close
               </Button>
+              
+              {/* Pre-Order Button - for journey plans with services */}
+              {isJourneyPlan && services.length > 0 && (
+                <Button 
+                  variant="secondary"
+                  onClick={async () => {
+                    const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+                    const token = userData.token;
+
+                    if (!token) {
+                      alert('Please login to create pre-orders');
+                      onClose();
+                      navigate('/login');
+                      return;
+                    }
+
+                    try {
+                      const bookingDate = trip.startDate || new Date().toISOString().split('T')[0];
+                      const participants = trip.travelers || 1;
+                      
+                      let successCount = 0;
+                      let failCount = 0;
+
+                      for (const service of services) {
+                        try {
+                          const response = await fetch(`${API_URL}/bookings`, {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                              serviceId: parseInt(service.id || service.service_id),
+                              bookingDate: bookingDate,
+                              participants: parseInt(participants)
+                            })
+                          });
+
+                          const data = await response.json();
+                          if (data.success) {
+                            successCount++;
+                          } else {
+                            failCount++;
+                          }
+                        } catch (error) {
+                          failCount++;
+                        }
+                      }
+
+                      if (successCount > 0) {
+                        alert(`✅ ${successCount} pre-order(s) created successfully!\n\nRedirecting to My Pre-Orders...`);
+                        onClose();
+                        navigate('/traveler-dashboard?tab=cart');
+                      } else {
+                        alert('❌ Failed to create pre-orders. Please try again.');
+                      }
+                    } catch (error) {
+                      alert('Error creating pre-orders. Please try again.');
+                    }
+                  }}
+                >
+                  <Icon name="Clock" size={16} />
+                  Pre-Order
+                </Button>
+              )}
+              
+              {/* Continue to Cart & Payment - for saved journey plans */}
               {isJourneyPlan && journeyStatus === 'saved' && services.length > 0 && (
                 <Button onClick={handleContinueToPayment}>
-                  <Icon name="CreditCard" size={16} />
-                  Continue to Payment
+                  <Icon name="ShoppingCart" size={16} />
+                  Continue to Cart & Payment
                 </Button>
               )}
             </div>

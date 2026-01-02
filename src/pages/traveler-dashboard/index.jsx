@@ -753,15 +753,26 @@ const TravelerDashboard = () => {
                             <p className="text-xs text-muted-foreground mt-1">
                               {plan.startDate && plan.endDate ? `${plan.startDate} - ${plan.endDate}` : 'Dates not set'}
                             </p>
+                            {/* Show location - handle multiple destinations */}
+                            <p className="text-xs text-muted-foreground mt-1 flex items-center">
+                              <Icon name="MapPin" size={12} className="mr-1" />
+                              {plan.isMultiTrip && plan.destinations && plan.destinations.length > 0
+                                ? plan.destinations
+                                    .filter(dest => dest.region)
+                                    .map(dest => `${dest.ward || dest.district || ''}, ${dest.region}`.replace(/^, /, ''))
+                                    .join(' → ')
+                                : plan.locationString || `${plan.area || plan.district || ''}, ${plan.region || ''}`.replace(/^, /, '') || 'Location not set'
+                              }
+                            </p>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-3">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                             plan.status === 'pending_payment' 
                               ? 'bg-yellow-100 text-yellow-700'
-                              : 'bg-blue-100 text-blue-700'
+                              : 'bg-green-100 text-green-700'
                           }`}>
-                            {plan.status === 'pending_payment' ? '💳 Pending Payment' : '📋 Saved'}
+                            {plan.status === 'pending_payment' ? '💳 Pending Payment' : '✅ Saved'}
                           </span>
                           <Button 
                             variant="outline" 
@@ -785,7 +796,7 @@ const TravelerDashboard = () => {
                                 plan.services?.forEach(service => {
                                   addToCart({
                                     ...service,
-                                    location: `${plan.area || plan.district}, ${plan.region}`,
+                                    location: plan.locationString || `${plan.area || plan.district}, ${plan.region}`,
                                     travelers: plan.travelers,
                                     journey_details: {
                                       startDate: plan.startDate,

@@ -1,10 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from './AppIcon';
 import Button from './ui/Button';
 import VerifiedBadge from './ui/VerifiedBadge';
+import { useFavorites } from '../contexts/FavoritesContext';
 import { bookingsAPI } from '../utils/api';
 
 const ProviderCard = ({ provider, onViewProfile, onSelect, isSelected }) => {
+  const navigate = useNavigate();
+  const { addToFavorites, isFavorite } = useFavorites();
   return (
     <div className={`bg-card border rounded-lg p-6 transition-all hover:shadow-lg ${
       isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-border'
@@ -91,33 +95,43 @@ const ProviderCard = ({ provider, onViewProfile, onSelect, isSelected }) => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => {
-            // Add to favorites
-            const favorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
-            const alreadyFavorite = favorites.find(f => f.id === provider.id);
+          onClick={async () => {
+            // Add to favorites using context (saves to database)
+            const alreadyFavorite = isFavorite(provider.id);
             
             if (!alreadyFavorite) {
-              const newFavorite = {
-                id: provider.id,
-                business_name: provider.business_name,
-                location: provider.location,
-                service_categories: provider.service_categories,
-                is_verified: provider.is_verified,
-                rating: provider.rating,
-                total_reviews: provider.total_reviews,
-                services_count: provider.services_count
-              };
-              favorites.push(newFavorite);
-              localStorage.setItem('favorite_providers', JSON.stringify(favorites));
-              alert('✅ Added to favorites!');
+              const success = await addToFavorites(provider.id);
+              if (success) {
+                alert('✅ Added to favorites! Redirecting to Favorites...');
+                // Navigate to favorites tab in dashboard
+                navigate('/traveler-dashboard?tab=favorites');
+              } else {
+                // Fallback to localStorage if API fails
+                const favorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
+                const newFavorite = {
+                  id: provider.id,
+                  business_name: provider.business_name,
+                  location: provider.location,
+                  service_categories: provider.service_categories,
+                  is_verified: provider.is_verified,
+                  rating: provider.rating,
+                  total_reviews: provider.total_reviews,
+                  services_count: provider.services_count
+                };
+                favorites.push(newFavorite);
+                localStorage.setItem('favorite_providers', JSON.stringify(favorites));
+                alert('✅ Added to favorites! Redirecting to Favorites...');
+                navigate('/traveler-dashboard?tab=favorites');
+              }
             } else {
-              alert('Already in favorites!');
+              alert('Already in favorites! Redirecting to Favorites...');
+              navigate('/traveler-dashboard?tab=favorites');
             }
           }}
-          className="flex-1 text-red-500 hover:bg-red-50"
+          className={`flex-1 ${isFavorite(provider.id) ? 'text-red-600 bg-red-50' : 'text-red-500 hover:bg-red-50'}`}
         >
-          <Icon name="Heart" size={16} />
-          Add to Favorite
+          <Icon name={isFavorite(provider.id) ? "HeartOff" : "Heart"} size={16} />
+          {isFavorite(provider.id) ? 'In Favorites' : 'Add to Favorite'}
         </Button>
       </div>
     </div>
