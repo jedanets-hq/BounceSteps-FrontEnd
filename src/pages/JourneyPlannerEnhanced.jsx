@@ -198,9 +198,11 @@ const JourneyPlannerEnhanced = () => {
   ];
 
   const calculateDays = () => {
-    if (!journeyData.startDate || !journeyData.endDate) return 0;
-    const start = new Date(journeyData.startDate);
-    const end = new Date(journeyData.endDate);
+    const startDate = journeyData.checkInDate || journeyData.startDate;
+    const endDate = journeyData.checkOutDate || journeyData.endDate;
+    if (!startDate || !endDate) return 0;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
     const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
     return days > 0 ? days : 0;
   };
@@ -415,10 +417,16 @@ const JourneyPlannerEnhanced = () => {
     setCurrentDestinationIndex(0);
   };
 
-  const handleMultiTripDestinationChange = (destIndex, field, value) => {
+  const handleMultiTripDestinationChange = (destIndex, locationData) => {
     setMultiTripDestinations(prev => {
       const updated = [...prev];
-      updated[destIndex] = { ...updated[destIndex], [field]: value };
+      updated[destIndex] = { 
+        ...updated[destIndex], 
+        region: locationData.region || '',
+        district: locationData.district || '',
+        ward: locationData.ward || '',
+        street: locationData.street || ''
+      };
       return updated;
     });
   };
@@ -646,14 +654,24 @@ const JourneyPlannerEnhanced = () => {
   };
 
   const handleAddServicesFromProvider = (services, provider) => {
-    // Add selected services to journey data
+    // Add selected services to journey data with destination info for multi-trip
     setJourneyData(prev => {
       const existingServices = prev.selectedServiceDetails || [];
+      
+      // Get current destination for multi-trip
+      const currentDest = isMultiTripEnabled && multiTripDestinations[currentDestinationIndex] 
+        ? multiTripDestinations[currentDestinationIndex] 
+        : selectedLocation;
+      
       const newServices = services.map(service => ({
         ...service,
         provider_name: provider.business_name,
         provider_id: provider.id,
-        provider_location: provider.location
+        provider_location: provider.location,
+        // Add destination info for multi-trip filtering
+        region: service.region || provider.region || currentDest.region,
+        district: service.district || provider.district || currentDest.district,
+        destinationIndex: isMultiTripEnabled ? currentDestinationIndex : 0
       }));
       
       return {
@@ -662,7 +680,12 @@ const JourneyPlannerEnhanced = () => {
         // Also add provider if not already selected
         selectedProviders: prev.selectedProviders?.find(p => p.id === provider.id)
           ? prev.selectedProviders
-          : [...(prev.selectedProviders || []), provider]
+          : [...(prev.selectedProviders || []), {
+              ...provider,
+              region: provider.region || currentDest.region,
+              district: provider.district || currentDest.district,
+              destinationIndex: isMultiTripEnabled ? currentDestinationIndex : 0
+            }]
       };
     });
     
@@ -776,12 +799,7 @@ const JourneyPlannerEnhanced = () => {
                   ward: dest.ward,
                   street: dest.street
                 }}
-                onChange={(loc) => {
-                  handleMultiTripDestinationChange(index, 'region', loc.region);
-                  handleMultiTripDestinationChange(index, 'district', loc.district);
-                  handleMultiTripDestinationChange(index, 'ward', loc.ward);
-                  handleMultiTripDestinationChange(index, 'street', loc.street);
-                }}
+                onChange={(loc) => handleMultiTripDestinationChange(index, loc)}
                 required={true}
                 showWard={true}
                 showStreet={true}
@@ -1101,12 +1119,217 @@ const JourneyPlannerEnhanced = () => {
     
     const totalBudget = (servicesCost + providersCost) * travelers;
 
-    return (
-      <div className="space-y-6">
-        <h2 className="text-2xl font-semibold mb-4">Trip Summary</h2>
-        
+    // Helper function to get destination title
+    const getDestinationTitle = (dest, index) => {
+      const locationName = [dest.district, dest.region].filter(Boolean).join(', ') || 'Not set';
+      if (dest.isStartingPoint) return `🟢 Trip ${index + 1} - Starting Point: ${locationName}`;
+      if (dest.isEndingPoint) return `🔴 Trip ${index + 1} - Final Destination: ${locationName}`;
+      return `📍 Trip ${index + 1} - Stop ${index}: ${locationName}`;
+    };
+
+    // Helper function to get services for a specific destination
+    const getServicesForDestination = (dest, destIndex) => {
+      if (!journeyData.selectedServiceDetails) return [];
+      return journeyData.selectedServiceDetails.filter(service => {
+        // First check by destinationIndex if available
+        if (service.destinationIndex !== undefined) {
+          return service.destinationIndex === destIndex;
+        }
+        // Fallback to location matching
+        const serviceRegion = (service.region || service.provider_location?.region || '').toLowerCase();
+        const serviceDistrict = (service.district || service.provider_location?.district || '').toLowerCase();
+        const destRegion = (dest.region || '').toLowerCase();
+        const destDistrict = (dest.district || '').toLowerCase();
+        return serviceRegion === destRegion || serviceDistrict === destDistrict;
+      });
+    };
+
+    // Helper function to get providers for a specific destination
+    const getProvidersForDestination = (dest, destIndex) => {
+      if (!journeyData.selectedProviders) return [];
+      return journeyData.selectedProviders.filter(provider => {
+        // First check by destinationIndex if available
+        if (provider.destinationIndex !== undefined) {
+          return provider.destinationIndex === destIndex;
+        }
+        // Fallback to location matching
+        const providerRegion = (provider.region || provider.location_data?.region || '').toLowerCase();
+        const providerDistrict = (provider.district || provider.location_data?.district || '').toLowerCase();
+        const destRegion = (dest.region || '').toLowerCase();
+        const destDistrict = (dest.district || '').toLowerCase();
+        return providerRegion === destRegion || providerDistrict === destDistrict;
+      });
+    };
+
+    // For multi-trip, render each destination separately
+    const renderMultiTripSummary = () => (
+      <div className="space-y-8">
+        {multiTripDestinations.map((dest, index) => {
+          const destServices = getServicesForDestination(dest, index);
+          const destProviders = getProvidersForDestination(dest, index);
+          const destServicesCost = destServices.reduce((total, s) => total + (parseFloat(s.price) || 0), 0);
+          
+          return (
+            <div key={`trip-${index}`} className="border-2 border-primary/30 rounded-xl overflow-hidden">
+              {/* Trip Header */}
+              <div className="bg-gradient-to-br from-primary to-secondary text-white p-6">
+                <h3 className="text-xl font-semibold mb-4">
+                  {getDestinationTitle(dest, index)}
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm opacity-90">Duration</div>
+                    <div className="text-2xl font-bold">{days || 0} Days</div>
+                  </div>
+                  <div>
+                    <div className="text-sm opacity-90">Total Budget</div>
+                    <div className="text-2xl font-bold">TZS {destServicesCost.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm opacity-90">Travelers</div>
+                    <div className="text-lg font-semibold">{travelers} {travelers === 1 ? 'Person' : 'People'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm opacity-90">Per Person</div>
+                    <div className="text-lg font-semibold">TZS {Math.round(destServicesCost / travelers).toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trip Details Grid */}
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Location Details */}
+                  <div className="bg-card border rounded-lg p-6">
+                    <h4 className="font-semibold mb-3 flex items-center">
+                      <Icon name="MapPin" size={20} className="mr-2 text-primary" />
+                      Location Details (Tanzania)
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div><strong>Region (Mkoa):</strong> {dest.region || 'Not set'}</div>
+                      <div><strong>District (Wilaya):</strong> {dest.district || 'Not set'}</div>
+                      {dest.ward && <div><strong>Ward (Kata):</strong> {dest.ward}</div>}
+                      {dest.street && <div><strong>Street (Mtaa):</strong> {dest.street}</div>}
+                      <div><strong>Destination:</strong> {
+                        [dest.ward, dest.district, dest.region].filter(Boolean).join(', ') || 'Not set'
+                      }</div>
+                    </div>
+                  </div>
+
+                  {/* Travel Dates */}
+                  <div className="bg-card border rounded-lg p-6">
+                    <h4 className="font-semibold mb-3 flex items-center">
+                      <Icon name="Calendar" size={20} className="mr-2 text-primary" />
+                      Travel Dates
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div><strong>Start Date:</strong> {(journeyData.checkInDate || journeyData.startDate) ? new Date(journeyData.checkInDate || journeyData.startDate).toLocaleDateString() : 'Not set'}</div>
+                      <div><strong>End Date:</strong> {(journeyData.checkOutDate || journeyData.endDate) ? new Date(journeyData.checkOutDate || journeyData.endDate).toLocaleDateString() : 'Not set'}</div>
+                      {journeyData.travelPurpose && <div><strong>Purpose:</strong> {travelPurposes.find(p => p.id === journeyData.travelPurpose)?.name}</div>}
+                      {journeyData.transportType && <div><strong>Transport:</strong> {transportTypes.find(t => t.id === journeyData.transportType)?.name}</div>}
+                    </div>
+                  </div>
+
+                  {/* Accommodation */}
+                  <div className="bg-card border rounded-lg p-6">
+                    <h4 className="font-semibold mb-3 flex items-center">
+                      <Icon name="Hotel" size={20} className="mr-2 text-primary" />
+                      Accommodation
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div><strong>Type:</strong> {accommodationTypes.find(a => a.id === journeyData.accommodationType)?.name || 'Not set'}</div>
+                      <div><strong>Price Range:</strong> {priceRanges.find(p => p.id === journeyData.priceRange)?.name || 'Not set'}</div>
+                      <div><strong>Room:</strong> {roomTypes.find(r => r.id === journeyData.roomType)?.name || 'Not set'}</div>
+                      <div><strong>Rating:</strong> {journeyData.minRating}+ stars</div>
+                    </div>
+                  </div>
+
+                  {/* Selected Services for this destination */}
+                  <div className="bg-card border rounded-lg p-6">
+                    <h4 className="font-semibold mb-3 flex items-center">
+                      <Icon name="Briefcase" size={20} className="mr-2 text-primary" />
+                      Selected Services ({destServices.length})
+                    </h4>
+                    <div className="space-y-3 text-sm max-h-48 overflow-y-auto">
+                      {destServices.length > 0 ? (
+                        destServices.map((service, idx) => (
+                          <div key={`service-${service.id}-${idx}`} className="border-l-2 border-primary pl-3 py-1">
+                            <div className="font-medium text-foreground">{service.title}</div>
+                            <div className="text-xs text-muted-foreground">
+                              Provider: {service.provider_name}
+                            </div>
+                            <div className="text-xs font-semibold text-primary mt-1">
+                              TZS {parseFloat(service.price || 0).toLocaleString()}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-muted-foreground">No services selected for this destination</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Selected Providers for this destination */}
+                {destProviders.length > 0 && (
+                  <div className="bg-card border rounded-lg p-6 mt-6">
+                    <h4 className="font-semibold mb-4 flex items-center">
+                      <Icon name="Users" size={20} className="mr-2 text-primary" />
+                      Selected Service Providers ({destProviders.length})
+                    </h4>
+                    <div className="space-y-4">
+                      {destProviders.map((provider, idx) => (
+                        <div key={`provider-${provider.id}-${idx}`} className="flex items-start justify-between p-4 bg-muted/50 rounded-lg">
+                          <div className="flex-1">
+                            <div className="font-medium">{provider.business_name || provider.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {Array.isArray(provider.service_categories) 
+                                ? provider.service_categories.join(', ') 
+                                : provider.service_category || ''}
+                            </div>
+                            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                              <Icon name="MapPin" size={12} />
+                              {provider.location_data?.district || provider.district || ''}, {provider.location_data?.region || provider.region || ''}
+                            </div>
+                          </div>
+                          <div className="text-right ml-4">
+                            <div className="font-semibold text-primary">
+                              TZS {parseFloat(provider.price || 0).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Grand Total for all trips */}
+        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h4 className="text-lg font-semibold">Grand Total ({multiTripDestinations.length} Destinations)</h4>
+              <p className="text-sm opacity-90">{travelers} traveler(s) × {days || 0} days</p>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold">TZS {totalBudget.toLocaleString()}</div>
+              <div className="text-sm opacity-90">TZS {Math.round(totalBudget / travelers).toLocaleString()} per person</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    // For single trip, render original summary
+    const renderSingleTripSummary = () => (
+      <>
         <div className="bg-gradient-to-br from-primary to-secondary text-white rounded-lg p-6">
-          <h3 className="text-xl font-semibold mb-4">Your Journey to {journeyData.region || journeyData.destination}</h3>
+          <h3 className="text-xl font-semibold mb-4">Your Journey to {
+            [selectedLocation.district, selectedLocation.region].filter(Boolean).join(', ') || journeyData.destination || 'Tanzania'
+          }</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="text-sm opacity-90">Duration</div>
@@ -1134,11 +1357,13 @@ const JourneyPlannerEnhanced = () => {
               Location Details (Tanzania)
             </h4>
             <div className="space-y-2 text-sm">
-              <div><strong>Region (Mkoa):</strong> {selectedLocation.region}</div>
-              <div><strong>District (Wilaya):</strong> {selectedLocation.district}</div>
+              <div><strong>Region (Mkoa):</strong> {selectedLocation.region || 'Not set'}</div>
+              <div><strong>District (Wilaya):</strong> {selectedLocation.district || 'Not set'}</div>
               {selectedLocation.ward && <div><strong>Ward (Kata):</strong> {selectedLocation.ward}</div>}
               {selectedLocation.street && <div><strong>Street (Mtaa):</strong> {selectedLocation.street}</div>}
-              <div><strong>Destination:</strong> {journeyData.destination}</div>
+              <div><strong>Destination:</strong> {
+                [selectedLocation.ward, selectedLocation.district, selectedLocation.region].filter(Boolean).join(', ') || 'Not set'
+              }</div>
             </div>
           </div>
 
@@ -1148,8 +1373,8 @@ const JourneyPlannerEnhanced = () => {
               Travel Dates
             </h4>
             <div className="space-y-2 text-sm">
-              <div><strong>Start Date:</strong> {journeyData.startDate ? new Date(journeyData.startDate).toLocaleDateString() : 'Not set'}</div>
-              <div><strong>End Date:</strong> {journeyData.endDate ? new Date(journeyData.endDate).toLocaleDateString() : 'Not set'}</div>
+              <div><strong>Start Date:</strong> {(journeyData.checkInDate || journeyData.startDate) ? new Date(journeyData.checkInDate || journeyData.startDate).toLocaleDateString() : 'Not set'}</div>
+              <div><strong>End Date:</strong> {(journeyData.checkOutDate || journeyData.endDate) ? new Date(journeyData.checkOutDate || journeyData.endDate).toLocaleDateString() : 'Not set'}</div>
               {journeyData.travelPurpose && <div><strong>Purpose:</strong> {travelPurposes.find(p => p.id === journeyData.travelPurpose)?.name}</div>}
               {journeyData.transportType && <div><strong>Transport:</strong> {transportTypes.find(t => t.id === journeyData.transportType)?.name}</div>}
             </div>
@@ -1161,9 +1386,9 @@ const JourneyPlannerEnhanced = () => {
               Accommodation
             </h4>
             <div className="space-y-2 text-sm">
-              <div><strong>Type:</strong> {accommodationTypes.find(a => a.id === journeyData.accommodationType)?.name}</div>
-              <div><strong>Price Range:</strong> {priceRanges.find(p => p.id === journeyData.priceRange)?.name}</div>
-              <div><strong>Room:</strong> {roomTypes.find(r => r.id === journeyData.roomType)?.name}</div>
+              <div><strong>Type:</strong> {accommodationTypes.find(a => a.id === journeyData.accommodationType)?.name || 'Not set'}</div>
+              <div><strong>Price Range:</strong> {priceRanges.find(p => p.id === journeyData.priceRange)?.name || 'Not set'}</div>
+              <div><strong>Room:</strong> {roomTypes.find(r => r.id === journeyData.roomType)?.name || 'Not set'}</div>
               <div><strong>Rating:</strong> {journeyData.minRating}+ stars</div>
               {journeyData.facilities && journeyData.facilities.length > 0 && (
                 <div><strong>Facilities:</strong> {journeyData.facilities.length} selected</div>
@@ -1238,6 +1463,16 @@ const JourneyPlannerEnhanced = () => {
             </div>
           </div>
         )}
+      </>
+    );
+
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-semibold mb-4">
+          {isMultiTripEnabled ? `Multi-Trip Summary (${multiTripDestinations.length} Destinations)` : 'Trip Summary'}
+        </h2>
+        
+        {isMultiTripEnabled && multiTripDestinations.length > 0 ? renderMultiTripSummary() : renderSingleTripSummary()}
 
         <div className="flex justify-between pt-6">
           <Button variant="outline" onClick={prevStep}>

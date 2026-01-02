@@ -488,7 +488,7 @@ router.put('/:id/status', authenticateJWT, async (req, res) => {
   }
 });
 
-// Cancel booking (traveler only)
+// Delete booking permanently (traveler can delete their own bookings)
 router.delete('/:id', authenticateJWT, async (req, res) => {
   try {
     const bookingId = parseInt(req.params.id);
@@ -496,32 +496,94 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid booking ID' });
     }
 
-    // Check if booking exists and belongs to user
+    const userId = parseInt(req.user.id);
+    const userType = req.user.user_type || req.user.userType;
+
+    // Check if booking exists
     const checkResult = await pool.query(
-      'SELECT id, status FROM bookings WHERE id = $1 AND traveler_id = $2',
-      [bookingId, parseInt(req.user.id)]
+      'SELECT id, status, traveler_id, provider_id FROM bookings WHERE id = $1',
+      [bookingId]
     );
 
     if (checkResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Booking not found' });
     }
 
-    if (checkResult.rows[0].status === 'completed') {
-      return res.status(400).json({ success: false, message: 'Cannot cancel completed booking' });
+    const booking = checkResult.rows[0];
+
+    // Check authorization - traveler can delete their own, provider can delete their bookings
+    let authorized = false;
+    
+    if (userType === 'traveler' && booking.traveler_id === userId) {
+      authorized = true;
+    } else if (userType === 'service_provider') {
+      // Get provider ID
+      const providerResult = await pool.query(
+        'SELECT id FROM service_providers WHERE user_id = $1',
+        [userId]
+      );
+      if (providerResult.rows.length > 0 && providerResult.rows[0].id === booking.provider_id) {
+        authorized = true;
+      }
     }
 
-    // Update status to cancelled
-    await pool.query(
-      `UPDATE bookings SET status = 'cancelled', updated_at = NOW() WHERE id = $1`,
-      [bookingId]
+    if (!authorized) {
+      return res.status(403).json({ success: false, message: 'Not authorized to delete this booking' });
+    }
+
+    // DELETE permanently from database
+    await pool.query('DELETE FROM bookings WHERE id = $1', [bookingId]);
+
+    console.log('✅ Booking PERMANENTLY DELETED:', bookingId, 'by user:', userId);
+
+    res.json({ success: true, message: 'Pre-order deleted permanently' });
+  } catch (error) {
+    console.error('❌ DELETE BOOKING Error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting booking' });
+  }
+});
+
+// Provider delete booking
+router.delete('/provider/:id', authenticateJWT, async (req, res) => {
+  try {
+    const bookingId = parseInt(req.params.id);
+    if (isNaN(bookingId)) {
+      return res.status(400).json({ success: false, message: 'Invalid booking ID' });
+    }
+
+    const userId = parseInt(req.user.id);
+
+    // Get provider ID
+    const providerResult = await pool.query(
+      'SELECT id FROM service_providers WHERE user_id = $1',
+      [userId]
+    );
+    
+    if (providerResult.rows.length === 0) {
+      return res.status(403).json({ success: false, message: 'Only providers can delete bookings' });
+    }
+
+    const providerId = providerResult.rows[0].id;
+
+    // Check if booking belongs to this provider
+    const checkResult = await pool.query(
+      'SELECT id FROM bookings WHERE id = $1 AND provider_id = $2',
+      [bookingId, providerId]
     );
 
-    console.log('✅ Booking cancelled:', bookingId);
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
 
-    res.json({ success: true, message: 'Booking cancelled successfully' });
+    // DELETE permanently
+    await pool.query('DELETE FROM bookings WHERE id = $1', [bookingId]);
+
+    console.log('✅ Booking PERMANENTLY DELETED by provider:', bookingId);
+
+    res.json({ success: true, message: 'Pre-order deleted permanently' });
   } catch (error) {
-    console.error('❌ CANCEL BOOKING Error:', error);
-    res.status(500).json({ success: false, message: 'Error cancelling booking' });
+    console.error('❌ PROVIDER DELETE BOOKING Error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting booking' });
   }
 });
 
