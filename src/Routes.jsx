@@ -7,7 +7,7 @@ import TravelerDashboard from './pages/traveler-dashboard';
 import ProviderPartnershipPortal from './pages/provider-partnership-portal';
 import ServicesOverview from './pages/services-overview';
 import Homepage from './pages/homepage';
-import JourneyPlanner from './pages/JourneyPlannerEnhanced';
+import JourneyPlanner from './pages/journey-planner/index';
 import DestinationDiscovery from './pages/destination-discovery';
 import ServiceBooking from './pages/service-booking';
 import Login from './pages/auth/login';
