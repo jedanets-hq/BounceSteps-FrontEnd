@@ -658,9 +658,24 @@ const JourneyPlannerEnhanced = () => {
     setJourneyData(prev => {
       const existingServices = prev.selectedServiceDetails || [];
       
-      // Get current destination for multi-trip
-      const currentDest = isMultiTripEnabled && multiTripDestinations[currentDestinationIndex] 
-        ? multiTripDestinations[currentDestinationIndex] 
+      // Get current destination for multi-trip - use the destination that matches provider's location
+      let currentDestIndex = 0;
+      if (isMultiTripEnabled && multiTripDestinations.length > 0) {
+        // Find which destination this provider belongs to based on region/district
+        const providerRegion = (provider.region || '').toLowerCase();
+        const providerDistrict = (provider.district || '').toLowerCase();
+        
+        const matchingDestIndex = multiTripDestinations.findIndex(dest => {
+          const destRegion = (dest.region || '').toLowerCase();
+          const destDistrict = (dest.district || '').toLowerCase();
+          return destRegion === providerRegion || destDistrict === providerDistrict;
+        });
+        
+        currentDestIndex = matchingDestIndex >= 0 ? matchingDestIndex : currentDestinationIndex;
+      }
+      
+      const currentDest = isMultiTripEnabled && multiTripDestinations[currentDestIndex] 
+        ? multiTripDestinations[currentDestIndex] 
         : selectedLocation;
       
       const newServices = services.map(service => ({
@@ -671,7 +686,7 @@ const JourneyPlannerEnhanced = () => {
         // Add destination info for multi-trip filtering
         region: service.region || provider.region || currentDest.region,
         district: service.district || provider.district || currentDest.district,
-        destinationIndex: isMultiTripEnabled ? currentDestinationIndex : 0
+        destinationIndex: currentDestIndex
       }));
       
       return {
@@ -684,14 +699,14 @@ const JourneyPlannerEnhanced = () => {
               ...provider,
               region: provider.region || currentDest.region,
               district: provider.district || currentDest.district,
-              destinationIndex: isMultiTripEnabled ? currentDestinationIndex : 0
+              destinationIndex: currentDestIndex
             }]
       };
     });
     
-    // Close modal and move to summary
+    // Close modal but STAY on providers page (step 4) - don't go to summary automatically
     setShowProviderModal(false);
-    setStep(5);
+    // Removed: setStep(5); - Let traveler click "View Summary" when ready
   };
 
   const viewSummary = () => {
@@ -1057,6 +1072,31 @@ const JourneyPlannerEnhanced = () => {
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Show selected services indicator */}
+          {journeyData.selectedServiceDetails && journeyData.selectedServiceDetails.length > 0 && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+              <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2 flex items-center">
+                <Icon name="CheckCircle" size={18} className="mr-2" />
+                Services Added ({journeyData.selectedServiceDetails.length})
+              </h4>
+              <div className="space-y-2">
+                {journeyData.selectedServiceDetails.map((service, idx) => (
+                  <div key={`added-service-${service.id}-${idx}`} className="flex items-center justify-between text-sm">
+                    <span className="text-green-700 dark:text-green-300">
+                      {service.title} - {service.provider_name}
+                    </span>
+                    <span className="font-medium text-green-800 dark:text-green-200">
+                      TZS {parseFloat(service.price || 0).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                Click "View Summary" to see your complete trip plan
+              </p>
             </div>
           )}
         </>
