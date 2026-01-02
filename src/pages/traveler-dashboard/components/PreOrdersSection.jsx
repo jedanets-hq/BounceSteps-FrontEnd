@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { API_URL } from '../../../utils/api';
 
-const PreOrdersSection = ({ bookings, loading }) => {
+const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
   const navigate = useNavigate();
   const [expandedBooking, setExpandedBooking] = useState(null);
+  const [deletingBooking, setDeletingBooking] = useState(null);
 
   // Debug: Log bookings data
   React.useEffect(() => {
@@ -16,10 +18,13 @@ const PreOrdersSection = ({ bookings, loading }) => {
   }, [bookings]);
 
   const getServiceImage = (booking) => {
-    // Try multiple possible image sources
-    const imageData = booking.service_images || booking.service?.images || booking.images;
+    // Try multiple possible image sources - check all possible fields
+    const imageData = booking.service_images || booking.images || booking.service?.images || booking.image;
+    
+    console.log('🖼️ Getting image for booking:', booking.id, 'imageData:', imageData);
     
     if (!imageData) {
+      console.log('⚠️ No image data found for booking:', booking.id);
       return null; // Will show placeholder
     }
 
@@ -30,23 +35,72 @@ const PreOrdersSection = ({ bookings, loading }) => {
         const parsed = JSON.parse(imageData);
         images = Array.isArray(parsed) ? parsed : [parsed];
       } catch (e) {
-        // If not JSON, treat as single URL
-        images = [imageData];
+        // If not JSON, treat as single URL or comma-separated URLs
+        if (imageData.includes(',')) {
+          images = imageData.split(',').map(url => url.trim());
+        } else {
+          images = [imageData];
+        }
       }
     } else if (Array.isArray(imageData)) {
       images = imageData;
     } else if (typeof imageData === 'object' && imageData !== null) {
       // If it's an object, try to extract URLs
-      images = Object.values(imageData).filter(v => typeof v === 'string');
+      images = Object.values(imageData).filter(v => typeof v === 'string' && (v.startsWith('http') || v.startsWith('/')));
     }
     
     // Filter out empty strings and return first valid image
-    const validImages = images.filter(img => img && img.trim().length > 0);
+    const validImages = images.filter(img => img && typeof img === 'string' && img.trim().length > 0);
+    console.log('✅ Valid images found:', validImages.length, validImages[0]?.substring(0, 50));
     return validImages.length > 0 ? validImages[0] : null;
   };
 
   const toggleExpanded = (bookingId) => {
     setExpandedBooking(expandedBooking === bookingId ? null : bookingId);
+  };
+
+  // Delete/Cancel pre-order
+  const handleDeletePreOrder = async (bookingId) => {
+    if (!confirm('Are you sure you want to delete this pre-order? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setDeletingBooking(bookingId);
+      const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      const token = userData.token;
+
+      if (!token) {
+        alert('Please login to delete pre-orders');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/bookings/${bookingId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('Pre-order deleted successfully!');
+        // Refresh the bookings list
+        if (onRefresh) {
+          onRefresh();
+        } else {
+          window.location.reload();
+        }
+      } else {
+        alert('Failed to delete pre-order: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error deleting pre-order:', error);
+      alert('Error deleting pre-order. Please try again.');
+    } finally {
+      setDeletingBooking(null);
+    }
   };
 
   // Enhanced Booking Card Component
@@ -234,6 +288,22 @@ const PreOrdersSection = ({ bookings, loading }) => {
                   Find Alternative Services
                 </Button>
               )}
+              
+              {/* Delete Pre-Order Button - Available for all statuses */}
+              <div className="mt-3 pt-3 border-t border-muted/50">
+                <button
+                  onClick={() => handleDeletePreOrder(booking.id)}
+                  disabled={deletingBooking === booking.id}
+                  className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {deletingBooking === booking.id ? (
+                    <Icon name="Loader2" size={14} className="animate-spin" />
+                  ) : (
+                    <Icon name="Trash2" size={14} />
+                  )}
+                  <span>Delete Pre-Order</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -287,7 +357,7 @@ const PreOrdersSection = ({ bookings, loading }) => {
 
   const statusConfigs = {
     pending: {
-      badge: '⏳ Pending',
+      badge: '📋 Submitted - Under Review',
       badgeColor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200',
       borderColor: 'border-yellow-300',
       messageBg: 'bg-yellow-50 dark:bg-yellow-900/10',
@@ -297,10 +367,10 @@ const PreOrdersSection = ({ bookings, loading }) => {
       iconBg: 'bg-yellow-100 dark:bg-yellow-900/30',
       iconColor: 'text-yellow-700 dark:text-yellow-300',
       ringColor: 'ring-yellow-200',
-      message: (booking) => `${booking.business_name} is currently reviewing your pre-order request. You'll receive a notification as soon as they respond. This usually takes 24-48 hours.`
+      message: (booking) => `${booking.business_name || 'The service provider'} is currently reviewing your pre-order request. You'll receive a notification as soon as they respond. This usually takes 24-48 hours.`
     },
     confirmed: {
-      badge: '✅ Confirmed',
+      badge: '✅ Approved',
       badgeColor: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
       borderColor: 'border-green-300',
       messageBg: 'bg-green-50 dark:bg-green-900/10',
@@ -310,7 +380,7 @@ const PreOrdersSection = ({ bookings, loading }) => {
       iconBg: 'bg-green-100 dark:bg-green-900/30',
       iconColor: 'text-green-700 dark:text-green-300',
       ringColor: 'ring-green-200',
-      message: (booking) => `🎉 Excellent news! ${booking.business_name} has confirmed your booking. They will contact you shortly with payment details and further instructions to finalize your trip.`
+      message: (booking) => `🎉 Your pre-order has been approved! ${booking.business_name || 'The service provider'} has confirmed your booking. They will contact you shortly with payment details and further instructions to finalize your trip.`
     },
     cancelled: {
       badge: '❌ Rejected',
@@ -323,7 +393,7 @@ const PreOrdersSection = ({ bookings, loading }) => {
       iconBg: 'bg-red-100 dark:bg-red-900/30',
       iconColor: 'text-red-700 dark:text-red-300',
       ringColor: 'ring-red-200',
-      message: (booking) => `We're sorry, but ${booking.business_name} is unable to fulfill your booking at the requested time. This may be due to availability issues. Please explore alternative services or contact the provider for different dates.`
+      message: (booking) => `Your pre-order has been rejected. ${booking.business_name || 'The service provider'} is unable to fulfill your booking at the requested time. This may be due to availability issues. Please explore alternative services or contact the provider for different dates.`
     },
     completed: {
       badge: '🎉 Completed',
@@ -336,7 +406,7 @@ const PreOrdersSection = ({ bookings, loading }) => {
       iconBg: 'bg-blue-100 dark:bg-blue-900/30',
       iconColor: 'text-blue-700 dark:text-blue-300',
       ringColor: 'ring-blue-200',
-      message: (booking) => `Your trip with ${booking.business_name} has been completed! We hope you had an amazing experience. Please consider leaving a review to help other travelers.`
+      message: (booking) => `Your trip with ${booking.business_name || 'the service provider'} has been completed! We hope you had an amazing experience. Please consider leaving a review to help other travelers.`
     }
   };
 
@@ -361,7 +431,7 @@ const PreOrdersSection = ({ bookings, loading }) => {
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 flex items-center">
                 <Icon name="Clock" size={18} className="mr-2" />
-                🟡 Awaiting Response
+                📋 Submitted - Currently Under Review
               </h4>
               <span className="text-sm text-muted-foreground">
                 {pendingBookings.length} {pendingBookings.length === 1 ? 'order' : 'orders'}
@@ -381,7 +451,7 @@ const PreOrdersSection = ({ bookings, loading }) => {
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-semibold text-green-800 dark:text-green-200 flex items-center">
                 <Icon name="CheckCircle" size={18} className="mr-2" />
-                ✅ Confirmed by Provider
+                ✅ Pre-Order Approved
               </h4>
               <span className="text-sm text-muted-foreground">
                 {confirmedBookings.length} {confirmedBookings.length === 1 ? 'order' : 'orders'}
@@ -401,7 +471,7 @@ const PreOrdersSection = ({ bookings, loading }) => {
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-semibold text-red-800 dark:text-red-200 flex items-center">
                 <Icon name="XCircle" size={18} className="mr-2" />
-                ❌ Unable to Fulfill
+                ❌ Pre-Order Rejected
               </h4>
               <span className="text-sm text-muted-foreground">
                 {rejectedBookings.length} {rejectedBookings.length === 1 ? 'order' : 'orders'}

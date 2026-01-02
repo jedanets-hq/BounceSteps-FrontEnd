@@ -24,8 +24,14 @@ const ServicesOverview = () => {
   };
 
   const handleBookNow = () => {
-    // Navigate to journey planner or booking flow
-    window.location.href = '/journey-planner';
+    // Check if user is logged in
+    const savedUser = localStorage.getItem('isafari_user');
+    if (!savedUser) {
+      window.location.href = '/login?redirect=/services-overview';
+      return;
+    }
+    // Navigate to cart & payment
+    window.location.href = '/traveler-dashboard?tab=cart&openPayment=true';
   };
 
   const renderServiceContent = () => {

@@ -6,6 +6,7 @@ import Header from '../../components/ui/Header';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import { PaymentModal, BookingConfirmation } from '../../components/PaymentSystem';
+import { API_URL } from '../../utils/api';
 
 const CartPage = () => {
   const { user, isAuthenticated } = useAuth();
@@ -13,6 +14,7 @@ const CartPage = () => {
   const navigate = useNavigate();
   const [showPayment, setShowPayment] = useState(false);
   const [booking, setBooking] = useState(null);
+  const [preOrderingItem, setPreOrderingItem] = useState(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -32,6 +34,61 @@ const CartPage = () => {
 
   const handleContinueShopping = () => {
     navigate('/journey-planner');
+  };
+
+  // Handle Pre-Order - creates booking and removes from cart
+  const handlePreOrder = async (item) => {
+    try {
+      setPreOrderingItem(item.id);
+      
+      const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      const token = userData.token;
+
+      if (!token) {
+        alert('Please login to create a pre-order');
+        setPreOrderingItem(null);
+        return;
+      }
+
+      // Use service_id (the actual service ID), not item.id (cart item ID)
+      const serviceId = item.service_id || item.serviceId;
+      console.log('📦 Pre-Order: Using service_id:', serviceId, 'from item:', item);
+
+      if (!serviceId) {
+        alert('Error: Service ID not found for this item');
+        setPreOrderingItem(null);
+        return;
+      }
+
+      // Create booking/pre-order
+      const response = await fetch(`${API_URL}/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          serviceId: parseInt(serviceId),
+          bookingDate: new Date().toISOString().split('T')[0], // Today's date
+          participants: item.quantity || 1
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Remove item from cart after successful pre-order (use cart item id)
+        await removeFromCart(item.id);
+        alert(`✅ Pre-order created successfully for "${item.title}"! Check "My Pre-Orders & Provider Feedback" in your dashboard.`);
+      } else {
+        alert('Failed to create pre-order: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error creating pre-order:', error);
+      alert('Error creating pre-order. Please try again.');
+    } finally {
+      setPreOrderingItem(null);
+    }
   };
 
   if (!isAuthenticated) {
@@ -103,22 +160,68 @@ const CartPage = () => {
                   <div className="p-6">
                     <h2 className="text-lg font-semibold text-foreground mb-6">Cart Items</h2>
                     <div className="space-y-4">
-                      {cartItems.map((item) => (
-                        <div key={item.id} className="flex items-start space-x-4 p-4 bg-muted/30 rounded-lg">
-                          <div className="flex-1">
-                            <h3 className="font-medium text-foreground">{item.title}</h3>
-                            <p className="text-sm text-muted-foreground">{item.category}</p>
-                            <div className="flex items-center space-x-1 text-sm text-muted-foreground mt-1">
-                              <Icon name="MapPin" size={14} />
-                              <span>{item.location}</span>
-                            </div>
-                            <div className="flex items-center space-x-1 text-sm text-muted-foreground mt-1">
-                              <Icon name="Star" size={14} className="text-yellow-500" />
-                              <span>{item.rating}</span>
+                      {cartItems.map((item) => {
+                        // Get service image
+                        const getItemImage = () => {
+                          const imageData = item.images || item.image;
+                          if (!imageData) return null;
+                          
+                          let images = [];
+                          if (typeof imageData === 'string') {
+                            try {
+                              const parsed = JSON.parse(imageData);
+                              images = Array.isArray(parsed) ? parsed : [parsed];
+                            } catch (e) {
+                              images = [imageData];
+                            }
+                          } else if (Array.isArray(imageData)) {
+                            images = imageData;
+                          }
+                          
+                          const validImages = images.filter(img => img && img.trim().length > 0);
+                          return validImages.length > 0 ? validImages[0] : null;
+                        };
+                        
+                        const itemImage = getItemImage();
+                        
+                        return (
+                        <div key={item.id} className="flex items-start space-x-4 p-4 bg-muted/30 rounded-lg border border-border">
+                          {/* Service Image */}
+                          <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+                            {itemImage ? (
+                              <img 
+                                src={itemImage} 
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextElementSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className={`w-full h-full flex-col items-center justify-center text-gray-400 ${itemImage ? 'hidden' : 'flex'}`}>
+                              <Icon name="Image" size={24} />
                             </div>
                           </div>
                           
-                          <div className="flex items-center space-x-3">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-foreground truncate">{item.title}</h3>
+                            <p className="text-sm text-muted-foreground">{item.category}</p>
+                            <div className="flex items-center space-x-1 text-sm text-muted-foreground mt-1">
+                              <Icon name="MapPin" size={14} />
+                              <span className="truncate">{item.location}</span>
+                            </div>
+                            <div className="flex items-center space-x-1 text-sm text-muted-foreground mt-1">
+                              <Icon name="Star" size={14} className="text-yellow-500" />
+                              <span>{item.rating || '0.0'}</span>
+                            </div>
+                            {/* Price on mobile */}
+                            <p className="font-semibold text-primary mt-2 lg:hidden">
+                              TZS {(item.price * item.quantity).toLocaleString()}
+                            </p>
+                          </div>
+                          
+                          <div className="flex flex-col lg:flex-row items-end lg:items-center space-y-2 lg:space-y-0 lg:space-x-3">
                             {/* Quantity Controls */}
                             <div className="flex items-center space-x-2">
                               <button
@@ -138,26 +241,50 @@ const CartPage = () => {
                               </button>
                             </div>
                             
-                            {/* Price */}
-                            <div className="text-right min-w-[80px]">
+                            {/* Price - hidden on mobile */}
+                            <div className="text-right min-w-[100px] hidden lg:block">
                               <p className="font-semibold text-foreground">
-                                ${(item.price * item.quantity).toFixed(2)}
+                                TZS {(item.price * item.quantity).toLocaleString()}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                ${item.price} each
+                                TZS {item.price?.toLocaleString()} each
                               </p>
                             </div>
                             
-                            {/* Remove Button */}
-                            <button
-                              onClick={() => removeFromCart(item.id)}
-                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <Icon name="Trash2" size={16} />
-                            </button>
+                            {/* Action Buttons */}
+                            <div className="flex items-center space-x-2">
+                              {/* Submit Pre-Order Button */}
+                              <button
+                                onClick={() => handlePreOrder(item)}
+                                disabled={preOrderingItem === item.id}
+                                className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                                title="Submit Pre-Order Request to Provider"
+                              >
+                                {preOrderingItem === item.id ? (
+                                  <Icon name="Loader2" size={16} className="animate-spin" />
+                                ) : (
+                                  <Icon name="Send" size={16} />
+                                )}
+                                <span className="text-sm font-medium hidden sm:inline">Submit Pre-Order</span>
+                              </button>
+                              
+                              {/* Delete/Remove Button - More Visible */}
+                              <button
+                                onClick={() => {
+                                  if (confirm('Are you sure you want to remove this item from cart?')) {
+                                    removeFromCart(item.id);
+                                  }
+                                }}
+                                className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center space-x-1"
+                                title="Remove from Cart"
+                              >
+                                <Icon name="Trash2" size={16} />
+                                <span className="text-sm font-medium hidden sm:inline">Remove</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      ))}
+                      )})}
                     </div>
                   </div>
                 </div>
@@ -172,11 +299,11 @@ const CartPage = () => {
                     <div className="space-y-3 mb-6">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Subtotal ({getCartCount()} items)</span>
-                        <span className="text-foreground">${getCartTotal().toFixed(2)}</span>
+                        <span className="text-foreground">TZS {getCartTotal().toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Service Fee</span>
-                        <span className="text-foreground">$0.00</span>
+                        <span className="text-foreground">TZS 0</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Taxes</span>
@@ -186,7 +313,7 @@ const CartPage = () => {
                         <div className="flex justify-between">
                           <span className="font-semibold text-foreground">Total</span>
                           <span className="font-bold text-lg text-primary">
-                            ${getCartTotal().toFixed(2)}
+                            TZS {getCartTotal().toLocaleString()}
                           </span>
                         </div>
                       </div>

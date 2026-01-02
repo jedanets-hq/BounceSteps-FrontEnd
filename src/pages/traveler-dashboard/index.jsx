@@ -767,13 +767,36 @@ const TravelerDashboard = () => {
                           </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            plan.status === 'pending_payment' 
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : 'bg-green-100 text-green-700'
-                          }`}>
-                            {plan.status === 'pending_payment' ? '💳 Pending Payment' : '✅ Saved'}
-                          </span>
+                          {(() => {
+                            // Determine trip status based on dates
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const endDate = plan.endDate ? new Date(plan.endDate) : null;
+                            const startDate = plan.startDate ? new Date(plan.startDate) : null;
+                            
+                            let statusLabel = '';
+                            let statusClass = '';
+                            
+                            if (endDate && endDate < today) {
+                              // Trip has ended - Completed
+                              statusLabel = '✅ Completed';
+                              statusClass = 'bg-green-100 text-green-700';
+                            } else if (startDate && startDate <= today && (!endDate || endDate >= today)) {
+                              // Trip is ongoing
+                              statusLabel = '🔄 In Progress';
+                              statusClass = 'bg-blue-100 text-blue-700';
+                            } else {
+                              // Trip is upcoming
+                              statusLabel = '🟡 Upcoming';
+                              statusClass = 'bg-yellow-100 text-yellow-700';
+                            }
+                            
+                            return (
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusClass}`}>
+                                {statusLabel}
+                              </span>
+                            );
+                          })()}
                           <Button 
                             variant="outline" 
                             size="sm"
@@ -788,36 +811,43 @@ const TravelerDashboard = () => {
                             <Icon name="Eye" size={16} />
                             View Details
                           </Button>
-                          {plan.status === 'saved' && (
-                            <Button 
-                              size="sm"
-                              onClick={() => {
-                                // Add services to cart
-                                plan.services?.forEach(service => {
-                                  addToCart({
-                                    ...service,
-                                    location: plan.locationString || `${plan.area || plan.district}, ${plan.region}`,
-                                    travelers: plan.travelers,
-                                    journey_details: {
-                                      startDate: plan.startDate,
-                                      endDate: plan.endDate,
-                                      travelers: plan.travelers
-                                    }
+                          {(() => {
+                            // Only show Continue to Cart button for upcoming trips
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const endDate = plan.endDate ? new Date(plan.endDate) : null;
+                            
+                            // Don't show button if trip is completed
+                            if (endDate && endDate < today) {
+                              return null;
+                            }
+                            
+                            return (
+                              <Button 
+                                size="sm"
+                                onClick={() => {
+                                  // Add services to cart
+                                  plan.services?.forEach(service => {
+                                    addToCart({
+                                      ...service,
+                                      location: plan.locationString || `${plan.area || plan.district}, ${plan.region}`,
+                                      travelers: plan.travelers,
+                                      journey_details: {
+                                        startDate: plan.startDate,
+                                        endDate: plan.endDate,
+                                        travelers: plan.travelers
+                                      }
+                                    });
                                   });
-                                });
-                                // Update plan status to pending_payment
-                                const updatedPlans = savedJourneyPlans.map(p => 
-                                  p.id === plan.id ? {...p, status: 'pending_payment'} : p
-                                );
-                                localStorage.setItem('journey_plans', JSON.stringify(updatedPlans));
-                                // Navigate to cart with payment section open
-                                navigate('/traveler-dashboard?tab=cart&openPayment=true');
-                              }}
-                            >
-                              <Icon name="ShoppingCart" size={16} />
-                              Continue to Cart & Payment
-                            </Button>
-                          )}
+                                  // Navigate to cart with payment section open
+                                  navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                                }}
+                              >
+                                <Icon name="ShoppingCart" size={16} />
+                                Continue to Cart & Payment
+                              </Button>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -842,86 +872,134 @@ const TravelerDashboard = () => {
               </div>
             )}
             
-            {/* Booked Trips List */}
+            {/* Booked Trips List - Shows only actual booked services */}
             <div className="space-y-4">
               <h3 className="font-semibold text-foreground text-lg flex items-center">
                 <Icon name="Calendar" size={20} className="mr-2 text-primary" />
-                Booked Trips
+                Booked Services
               </h3>
               {loadingBookings ? (
                 <div className="flex justify-center py-12">
                   <Icon name="Loader2" size={32} className="animate-spin text-primary" />
                 </div>
-              ) : tripsList.length > 0 ? (
-                tripsList.map((trip, index) => {
-                  const completed = isTripCompleted(trip);
-                  return (
-                    <div key={index} className="bg-card border border-border rounded-lg overflow-hidden">
-                      {/* Trip Header */}
-                      <div className={`p-4 ${completed ? 'bg-green-50 dark:bg-green-900/20' : 'bg-primary/5'}`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${completed ? 'bg-green-500' : 'bg-primary'}`}>
-                              <Icon name={completed ? 'CheckCircle' : 'MapPin'} size={24} className="text-white" />
+              ) : myBookings.length > 0 ? (
+                <div className="space-y-4">
+                  {myBookings.map((booking, index) => {
+                    // Determine booking status based on date
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const bookingDate = new Date(booking.booking_date || booking.bookingDate);
+                    bookingDate.setHours(0, 0, 0, 0);
+                    
+                    let isCompleted = false;
+                    let statusLabel = '';
+                    let statusClass = '';
+                    let iconName = 'MapPin';
+                    let bgClass = 'bg-primary/5';
+                    let iconBgClass = 'bg-primary';
+                    
+                    if (booking.status === 'completed' || bookingDate < today) {
+                      isCompleted = true;
+                      statusLabel = '✅ Completed';
+                      statusClass = 'bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300';
+                      iconName = 'CheckCircle';
+                      bgClass = 'bg-green-50 dark:bg-green-900/20';
+                      iconBgClass = 'bg-green-500';
+                    } else if (booking.status === 'confirmed') {
+                      statusLabel = '✅ Confirmed';
+                      statusClass = 'bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300';
+                    } else if (booking.status === 'pending') {
+                      statusLabel = '🟡 Pending';
+                      statusClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300';
+                    } else if (booking.status === 'rejected' || booking.status === 'cancelled') {
+                      statusLabel = '❌ Cancelled';
+                      statusClass = 'bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-300';
+                    } else {
+                      statusLabel = '🟡 Pending';
+                      statusClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300';
+                    }
+                    
+                    return (
+                      <div key={booking.id || index} className="bg-card border border-border rounded-lg overflow-hidden">
+                        {/* Booking Header */}
+                        <div className={`p-4 ${bgClass}`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${iconBgClass}`}>
+                                <Icon name={iconName} size={24} className="text-white" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-foreground text-lg">
+                                  {booking.service_title || booking.service?.title || 'Service Booking'}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {booking.business_name || booking.provider?.businessName || 'Provider'} • {booking.participants || 1} participant(s)
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  📅 {new Date(booking.booking_date || booking.bookingDate).toLocaleDateString('en-US', { 
+                                    weekday: 'short', 
+                                    year: 'numeric', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-foreground text-lg">
-                                Trip - {trip.date}
-                              </h3>
-                              <p className="text-sm text-muted-foreground">
-                                {trip.bookings.length} service(s) • TZS {trip.totalAmount.toLocaleString()}
-                              </p>
+                            <div className="flex items-center space-x-3">
+                              {/* Status Badge */}
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusClass}`}>
+                                {statusLabel}
+                              </span>
+                              {/* View Button */}
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedTrip({
+                                    ...booking,
+                                    isBooking: true,
+                                    date: new Date(booking.booking_date || booking.bookingDate).toLocaleDateString(),
+                                    bookings: [booking],
+                                    totalAmount: booking.total_price || booking.totalAmount || 0
+                                  });
+                                  setShowTripDetails(true);
+                                }}
+                              >
+                                <Icon name="Eye" size={16} />
+                                View Details
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-3">
-                            {/* Status Badge */}
-                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              completed 
-                                ? 'bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300'
-                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300'
-                            }`}>
-                              {completed ? '✅ Completed' : '🟡 Upcoming'}
+                        </div>
+                        
+                        {/* Booking Details Preview */}
+                        <div className="p-4 border-t border-border">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap gap-2">
+                              <span className="inline-flex items-center px-2 py-1 bg-muted rounded text-xs text-muted-foreground">
+                                <Icon name="Tag" size={12} className="mr-1" />
+                                {booking.service_title || booking.service?.title || 'Service'}
+                              </span>
+                              {booking.category && (
+                                <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded text-xs">
+                                  {booking.category}
+                                </span>
+                              )}
+                            </div>
+                            <span className="font-semibold text-primary">
+                              TZS {(booking.total_price || booking.totalAmount || 0).toLocaleString()}
                             </span>
-                            {/* View Button */}
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                setSelectedTrip(trip);
-                                setShowTripDetails(true);
-                              }}
-                            >
-                              <Icon name="Eye" size={16} />
-                              View Details
-                            </Button>
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Trip Services Preview */}
-                      <div className="p-4 border-t border-border">
-                        <div className="flex flex-wrap gap-2">
-                          {trip.bookings.slice(0, 3).map((booking, idx) => (
-                            <span key={idx} className="inline-flex items-center px-2 py-1 bg-muted rounded text-xs text-muted-foreground">
-                              <Icon name="Tag" size={12} className="mr-1" />
-                              {booking.service_title || booking.service?.title || 'Service'}
-                            </span>
-                          ))}
-                          {trip.bookings.length > 3 && (
-                            <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                              +{trip.bookings.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                </div>
               ) : (
                 <div className="text-center py-12 bg-card border border-border rounded-lg">
-                  <Icon name="MapPin" size={48} className="mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-2">No trips yet</p>
-                  <p className="text-sm text-muted-foreground mb-4">Start planning your first adventure!</p>
+                  <Icon name="Calendar" size={48} className="mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-2">No booked services yet</p>
+                  <p className="text-sm text-muted-foreground mb-4">Book services to see them here!</p>
                   <Button onClick={() => navigate('/journey-planner')}>
                     <Icon name="Plus" size={16} />
                     Plan Your First Trip
@@ -1079,7 +1157,7 @@ const TravelerDashboard = () => {
             </div>
 
             {/* Pre-Orders Section */}
-            <PreOrdersSection bookings={myBookings} loading={loadingBookings} />
+            <PreOrdersSection bookings={myBookings} loading={loadingBookings} onRefresh={fetchMyBookings} />
             
             {/* Cart Items */}
             <div className="bg-card rounded-lg border border-border p-6">
@@ -1103,33 +1181,76 @@ const TravelerDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {cartItems.map((item, index) => (
+                  {cartItems.map((item, index) => {
+                    // Get service image
+                    const getItemImage = () => {
+                      const imageData = item.images || item.image;
+                      if (!imageData) return null;
+                      
+                      let images = [];
+                      if (typeof imageData === 'string') {
+                        try {
+                          const parsed = JSON.parse(imageData);
+                          images = Array.isArray(parsed) ? parsed : [parsed];
+                        } catch (e) {
+                          if (imageData.includes(',')) {
+                            images = imageData.split(',').map(url => url.trim());
+                          } else {
+                            images = [imageData];
+                          }
+                        }
+                      } else if (Array.isArray(imageData)) {
+                        images = imageData;
+                      }
+                      
+                      const validImages = images.filter(img => img && typeof img === 'string' && img.trim().length > 0);
+                      return validImages.length > 0 ? validImages[0] : null;
+                    };
+                    
+                    const itemImage = getItemImage();
+                    
+                    return (
                     <div key={item.id || index} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-foreground text-lg">{item.title}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">{item.category}</p>
+                      <div className="flex gap-4 mb-3">
+                        {/* Service Image */}
+                        <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+                          {itemImage ? (
+                            <img 
+                              src={itemImage} 
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextElementSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-full h-full flex-col items-center justify-center text-gray-400 ${itemImage ? 'hidden' : 'flex'}`}>
+                            <Icon name="Image" size={24} />
+                            <span className="text-xs mt-1">No Image</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-foreground text-lg">{item.title}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">{item.category}</p>
+                              {item.location && (
+                                <p className="text-xs text-muted-foreground flex items-center mt-1">
+                                  <Icon name="MapPin" size={12} className="mr-1" />
+                                  {item.location}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right ml-4">
+                              <p className="text-lg font-bold text-primary">TZS {(item.price * item.quantity).toLocaleString()}</p>
+                              <p className="text-xs text-muted-foreground">TZS {item.price?.toLocaleString()} × {item.quantity}</p>
+                            </div>
+                          </div>
                           {item.description && (
                             <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</p>
                           )}
-                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                            {item.region && (
-                              <span className="flex items-center">
-                                <Icon name="MapPin" size={12} className="mr-1" />
-                                {item.district}, {item.region}
-                              </span>
-                            )}
-                            {item.journey_details && (
-                              <>
-                                <span>• {item.journey_details.travelers} traveler(s)</span>
-                                <span>• {item.quantity} day(s)</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right ml-4">
-                          <p className="text-lg font-bold text-primary">TZS {(item.price * item.quantity).toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground">TZS {item.price.toLocaleString()} × {item.quantity} days</p>
                         </div>
                       </div>
                       
@@ -1165,24 +1286,50 @@ const TravelerDashboard = () => {
                       )}
                       
                       <div className="flex justify-between items-center">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-destructive"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (confirm('Remove this service from cart?')) {
-                              removeFromCart(item.id);
-                            }
-                          }}
-                        >
-                          <Icon name="Trash2" size={14} />
-                          Remove
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="default" 
+                            size="sm"
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              
+                              const bookingDate = item.journey_details?.startDate || new Date().toISOString().split('T')[0];
+                              const participants = item.journey_details?.travelers || item.quantity || 1;
+                              // Use service_id (the actual service ID), not item.id (cart item ID)
+                              const serviceId = item.service_id || item.serviceId || item.id;
+                              console.log('📦 Pre-Order: Using service_id:', serviceId, 'from item:', item);
+                              const success = await createBooking(serviceId, bookingDate, participants);
+                              
+                              if (success) {
+                                // Remove from cart after successful pre-order (use cart item id)
+                                removeFromCart(item.id);
+                                alert(`✅ Pre-order created for "${item.title}"! Check "My Pre-Orders & Provider Feedback" section above.`);
+                              }
+                            }}
+                          >
+                            <Icon name="Package" size={14} />
+                            Pre-Order
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-destructive bg-red-50 hover:bg-red-100 border-red-200"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (confirm('Remove this service from cart?')) {
+                                removeFromCart(item.id);
+                              }
+                            }}
+                          >
+                            <Icon name="Trash2" size={14} />
+                            Remove
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  ))}
+                  )})}
                   
                   {/* Cart Summary & Payment Options */}
                   <div className="border-t pt-6 mt-6">
@@ -1227,9 +1374,16 @@ const TravelerDashboard = () => {
                             let successCount = 0;
                             for (const item of cartItems) {
                               const bookingDate = item.journey_details?.startDate || new Date().toISOString().split('T')[0];
-                              const participants = item.journey_details?.travelers || 1;
-                              const success = await createBooking(item.id || item.service_id, bookingDate, participants);
-                              if (success) successCount++;
+                              const participants = item.journey_details?.travelers || item.quantity || 1;
+                              // Use service_id (the actual service ID), not item.id (cart item ID)
+                              const serviceId = item.service_id || item.serviceId;
+                              console.log('📦 Bulk Pre-Order: Using service_id:', serviceId, 'for item:', item.title);
+                              if (serviceId) {
+                                const success = await createBooking(serviceId, bookingDate, participants);
+                                if (success) successCount++;
+                              } else {
+                                console.error('❌ No service_id found for item:', item);
+                              }
                             }
                             
                             if (successCount > 0) {

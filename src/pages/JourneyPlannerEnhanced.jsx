@@ -1375,7 +1375,7 @@ const JourneyPlannerEnhanced = () => {
               // Save trip AND add to cart
               const journeyPlan = {
                 id: Date.now(),
-                status: 'pending_payment',
+                status: 'saved',
                 country: 'Tanzania',
                 region: selectedLocation.region,
                 district: selectedLocation.district,

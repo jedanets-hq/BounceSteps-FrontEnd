@@ -582,25 +582,33 @@ const ProviderProfile = () => {
                             onClick={async () => {
                               const savedUser = localStorage.getItem('isafari_user');
                               if (!savedUser) {
-                                navigate('/login');
+                                navigate('/login?redirect=/provider/' + providerId);
                                 return;
                               }
                               
                               try {
-                                const result = await bookingsAPI.create({
-                                  serviceId: service.id,
-                                  bookingDate: new Date().toISOString().split('T')[0],
-                                  participants: 1
-                                });
+                                // Add to cart first
+                                const bookingItem = {
+                                  id: service.id,
+                                  name: service.title,
+                                  title: service.title,
+                                  price: parseFloat(service.price || 0),
+                                  quantity: 1,
+                                  image: service.images && service.images.length > 0 ? service.images[0] : null,
+                                  description: service.description,
+                                  type: 'service',
+                                  category: service.category,
+                                  location: service.location,
+                                  provider_id: service.provider_id || providerId,
+                                  business_name: service.business_name || provider?.business_name
+                                };
                                 
-                                if (result.success) {
-                                  window.location.href = '/traveler-dashboard?tab=cart&openPayment=true';
-                                } else {
-                                  alert('❌ ' + (result.message || 'Failed to create booking'));
-                                }
+                                await addToCart(bookingItem);
+                                // Navigate to cart & payment
+                                navigate('/traveler-dashboard?tab=cart&openPayment=true');
                               } catch (error) {
-                                console.error('Error booking:', error);
-                                alert('❌ Error processing booking');
+                                console.error('Error adding to cart:', error);
+                                alert('❌ Error: ' + error.message);
                               }
                             }}
                           >

@@ -18,7 +18,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
   };
 
   const handleBookingAction = async (bookingId, action) => {
-    if (!confirm(`Are you sure you want to ${action} this pre-order?`)) {
+    if (!confirm(`Are you sure you want to ${action === 'confirmed' ? 'approve' : action === 'cancelled' ? 'reject' : action} this pre-order?`)) {
       return;
     }
     await onUpdateBookingStatus(bookingId, action);
@@ -36,11 +36,37 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Get service image from booking
+  const getServiceImage = (booking) => {
+    const imageData = booking.service_images || booking.images;
+    
+    if (!imageData) return null;
+
+    let images = [];
+    if (typeof imageData === 'string') {
+      try {
+        const parsed = JSON.parse(imageData);
+        images = Array.isArray(parsed) ? parsed : [parsed];
+      } catch (e) {
+        if (imageData.includes(',')) {
+          images = imageData.split(',').map(url => url.trim());
+        } else {
+          images = [imageData];
+        }
+      }
+    } else if (Array.isArray(imageData)) {
+      images = imageData;
+    }
+    
+    const validImages = images.filter(img => img && typeof img === 'string' && img.trim().length > 0);
+    return validImages.length > 0 ? validImages[0] : null;
   };
 
   return (
@@ -72,27 +98,27 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
-          �� Pending ({statusCounts.pending})
+          📋 Pending Review ({statusCounts.pending})
         </button>
         <button
           onClick={() => setFilterStatus('confirmed')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             filterStatus === 'confirmed'
-              ? 'bg-blue-500 text-white shadow-sm'
+              ? 'bg-green-500 text-white shadow-sm'
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
-          ✅ Confirmed ({statusCounts.confirmed})
+          ✅ Approved ({statusCounts.confirmed})
         </button>
         <button
           onClick={() => setFilterStatus('completed')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             filterStatus === 'completed'
-              ? 'bg-green-500 text-white shadow-sm'
+              ? 'bg-blue-500 text-white shadow-sm'
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
-          ✅ Completed ({statusCounts.completed})
+          🎉 Completed ({statusCounts.completed})
         </button>
         <button
           onClick={() => setFilterStatus('cancelled')}
@@ -105,6 +131,21 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
           ❌ Rejected ({statusCounts.cancelled})
         </button>
       </div>
+
+      {/* Info message for pending orders */}
+      {filterStatus === 'pending' && statusCounts.pending > 0 && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Icon name="AlertCircle" size={20} className="text-yellow-600 mt-0.5" />
+            <div>
+              <p className="font-medium text-yellow-800 dark:text-yellow-200">Action Required</p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                You have {statusCounts.pending} pre-order(s) waiting for your review. Click "Approve" to accept or "Reject" to decline each request.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         {loading ? (
@@ -120,20 +161,44 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
             </p>
           </div>
         ) : (
-          filteredBookings.map((booking) => (
+          filteredBookings.map((booking) => {
+            const serviceImage = getServiceImage(booking);
+            
+            return (
             <div key={booking.id} className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start gap-4 mb-4">
+                {/* Service Image */}
+                <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+                  {serviceImage ? (
+                    <img 
+                      src={serviceImage} 
+                      alt={booking.service_title || 'Service'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextElementSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-full h-full flex-col items-center justify-center text-gray-400 ${serviceImage ? 'hidden' : 'flex'}`}>
+                    <Icon name="Image" size={24} />
+                    <span className="text-xs mt-1">No Image</span>
+                  </div>
+                </div>
+                
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h4 className="font-medium text-foreground">
-                      {`${booking.traveler_first_name || ''} ${booking.traveler_last_name || ''}`.trim() || booking.traveler?.name || 'Unknown Traveler'}
-                    </h4>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
-                      {booking.status === 'pending' ? '🟡 Pending Review' :
-                       booking.status === 'confirmed' ? '✅ Confirmed' :
-                       booking.status === 'completed' ? '✅ Completed' :
-                       '❌ Rejected'}
-                    </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <h4 className="font-medium text-foreground">
+                        {`${booking.traveler_first_name || ''} ${booking.traveler_last_name || ''}`.trim() || booking.traveler?.name || 'Unknown Traveler'}
+                      </h4>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                        {booking.status === 'pending' ? '📋 Pending Review' :
+                         booking.status === 'confirmed' ? '✅ Approved' :
+                         booking.status === 'completed' ? '🎉 Completed' :
+                         '❌ Rejected'}
+                      </span>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground mb-3">{booking.service_title || 'Service'}</p>
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -149,7 +214,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                     </div>
                     <div>
                       <span className="text-muted-foreground">Guests:</span>
-                      <p className="font-medium text-foreground">{booking.number_of_guests || 1}</p>
+                      <p className="font-medium text-foreground">{booking.number_of_guests || booking.participants || 1}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Pre-Ordered:</span>
@@ -173,14 +238,16 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                     <Button 
                       variant="default" 
                       size="sm"
+                      className="bg-green-600 hover:bg-green-700"
                       onClick={() => handleBookingAction(booking.id, 'confirmed')}
                     >
                       <Icon name="Check" size={14} />
-                      Accept
+                      Approve Pre-Order
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
+                      className="border-red-300 text-red-600 hover:bg-red-50"
                       onClick={() => handleBookingAction(booking.id, 'cancelled')}
                     >
                       <Icon name="X" size={14} />
@@ -209,7 +276,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                 </Button>
               </div>
             </div>
-          ))
+          )})
         )}
       </div>
     </div>

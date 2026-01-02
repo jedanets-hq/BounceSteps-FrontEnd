@@ -141,14 +141,24 @@ router.get('/', authenticateJWT, async (req, res) => {
       end_time: b.end_time,
       participants: b.participants,
       total_amount: b.total_amount,
+      total_price: b.total_amount, // Alias for frontend compatibility
       status: b.status,
       payment_status: b.payment_status,
       special_requests: b.special_requests,
       created_at: b.created_at,
       updated_at: b.updated_at,
       service_title: b.service_title,
+      service_description: b.description,
+      service_location: b.location,
+      service_images: b.images, // Include service images
+      images: b.images, // Alias for frontend compatibility
       business_name: b.business_name,
-      traveler_name: `${b.first_name || ''} ${b.last_name || ''}`.trim()
+      provider_location: b.provider_location,
+      traveler_name: `${b.first_name || ''} ${b.last_name || ''}`.trim(),
+      traveler_first_name: b.first_name,
+      traveler_last_name: b.last_name,
+      traveler_email: b.email,
+      traveler_phone: b.phone
     }));
 
     console.log('✅ [GET BOOKINGS] Found:', enrichedBookings.length, 'bookings');
@@ -163,6 +173,87 @@ router.get('/', authenticateJWT, async (req, res) => {
   } catch (error) {
     console.error('❌ GET BOOKINGS Error:', error);
     res.status(500).json({ success: false, message: 'Error fetching bookings' });
+  }
+});
+
+// Get provider's bookings (for service provider dashboard)
+router.get('/provider/my-bookings', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log('📋 [PROVIDER BOOKINGS] User:', userId);
+
+    // Get provider ID
+    const providerResult = await pool.query(
+      'SELECT id FROM service_providers WHERE user_id = $1',
+      [parseInt(userId)]
+    );
+    
+    if (providerResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Provider profile not found' });
+    }
+
+    const providerId = providerResult.rows[0].id;
+
+    // Get all bookings for this provider with service and traveler info
+    const query = `
+      SELECT 
+        b.*,
+        s.title as service_title,
+        s.description as service_description,
+        s.category,
+        s.price,
+        s.location as service_location,
+        s.images,
+        u.first_name as traveler_first_name,
+        u.last_name as traveler_last_name,
+        u.email as traveler_email,
+        u.phone as traveler_phone
+      FROM bookings b
+      LEFT JOIN services s ON b.service_id = s.id
+      LEFT JOIN users u ON b.traveler_id = u.id
+      WHERE b.provider_id = $1
+      ORDER BY b.created_at DESC
+    `;
+
+    const result = await pool.query(query, [providerId]);
+
+    const bookings = result.rows.map(b => ({
+      id: b.id,
+      traveler_id: b.traveler_id,
+      service_id: b.service_id,
+      provider_id: b.provider_id,
+      booking_date: b.booking_date,
+      travel_date: b.booking_date, // Alias for frontend
+      start_time: b.start_time,
+      end_time: b.end_time,
+      participants: b.participants,
+      number_of_guests: b.participants, // Alias for frontend
+      total_amount: b.total_amount,
+      status: b.status,
+      payment_status: b.payment_status,
+      special_requests: b.special_requests,
+      created_at: b.created_at,
+      updated_at: b.updated_at,
+      service_title: b.service_title,
+      service_description: b.service_description,
+      service_location: b.service_location,
+      service_images: b.images,
+      images: b.images,
+      traveler_first_name: b.traveler_first_name,
+      traveler_last_name: b.traveler_last_name,
+      traveler_email: b.traveler_email,
+      traveler_phone: b.traveler_phone
+    }));
+
+    console.log('✅ [PROVIDER BOOKINGS] Found:', bookings.length, 'bookings');
+
+    res.json({ 
+      success: true, 
+      bookings
+    });
+  } catch (error) {
+    console.error('❌ PROVIDER BOOKINGS Error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching provider bookings' });
   }
 });
 
@@ -343,6 +434,52 @@ router.patch('/:id/status', authenticateJWT, async (req, res) => {
     }
 
     console.log('✅ Booking status updated:', bookingId, '→', status);
+
+    res.json({ success: true, message: 'Booking status updated', booking: updateResult.rows[0] });
+  } catch (error) {
+    console.error('❌ UPDATE BOOKING STATUS Error:', error);
+    res.status(500).json({ success: false, message: 'Error updating booking status' });
+  }
+});
+
+// Update booking status (provider only) - PUT method for compatibility
+router.put('/:id/status', authenticateJWT, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+
+    const bookingId = parseInt(req.params.id);
+    if (isNaN(bookingId)) {
+      return res.status(400).json({ success: false, message: 'Invalid booking ID' });
+    }
+
+    // Get provider
+    const providerResult = await pool.query(
+      'SELECT id FROM service_providers WHERE user_id = $1',
+      [parseInt(req.user.id)]
+    );
+    
+    if (providerResult.rows.length === 0) {
+      return res.status(403).json({ success: false, message: 'Only providers can update booking status' });
+    }
+
+    const providerId = providerResult.rows[0].id;
+
+    // Update booking
+    const updateResult = await pool.query(
+      `UPDATE bookings SET status = $1, updated_at = NOW() 
+       WHERE id = $2 AND provider_id = $3 
+       RETURNING *`,
+      [status, bookingId, providerId]
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    console.log('✅ Booking status updated (PUT):', bookingId, '→', status);
 
     res.json({ success: true, message: 'Booking status updated', booking: updateResult.rows[0] });
   } catch (error) {
