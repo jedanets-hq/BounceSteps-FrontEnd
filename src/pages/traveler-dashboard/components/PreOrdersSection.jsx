@@ -8,6 +8,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
   const navigate = useNavigate();
   const [expandedBooking, setExpandedBooking] = useState(null);
   const [deletingBooking, setDeletingBooking] = useState(null);
+  const [submittingBooking, setSubmittingBooking] = useState(null);
 
   // Debug: Log bookings data
   React.useEffect(() => {
@@ -59,9 +60,9 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
     setExpandedBooking(expandedBooking === bookingId ? null : bookingId);
   };
 
-  // Delete/Cancel pre-order
+  // Delete/Cancel pre-order PERMANENTLY
   const handleDeletePreOrder = async (bookingId) => {
-    if (!confirm('Are you sure you want to delete this pre-order? This action cannot be undone.')) {
+    if (!confirm('⚠️ DELETE PERMANENTLY?\n\nThis will permanently remove this pre-order. This action cannot be undone.\n\nAre you sure?')) {
       return;
     }
 
@@ -78,14 +79,15 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
       const response = await fetch(`${API_URL}/bookings/${bookingId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
       const data = await response.json();
       
       if (data.success) {
-        alert('Pre-order deleted successfully!');
+        alert('✅ Pre-order deleted permanently!');
         // Refresh the bookings list
         if (onRefresh) {
           onRefresh();
@@ -93,13 +95,58 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
           window.location.reload();
         }
       } else {
-        alert('Failed to delete pre-order: ' + data.message);
+        alert('❌ Failed to delete: ' + (data.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('Error deleting pre-order:', error);
-      alert('Error deleting pre-order. Please try again.');
+      alert('❌ Error deleting pre-order. Please try again.');
     } finally {
       setDeletingBooking(null);
+    }
+  };
+
+  // Submit draft pre-order to provider
+  const handleSubmitPreOrder = async (bookingId) => {
+    if (!confirm('📤 SUBMIT PRE-ORDER REQUEST?\n\nThis will send your pre-order request to the service provider for review.\n\nThey will respond within 24-48 hours.\n\nContinue?')) {
+      return;
+    }
+
+    try {
+      setSubmittingBooking(bookingId);
+      const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      const token = userData.token;
+
+      if (!token) {
+        alert('Please login to submit pre-orders');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/bookings/${bookingId}/submit`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('✅ Pre-order submitted successfully!\n\nThe service provider will review your request and respond within 24-48 hours.');
+        // Refresh the bookings list
+        if (onRefresh) {
+          onRefresh();
+        } else {
+          window.location.reload();
+        }
+      } else {
+        alert('❌ Failed to submit: ' + (data.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error submitting pre-order:', error);
+      alert('❌ Error submitting pre-order. Please try again.');
+    } finally {
+      setSubmittingBooking(null);
     }
   };
 
@@ -276,6 +323,29 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
                 </div>
               )}
 
+              {/* Submit Button for Draft Orders - IMPORTANT: This sends to provider */}
+              {status === 'draft' && (
+                <div className="mt-3">
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="w-full bg-primary hover:bg-primary/90"
+                    onClick={() => handleSubmitPreOrder(booking.id)}
+                    disabled={submittingBooking === booking.id}
+                  >
+                    {submittingBooking === booking.id ? (
+                      <Icon name="Loader2" size={14} className="animate-spin" />
+                    ) : (
+                      <Icon name="Send" size={14} />
+                    )}
+                    Submit Pre-Order Request to Provider
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    Click above to send this request to the service provider for review
+                  </p>
+                </div>
+              )}
+
               {/* Action Button for Rejected Orders */}
               {status === 'cancelled' && (
                 <Button 
@@ -354,8 +424,22 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
   const rejectedBookings = bookings.filter(b => b.status === 'cancelled');
   const completedBookings = bookings.filter(b => b.status === 'completed');
+  const draftBookings = bookings.filter(b => b.status === 'draft');
 
   const statusConfigs = {
+    draft: {
+      badge: '📝 Draft - Not Submitted',
+      badgeColor: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
+      borderColor: 'border-gray-300',
+      messageBg: 'bg-gray-50 dark:bg-gray-900/10',
+      messageTitle: 'text-gray-800 dark:text-gray-200',
+      messageText: 'text-gray-700 dark:text-gray-300',
+      icon: 'FileEdit',
+      iconBg: 'bg-gray-100 dark:bg-gray-900/30',
+      iconColor: 'text-gray-700 dark:text-gray-300',
+      ringColor: 'ring-gray-200',
+      message: (booking) => `This pre-order has NOT been sent to ${booking.business_name || 'the service provider'} yet. Click "Submit Pre-Order Request" below to send it for review.`
+    },
     pending: {
       badge: '📋 Submitted - Under Review',
       badgeColor: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200',
@@ -425,6 +509,39 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
       </div>
       
       <div className="space-y-6">
+        {/* Draft Pre-Orders - Not yet submitted to provider */}
+        {draftBookings.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-semibold text-gray-800 dark:text-gray-200 flex items-center">
+                <Icon name="FileEdit" size={18} className="mr-2" />
+                📝 Draft - Ready to Submit
+              </h4>
+              <span className="text-sm text-muted-foreground">
+                {draftBookings.length} {draftBookings.length === 1 ? 'order' : 'orders'}
+              </span>
+            </div>
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-4">
+              <div className="flex items-start gap-3">
+                <Icon name="Info" size={20} className="text-blue-600 dark:text-blue-400 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                    These pre-orders have NOT been sent to providers yet
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                    Click "Submit Pre-Order Request" on each item to send it to the service provider for review.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {draftBookings.map(booking => (
+                <BookingCard key={booking.id} booking={booking} status="draft" statusConfig={statusConfigs.draft} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Pending Pre-Orders */}
         {pendingBookings.length > 0 && (
           <div>

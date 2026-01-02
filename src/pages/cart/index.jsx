@@ -79,7 +79,7 @@ const CartPage = () => {
       if (data.success) {
         // Remove item from cart after successful pre-order (use cart item id)
         await removeFromCart(item.id);
-        alert(`✅ Pre-order created successfully for "${item.title}"! Check "My Pre-Orders & Provider Feedback" in your dashboard.`);
+        alert(`✅ Pre-order saved for "${item.title}"!\n\n📝 IMPORTANT: This pre-order is saved as DRAFT.\n\nGo to "My Pre-Orders" section and click "Submit Pre-Order Request" to send it to the provider for review.`);
       } else {
         alert('Failed to create pre-order: ' + data.message);
       }

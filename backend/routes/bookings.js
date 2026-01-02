@@ -368,7 +368,7 @@ router.post('/', [authenticateJWT, body('serviceId').notEmpty()], async (req, re
       participants: parseInt(participants) || 1,
       total_amount: totalAmount,
       special_requests: specialRequests || null,
-      status: 'pending',
+      status: 'draft', // Start as draft - traveler must submit to send to provider
       payment_status: 'pending'
     };
 
@@ -400,7 +400,7 @@ router.post('/', [authenticateJWT, body('serviceId').notEmpty()], async (req, re
 router.patch('/:id/status', authenticateJWT, async (req, res) => {
   try {
     const { status } = req.body;
-    if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
+    if (!['draft', 'pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
@@ -442,11 +442,64 @@ router.patch('/:id/status', authenticateJWT, async (req, res) => {
   }
 });
 
+// Submit draft pre-order to provider (traveler only) - changes status from draft to pending
+router.patch('/:id/submit', authenticateJWT, async (req, res) => {
+  try {
+    const bookingId = parseInt(req.params.id);
+    if (isNaN(bookingId)) {
+      return res.status(400).json({ success: false, message: 'Invalid booking ID' });
+    }
+
+    const userId = parseInt(req.user.id);
+
+    // Check if booking exists and belongs to this traveler
+    const checkResult = await pool.query(
+      'SELECT id, status, traveler_id FROM bookings WHERE id = $1',
+      [bookingId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Pre-order not found' });
+    }
+
+    const booking = checkResult.rows[0];
+
+    // Check authorization - only traveler can submit their own pre-order
+    if (booking.traveler_id !== userId) {
+      return res.status(403).json({ success: false, message: 'Not authorized to submit this pre-order' });
+    }
+
+    // Check if status is draft
+    if (booking.status !== 'draft') {
+      return res.status(400).json({ success: false, message: 'Only draft pre-orders can be submitted' });
+    }
+
+    // Update status to pending (submitted to provider)
+    const updateResult = await pool.query(
+      `UPDATE bookings SET status = 'pending', updated_at = NOW() 
+       WHERE id = $1 
+       RETURNING *`,
+      [bookingId]
+    );
+
+    console.log('✅ Pre-order submitted to provider:', bookingId, 'draft → pending');
+
+    res.json({ 
+      success: true, 
+      message: 'Pre-order submitted to provider successfully! They will review and respond within 24-48 hours.', 
+      booking: updateResult.rows[0] 
+    });
+  } catch (error) {
+    console.error('❌ SUBMIT PRE-ORDER Error:', error);
+    res.status(500).json({ success: false, message: 'Error submitting pre-order' });
+  }
+});
+
 // Update booking status (provider only) - PUT method for compatibility
 router.put('/:id/status', authenticateJWT, async (req, res) => {
   try {
     const { status } = req.body;
-    if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
+    if (!['draft', 'pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
