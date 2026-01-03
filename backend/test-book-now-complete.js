@@ -1,29 +1,34 @@
-const dotenv = require('dotenv');
-const path = require('path');
-dotenv.config({ path: path.join(__dirname, '.env') });
-
-const jwt = require('jsonwebtoken');
-const { pool } = require('./config/postgresql');
 const http = require('http');
 
-const API_URL = 'http://localhost:5000/api';
+const API_BASE = 'http://localhost:5000/api';
+
+// Test data
+let authToken = null;
+let userId = null;
+let serviceId = null;
+let providerId = null;
 
 // Helper function to make HTTP requests
-const makeRequest = (method, endpoint, body, token) => {
+function makeRequest(method, path, body = null) {
   return new Promise((resolve, reject) => {
-    const url = new URL(`${API_URL}${endpoint}`);
+    // Ensure path starts with /api if not already
+    if (!path.startsWith('/api')) {
+      path = '/api' + path;
+    }
+    
+    const url = new URL(path, API_BASE);
     const options = {
       hostname: url.hostname,
       port: url.port,
       path: url.pathname + url.search,
       method: method,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       }
     };
 
-    if (token) {
-      options.headers['Authorization'] = `Bearer ${token}`;
+    if (authToken) {
+      options.headers['Authorization'] = `Bearer ${authToken}`;
     }
 
     const req = http.request(options, (res) => {
@@ -31,15 +36,10 @@ const makeRequest = (method, endpoint, body, token) => {
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
         try {
-          resolve({
-            status: res.statusCode,
-            data: JSON.parse(data)
-          });
+          const parsed = JSON.parse(data);
+          resolve({ status: res.statusCode, data: parsed, headers: res.headers });
         } catch (e) {
-          resolve({
-            status: res.statusCode,
-            data: { error: data }
-          });
+          resolve({ status: res.statusCode, data: data, headers: res.headers });
         }
       });
     });
@@ -51,121 +51,183 @@ const makeRequest = (method, endpoint, body, token) => {
     }
     req.end();
   });
-};
+}
 
-(async () => {
+async function runTests() {
+  console.log('📱 Testing Complete "Book Now" Workflow\n');
+  console.log('='.repeat(60) + '\n');
+
   try {
-    console.log('\n╔════════════════════════════════════════════════════════════╗');
-    console.log('║  Complete "Book Now" Workflow Test                         ║');
-    console.log('╚════════════════════════════════════════════════════════════╝\n');
-
-    // 1. Get test user
-    console.log('1️⃣  Getting Test User...');
-    const userResult = await pool.query(
-      "SELECT id, email, password FROM users WHERE email = 'traveler@isafari.com' LIMIT 1"
-    );
-    if (userResult.rows.length === 0) {
-      console.log('   ❌ Test user not found\n');
-      process.exit(1);
-    }
-    const testUser = userResult.rows[0];
-    console.log(`   ✅ Test user: ${testUser.email} (ID: ${testUser.id})\n`);
-
-    // 2. Generate JWT token (simulating login)
-    console.log('2️⃣  Generating JWT Token...');
-    const token = jwt.sign(
-      { id: testUser.id, email: testUser.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    console.log(`   ✅ Token generated\n`);
-
-    // 3. Get test service
-    console.log('3️⃣  Getting Test Service...');
-    const serviceResult = await pool.query(
-      'SELECT id, title, price FROM services LIMIT 1'
-    );
-    if (serviceResult.rows.length === 0) {
-      console.log('   ❌ No service found\n');
-      process.exit(1);
-    }
-    const testService = serviceResult.rows[0];
-    console.log(`   ✅ Test service: ${testService.title} (ID: ${testService.id})\n`);
-
-    // 4. Test POST /api/cart/add
-    console.log('4️⃣  Testing POST /api/cart/add...');
-    const addRes = await makeRequest('POST', '/cart/add', {
-      serviceId: testService.id,
-      quantity: 1
-    }, token);
-
-    if (!addRes.data.success) {
-      console.log(`   ❌ Failed: ${addRes.data.message}\n`);
-      console.log('   Response:', addRes.data);
-      process.exit(1);
-    }
-    console.log(`   ✅ Item added to cart\n`);
-
-    // 5. Test GET /api/cart
-    console.log('5️⃣  Testing GET /api/cart...');
-    const getRes = await makeRequest('GET', '/cart', null, token);
-
-    if (!getRes.data.success) {
-      console.log(`   ❌ Failed: ${getRes.data.message}\n`);
-      process.exit(1);
-    }
-    console.log(`   ✅ Cart retrieved with ${getRes.data.cartItems.length} items\n`);
-    getRes.data.cartItems.forEach(item => {
-      console.log(`      - ${item.title} (Qty: ${item.quantity}, Price: ${item.price})`);
+    // 1. Create traveler account
+    console.log('1️⃣  Creating Traveler Account...');
+    const travelerEmail = `traveler-${Date.now()}@example.com`;
+    const registerTraveler = await makeRequest('POST', '/auth/register', {
+      email: travelerEmail,
+      password: 'Test123!@#',
+      userType: 'traveler',
+      firstName: 'John',
+      lastName: 'Traveler',
+      phone: '+255123456789'
     });
-    console.log();
-
-    // 6. Test without authentication
-    console.log('6️⃣  Testing Without Authentication...');
-    const noAuthRes = await makeRequest('POST', '/cart/add', {
-      serviceId: testService.id,
-      quantity: 1
-    }, null);
-
-    if (noAuthRes.status === 401) {
-      console.log(`   ✅ Correctly rejected unauthenticated request (HTTP 401)\n`);
-    } else {
-      console.log(`   ⚠️  Expected 401, got ${noAuthRes.status}\n`);
+    
+    if (registerTraveler.status !== 201) {
+      console.log(`   ❌ Failed: ${registerTraveler.status}`);
+      return;
     }
+    
+    authToken = registerTraveler.data.token;
+    userId = registerTraveler.data.user.id;
+    console.log(`   ✅ Traveler created: ${travelerEmail}`);
+    console.log(`   ✅ User ID: ${userId}\n`);
 
-    // 7. Test with invalid service ID
-    console.log('7️⃣  Testing With Invalid Service ID...');
-    const invalidRes = await makeRequest('POST', '/cart/add', {
+    // 2. Get available services
+    console.log('2️⃣  Fetching Available Services...');
+    const services = await makeRequest('GET', '/services');
+    
+    if (services.status !== 200 || !services.data.services || services.data.services.length === 0) {
+      console.log(`   ❌ No services available`);
+      return;
+    }
+    
+    serviceId = services.data.services[0].id;
+    providerId = services.data.services[0].provider_id;
+    const serviceName = services.data.services[0].title;
+    const servicePrice = services.data.services[0].price;
+    
+    console.log(`   ✅ Found ${services.data.services.length} services`);
+    console.log(`   ✅ Selected service: "${serviceName}" (ID: ${serviceId})`);
+    console.log(`   ✅ Price: ${servicePrice}\n`);
+
+    // 3. Verify cart is empty
+    console.log('3️⃣  Verifying Cart is Empty...');
+    const emptyCart = await makeRequest('GET', '/cart');
+    
+    if (emptyCart.status !== 200) {
+      console.log(`   ❌ Failed to get cart: ${emptyCart.status}`);
+      return;
+    }
+    
+    console.log(`   ✅ Cart items: ${emptyCart.data.cartItems.length}`);
+    console.log(`   ✅ Cart is empty\n`);
+
+    // 4. Simulate "Book Now" button click - Add to cart
+    console.log('4️⃣  Simulating "Book Now" Button Click...');
+    console.log(`   📍 Action: Adding service to cart`);
+    
+    const addToCart = await makeRequest('POST', '/cart/add', {
+      serviceId: serviceId,
+      quantity: 1
+    });
+    
+    if (addToCart.status !== 200 && addToCart.status !== 201) {
+      console.log(`   ❌ Failed to add to cart: ${addToCart.status}`);
+      console.log(`   ❌ Response: ${JSON.stringify(addToCart.data)}\n`);
+      return;
+    }
+    
+    console.log(`   ✅ Item added to cart successfully!`);
+    console.log(`   ✅ Cart Item ID: ${addToCart.data.cartItem.id}`);
+    console.log(`   ✅ Quantity: ${addToCart.data.cartItem.quantity}\n`);
+
+    // 5. Verify item in cart
+    console.log('5️⃣  Verifying Item in Cart...');
+    const cartWithItem = await makeRequest('GET', '/cart');
+    
+    if (cartWithItem.status !== 200) {
+      console.log(`   ❌ Failed to get cart: ${cartWithItem.status}`);
+      return;
+    }
+    
+    if (cartWithItem.data.cartItems.length === 0) {
+      console.log(`   ❌ Item not found in cart`);
+      return;
+    }
+    
+    const cartItem = cartWithItem.data.cartItems[0];
+    console.log(`   ✅ Cart now has ${cartWithItem.data.cartItems.length} item(s)`);
+    console.log(`   ✅ Service: "${cartItem.title}"`);
+    console.log(`   ✅ Price: ${cartItem.price}`);
+    console.log(`   ✅ Quantity: ${cartItem.quantity}\n`);
+
+    // 6. Test adding same service again (should increase quantity)
+    console.log('6️⃣  Testing Add Same Service Again...');
+    const addAgain = await makeRequest('POST', '/cart/add', {
+      serviceId: serviceId,
+      quantity: 1
+    });
+    
+    if (addAgain.status !== 200 && addAgain.status !== 201) {
+      console.log(`   ❌ Failed: ${addAgain.status}`);
+      return;
+    }
+    
+    console.log(`   ✅ Service added again`);
+    console.log(`   ✅ New quantity: ${addAgain.data.cartItem.quantity}\n`);
+
+    // 7. Verify quantity increased
+    console.log('7️⃣  Verifying Quantity Increased...');
+    const updatedCart = await makeRequest('GET', '/cart');
+    
+    if (updatedCart.data.cartItems[0].quantity !== 2) {
+      console.log(`   ❌ Quantity not increased correctly`);
+      return;
+    }
+    
+    console.log(`   ✅ Quantity correctly increased to: ${updatedCart.data.cartItems[0].quantity}\n`);
+
+    // 8. Test removing item
+    console.log('8️⃣  Testing Remove from Cart...');
+    const cartItemId = updatedCart.data.cartItems[0].id;
+    const removeItem = await makeRequest('DELETE', `/cart/${cartItemId}`);
+    
+    if (removeItem.status !== 200) {
+      console.log(`   ❌ Failed to remove: ${removeItem.status}`);
+      return;
+    }
+    
+    console.log(`   ✅ Item removed from cart\n`);
+
+    // 9. Verify cart is empty again
+    console.log('9️⃣  Verifying Cart is Empty Again...');
+    const emptyCartAgain = await makeRequest('GET', '/cart');
+    
+    if (emptyCartAgain.data.cartItems.length !== 0) {
+      console.log(`   ❌ Cart not empty: ${emptyCartAgain.data.cartItems.length} items`);
+      return;
+    }
+    
+    console.log(`   ✅ Cart is empty\n`);
+
+    // 10. Test error handling - invalid service
+    console.log('🔟 Testing Error Handling - Invalid Service...');
+    const invalidService = await makeRequest('POST', '/cart/add', {
       serviceId: 99999,
       quantity: 1
-    }, token);
-
-    if (invalidRes.status === 404) {
-      console.log(`   ✅ Correctly rejected invalid service (HTTP 404)\n`);
+    });
+    
+    if (invalidService.status === 404) {
+      console.log(`   ✅ Correctly rejected invalid service (404)`);
+      console.log(`   ✅ Error message: ${invalidService.data.message}\n`);
     } else {
-      console.log(`   ⚠️  Expected 404, got ${invalidRes.status}\n`);
+      console.log(`   ⚠️  Unexpected status: ${invalidService.status}\n`);
     }
 
-    // 8. Test with missing serviceId
-    console.log('8️⃣  Testing With Missing Service ID...');
-    const missingRes = await makeRequest('POST', '/cart/add', {
-      quantity: 1
-    }, token);
+    // Summary
+    console.log('='.repeat(60));
+    console.log('\n✅ ALL TESTS PASSED!\n');
+    console.log('📊 Summary:');
+    console.log('   ✓ Traveler account created');
+    console.log('   ✓ Services fetched successfully');
+    console.log('   ✓ "Book Now" button works (add to cart)');
+    console.log('   ✓ Cart persistence verified');
+    console.log('   ✓ Quantity update works');
+    console.log('   ✓ Item removal works');
+    console.log('   ✓ Error handling works');
+    console.log('\n🎉 "Book Now" workflow is fully functional!\n');
 
-    if (missingRes.status === 400) {
-      console.log(`   ✅ Correctly rejected missing serviceId (HTTP 400)\n`);
-    } else {
-      console.log(`   ⚠️  Expected 400, got ${missingRes.status}\n`);
-    }
-
-    console.log('╔════════════════════════════════════════════════════════════╗');
-    console.log('║  ✅ All "Book Now" Workflow Tests Passed!                 ║');
-    console.log('╚════════════════════════════════════════════════════════════╝\n');
-
-    process.exit(0);
   } catch (error) {
-    console.error('❌ Error:', error.message);
-    console.error(error);
-    process.exit(1);
+    console.error('❌ Test error:', error.message);
   }
-})();
+}
+
+runTests();

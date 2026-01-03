@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: isafarinetworkglobal-2
+    env: node
+    plan: free
+    branch: main
+    rootDir: backend
+    buildCommand: npm install --production
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        value: isafari_global_super_secret_jwt_key_2024_production
+      - key: SESSION_SECRET
+        value: isafari_session_secret_key_2024
+      - key: FRONTEND_URL
+        value: https://isafari-tz.netlify.app
+      - key: DATABASE_URL
+        sync: false
+        # MUHIMU: Weka hii kwenye Render Dashboard
+        # PostgreSQL connection string: postgresql://user:password@host:5432/database

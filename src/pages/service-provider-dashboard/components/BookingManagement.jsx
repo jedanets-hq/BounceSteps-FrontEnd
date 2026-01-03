@@ -3,7 +3,8 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
 const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooking, loading = false }) => {
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('pending'); // Default to pending to show action required
+  const [processingId, setProcessingId] = useState(null);
 
   const filteredBookings = filterStatus === 'all' 
     ? bookings 
@@ -18,18 +19,29 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
   };
 
   const handleBookingAction = async (bookingId, action) => {
-    if (!confirm(`Are you sure you want to ${action === 'confirmed' ? 'approve' : action === 'cancelled' ? 'reject' : action} this pre-order?`)) {
+    const actionText = action === 'confirmed' ? 'APPROVE' : action === 'cancelled' ? 'REJECT' : action;
+    if (!confirm(`Are you sure you want to ${actionText} this pre-order request?\n\nThe traveler will be notified of your decision.`)) {
       return;
     }
-    await onUpdateBookingStatus(bookingId, action);
+    setProcessingId(bookingId);
+    try {
+      await onUpdateBookingStatus(bookingId, action);
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handleDeleteBooking = async (bookingId) => {
-    if (!confirm('Are you sure you want to delete this pre-order? This action cannot be undone.')) {
+    if (!confirm('⚠️ DELETE PERMANENTLY?\n\nThis will permanently remove this pre-order from the system. This action cannot be undone.')) {
       return;
     }
-    if (onDeleteBooking) {
-      await onDeleteBooking(bookingId);
+    setProcessingId(bookingId);
+    try {
+      if (onDeleteBooking) {
+        await onDeleteBooking(bookingId);
+      }
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -138,9 +150,26 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
           <div className="flex items-start gap-3">
             <Icon name="AlertCircle" size={20} className="text-yellow-600 mt-0.5" />
             <div>
-              <p className="font-medium text-yellow-800 dark:text-yellow-200">Action Required</p>
+              <p className="font-medium text-yellow-800 dark:text-yellow-200">⚡ Action Required - Traveler Waiting!</p>
               <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                You have {statusCounts.pending} pre-order(s) waiting for your review. Click "Approve" to accept or "Reject" to decline each request.
+                You have {statusCounts.pending} pre-order request(s) waiting for your decision. 
+                Click <strong>"✅ Approve"</strong> to accept or <strong>"❌ Reject"</strong> to decline. 
+                The traveler will be notified immediately.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No pending orders message */}
+      {filterStatus === 'pending' && statusCounts.pending === 0 && (
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Icon name="CheckCircle" size={20} className="text-green-600 mt-0.5" />
+            <div>
+              <p className="font-medium text-green-800 dark:text-green-200">✅ All Caught Up!</p>
+              <p className="text-sm text-green-700 dark:text-green-300">
+                No pending pre-order requests. Check other tabs to see approved, rejected, or completed bookings.
               </p>
             </div>
           </div>
@@ -238,20 +267,30 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                     <Button 
                       variant="default" 
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 flex-1"
                       onClick={() => handleBookingAction(booking.id, 'confirmed')}
+                      disabled={processingId === booking.id}
                     >
-                      <Icon name="Check" size={14} />
-                      Approve Pre-Order
+                      {processingId === booking.id ? (
+                        <Icon name="Loader2" size={14} className="animate-spin" />
+                      ) : (
+                        <Icon name="Check" size={14} />
+                      )}
+                      ✅ Approve Pre-Order
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="border-red-300 text-red-600 hover:bg-red-50"
+                      className="border-red-300 text-red-600 hover:bg-red-50 flex-1"
                       onClick={() => handleBookingAction(booking.id, 'cancelled')}
+                      disabled={processingId === booking.id}
                     >
-                      <Icon name="X" size={14} />
-                      Reject
+                      {processingId === booking.id ? (
+                        <Icon name="Loader2" size={14} className="animate-spin" />
+                      ) : (
+                        <Icon name="X" size={14} />
+                      )}
+                      ❌ Reject
                     </Button>
                   </>
                 )}
@@ -260,8 +299,13 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                     variant="default" 
                     size="sm"
                     onClick={() => handleBookingAction(booking.id, 'completed')}
+                    disabled={processingId === booking.id}
                   >
-                    <Icon name="CheckCircle" size={14} />
+                    {processingId === booking.id ? (
+                      <Icon name="Loader2" size={14} className="animate-spin" />
+                    ) : (
+                      <Icon name="CheckCircle" size={14} />
+                    )}
                     Mark as Completed
                   </Button>
                 )}
@@ -269,10 +313,15 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                   variant="ghost" 
                   size="sm"
                   onClick={() => handleDeleteBooking(booking.id)}
+                  disabled={processingId === booking.id}
                   className="text-error hover:text-error hover:bg-error/10"
                 >
-                  <Icon name="Trash2" size={14} />
-                  Delete
+                  {processingId === booking.id ? (
+                    <Icon name="Loader2" size={14} className="animate-spin" />
+                  ) : (
+                    <Icon name="Trash2" size={14} />
+                  )}
+                  Delete Permanently
                 </Button>
               </div>
             </div>
