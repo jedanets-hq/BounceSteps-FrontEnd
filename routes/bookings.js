@@ -368,7 +368,7 @@ router.post('/', [authenticateJWT, body('serviceId').notEmpty()], async (req, re
       participants: parseInt(participants) || 1,
       total_amount: totalAmount,
       special_requests: specialRequests || null,
-      status: 'draft', // Start as draft - traveler must submit to send to provider
+      status: 'pending', // Goes to provider for review (database constraint doesn't have 'draft')
       payment_status: 'pending'
     };
 
