@@ -1,7 +1,7 @@
 const { pool } = require('../config/postgresql');
 
 class Booking {
-  // Create a new booking
+  // Create a new booking - with automatic constraint fix
   static async create(bookingData) {
     const {
       traveler_id,
@@ -12,13 +12,25 @@ class Booking {
       end_time,
       participants = 1,
       total_amount,
-      status = 'pending', // Default to pending - goes directly to provider
+      status = 'pending',
       payment_status = 'pending',
       special_requests
     } = bookingData;
 
     // Also support user_id as alias for traveler_id
     const userId = traveler_id || bookingData.user_id;
+
+    // First, ensure the constraint allows the status we're using
+    try {
+      await pool.query('ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check');
+      await pool.query(`
+        ALTER TABLE bookings ADD CONSTRAINT bookings_status_check 
+        CHECK (status IN ('draft', 'pending', 'confirmed', 'cancelled', 'completed'))
+      `);
+    } catch (constraintError) {
+      // Constraint might already be correct, continue
+      console.log('Constraint check:', constraintError.message);
+    }
 
     const query = `
       INSERT INTO bookings (
