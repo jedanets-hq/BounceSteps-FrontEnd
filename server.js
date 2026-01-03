@@ -249,6 +249,38 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Migration endpoint to fix bookings status constraint (add 'draft' status)
+app.get('/api/run-migration', async (req, res) => {
+  try {
+    const { pool } = require('./config/postgresql');
+    
+    console.log('🔧 Running bookings status constraint migration...');
+    
+    // Drop existing constraint
+    await pool.query('ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check');
+    
+    // Add new constraint with draft included
+    await pool.query(`
+      ALTER TABLE bookings ADD CONSTRAINT bookings_status_check 
+      CHECK (status IN ('draft', 'pending', 'confirmed', 'cancelled', 'completed'))
+    `);
+    
+    console.log('✅ Migration completed successfully!');
+    
+    res.json({
+      success: true,
+      message: 'Migration completed! Draft status is now allowed.',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Migration error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
