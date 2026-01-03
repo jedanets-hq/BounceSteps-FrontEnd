@@ -1346,61 +1346,6 @@ const TravelerDashboard = () => {
                     </div>
                     
                     <div className="space-y-3" data-payment-section>
-                      {/* Pre-Order Option */}
-                      <div className="border border-border rounded-lg p-4">
-                        <div className="flex items-start space-x-3 mb-3">
-                          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Icon name="Clock" size={20} className="text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-foreground">Pre-Order Services</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Submit pre-order request to service providers. They will review and confirm your order.
-                            </p>
-                          </div>
-                        </div>
-                        <Button 
-                          className="w-full"
-                          variant="outline"
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            
-                            if (!confirm(`Submit pre-order for ${cartItems.length} service(s)? Service providers will review and confirm.`)) {
-                              return;
-                            }
-                            
-                            // Create bookings for all cart items
-                            let successCount = 0;
-                            for (const item of cartItems) {
-                              const bookingDate = item.journey_details?.startDate || new Date().toISOString().split('T')[0];
-                              const participants = item.journey_details?.travelers || item.quantity || 1;
-                              // Use service_id (the actual service ID), not item.id (cart item ID)
-                              const serviceId = item.service_id || item.serviceId;
-                              console.log('📦 Bulk Pre-Order: Using service_id:', serviceId, 'for item:', item.title);
-                              if (serviceId) {
-                                const success = await createBooking(serviceId, bookingDate, participants);
-                                if (success) successCount++;
-                              } else {
-                                console.error('❌ No service_id found for item:', item);
-                              }
-                            }
-                            
-                            if (successCount > 0) {
-                              alert(`✅ Pre-Order Successfully Submitted!\n\n${successCount} service(s) ordered.\n\nService providers will review your request and send confirmation. Check "Active Pre-Orders" in Overview tab for status updates.`);
-                              clearCart();
-                              // Switch to overview tab
-                              setActiveTab('overview');
-                            } else {
-                              alert('❌ Failed to create pre-orders. Please try again.');
-                            }
-                          }}
-                        >
-                          <Icon name="Send" size={16} />
-                          Submit Pre-Order Request
-                        </Button>
-                      </div>
-                      
                       {/* Direct Payment Option */}
                       <div className="border border-border rounded-lg p-4 border-green-500/50 bg-green-50/30 dark:bg-green-900/10">
                         <div className="flex items-start space-x-3 mb-3">
