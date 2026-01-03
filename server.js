@@ -1,5 +1,6 @@
 // iSafari Global Backend API
 // Cart routes deployment fix - 2025-12-31 - FORCE DEPLOY WITH CART ROUTES
+// Pre-order draft status fix - 2026-01-02
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -14,6 +15,9 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Import PostgreSQL connection
 const { connectPostgreSQL } = require('./config/postgresql');
+
+// Import startup migrations
+const { runStartupMigrations } = require('./migrations/run-on-startup');
 
 // Create PostgreSQL pool for session store
 const sessionPool = new Pool({
@@ -245,6 +249,38 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Migration endpoint to fix bookings status constraint (add 'draft' status)
+app.get('/api/run-migration', async (req, res) => {
+  try {
+    const { pool } = require('./config/postgresql');
+    
+    console.log('🔧 Running bookings status constraint migration...');
+    
+    // Drop existing constraint
+    await pool.query('ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check');
+    
+    // Add new constraint with draft included
+    await pool.query(`
+      ALTER TABLE bookings ADD CONSTRAINT bookings_status_check 
+      CHECK (status IN ('draft', 'pending', 'confirmed', 'cancelled', 'completed'))
+    `);
+    
+    console.log('✅ Migration completed successfully!');
+    
+    res.json({
+      success: true,
+      message: 'Migration completed! Draft status is now allowed.',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Migration error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -268,6 +304,9 @@ const startServer = async () => {
   try {
     // Connect to PostgreSQL
     await connectPostgreSQL();
+
+    // Run startup migrations (adds 'draft' status to bookings constraint)
+    await runStartupMigrations();
 
     // Start Express server
     app.listen(PORT, () => {

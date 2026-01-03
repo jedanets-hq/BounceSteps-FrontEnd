@@ -306,4 +306,51 @@ router.get('/me', passport.authenticate('jwt', { session: false }), async (req, 
   }
 });
 
+// Forgot Password - Request password reset
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Find user by email
+    const user = await User.findByEmail(email.toLowerCase().trim());
+    
+    // Always return success for security (don't reveal if email exists)
+    // In production, you would send an actual email here
+    if (user) {
+      // Generate reset token
+      const resetToken = jwt.sign(
+        { id: user.id, email: user.email, type: 'password_reset' },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+      
+      // In production: Send email with reset link
+      // For now, just log it
+      console.log(`Password reset requested for: ${email}`);
+      console.log(`Reset token: ${resetToken}`);
+      
+      // TODO: Implement email sending
+      // await sendPasswordResetEmail(user.email, resetToken);
+    }
+
+    res.json({
+      success: true,
+      message: 'If an account with that email exists, a password reset link has been sent.'
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process password reset request'
+    });
+  }
+});
+
 module.exports = router;
