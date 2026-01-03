@@ -368,7 +368,7 @@ router.post('/', [authenticateJWT, body('serviceId').notEmpty()], async (req, re
       participants: parseInt(participants) || 1,
       total_amount: totalAmount,
       special_requests: specialRequests || null,
-      status: 'draft', // Start as draft - traveler must submit to send to provider
+      status: 'pending', // Goes to provider for review (database constraint doesn't have 'draft')
       payment_status: 'pending'
     };
 
@@ -442,7 +442,7 @@ router.patch('/:id/status', authenticateJWT, async (req, res) => {
   }
 });
 
-// Submit draft pre-order to provider (traveler only) - changes status from draft to pending
+// Submit pre-order to provider (traveler only) - changes status from draft to pending
 router.patch('/:id/submit', authenticateJWT, async (req, res) => {
   try {
     const bookingId = parseInt(req.params.id);
