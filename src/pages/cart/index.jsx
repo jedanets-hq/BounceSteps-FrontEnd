@@ -79,7 +79,7 @@ const CartPage = () => {
       if (data.success) {
         // Remove item from cart after successful pre-order (use cart item id)
         await removeFromCart(item.id);
-        alert(`✅ Pre-order saved for "${item.title}"!\n\n📝 IMPORTANT: This pre-order is saved as DRAFT.\n\nGo to "My Pre-Orders" section and click "Submit Pre-Order Request" to send it to the provider for review.`);
+        alert(`✅ Pre-order created for "${item.title}"!\n\nYour request has been sent to the provider. They will review and respond within 24-48 hours.\n\nTrack your pre-orders in "My Pre-Orders" section.`);
       } else {
         alert('Failed to create pre-order: ' + data.message);
       }
@@ -258,14 +258,14 @@ const CartPage = () => {
                                 onClick={() => handlePreOrder(item)}
                                 disabled={preOrderingItem === item.id}
                                 className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-                                title="Submit Pre-Order Request to Provider"
+                                title="Save as Draft Pre-Order"
                               >
                                 {preOrderingItem === item.id ? (
                                   <Icon name="Loader2" size={16} className="animate-spin" />
                                 ) : (
-                                  <Icon name="Send" size={16} />
+                                  <Icon name="Clock" size={16} />
                                 )}
-                                <span className="text-sm font-medium hidden sm:inline">Submit Pre-Order</span>
+                                <span className="text-sm font-medium hidden sm:inline">Pre-Order</span>
                               </button>
                               
                               {/* Delete/Remove Button - More Visible */}
