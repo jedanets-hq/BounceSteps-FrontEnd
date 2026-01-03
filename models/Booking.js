@@ -12,7 +12,7 @@ class Booking {
       end_time,
       participants = 1,
       total_amount,
-      status = 'pending',
+      status = 'pending', // Default to pending - goes directly to provider
       payment_status = 'pending',
       special_requests
     } = bookingData;

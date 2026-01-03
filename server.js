@@ -1,5 +1,6 @@
 // iSafari Global Backend API
 // Cart routes deployment fix - 2025-12-31 - FORCE DEPLOY WITH CART ROUTES
+// Pre-order draft status fix - 2026-01-02
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -14,6 +15,9 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Import PostgreSQL connection
 const { connectPostgreSQL } = require('./config/postgresql');
+
+// Import startup migrations
+const { runStartupMigrations } = require('./migrations/run-on-startup');
 
 // Create PostgreSQL pool for session store
 const sessionPool = new Pool({
@@ -268,6 +272,9 @@ const startServer = async () => {
   try {
     // Connect to PostgreSQL
     await connectPostgreSQL();
+
+    // Run startup migrations (adds 'draft' status to bookings constraint)
+    await runStartupMigrations();
 
     // Start Express server
     app.listen(PORT, () => {
