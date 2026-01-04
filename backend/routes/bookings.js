@@ -7,38 +7,66 @@ const { Booking, Service, ServiceProvider } = require('../models');
 const router = express.Router();
 const authenticateJWT = passport.authenticate('jwt', { session: false });
 
-// Public endpoint for recent activity (no auth required)
+// Public endpoint for recent activity (no auth required) - REAL DATA
 router.get('/public/recent-activity', async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
+    const { limit = 20 } = req.query;
     
-    // Return mock data - using standard JavaScript Date constructor
-    const activities = [
-      {
-        id: '1',
-        type: 'booking',
-        user: 'John D.',
-        action: 'booked Safari Adventure',
-        location: 'Serengeti',
-        timestamp: new Date(),
-        category: 'safari'
-      },
-      {
-        id: '2',
-        type: 'booking',
-        user: 'Sarah M.',
-        action: 'booked Mountain Climbing',
-        location: 'Kilimanjaro',
-        timestamp: new Date(Date.now() - 3600000),
-        category: 'adventure'
-      }
-    ];
+    // Get real recent bookings from database
+    const bookingsQuery = `
+      SELECT 
+        b.id,
+        b.created_at,
+        b.status,
+        s.title as service_title,
+        s.category,
+        s.location as service_location,
+        u.first_name,
+        u.last_name
+      FROM bookings b
+      LEFT JOIN services s ON b.service_id = s.id
+      LEFT JOIN users u ON b.traveler_id = u.id
+      WHERE b.created_at > NOW() - INTERVAL '30 days'
+      ORDER BY b.created_at DESC
+      LIMIT $1
+    `;
+    
+    const bookingsResult = await pool.query(bookingsQuery, [parseInt(limit)]);
+    
+    // Format activities for frontend
+    const activities = bookingsResult.rows.map((booking, index) => {
+      const firstName = booking.first_name || 'Traveler';
+      const lastInitial = booking.last_name ? booking.last_name.charAt(0) + '.' : '';
+      const userName = `${firstName} ${lastInitial}`.trim();
+      
+      return {
+        id: booking.id.toString(),
+        type: booking.status === 'confirmed' ? 'exclusive' : 'booking',
+        user: userName,
+        action: `booked ${booking.service_title || 'a service'}`,
+        location: booking.service_location || 'Tanzania',
+        timestamp: booking.created_at,
+        category: (booking.category || 'tour').toLowerCase()
+      };
+    });
+    
+    // Get real stats from database
+    const statsQuery = `
+      SELECT 
+        (SELECT COUNT(*) FROM bookings WHERE created_at > NOW() - INTERVAL '7 days') as weekly_bookings,
+        (SELECT COUNT(DISTINCT traveler_id) FROM bookings WHERE created_at > NOW() - INTERVAL '30 days') as active_travelers,
+        (SELECT COUNT(DISTINCT location) FROM services WHERE is_active = true) as destinations,
+        (SELECT COUNT(*) FROM services WHERE is_active = true) as total_services
+    `;
+    
+    const statsResult = await pool.query(statsQuery);
+    const statsRow = statsResult.rows[0] || {};
     
     const stats = {
-      weeklyBookings: 15,
-      activeTravelers: 8,
-      destinations: 5,
-      totalServices: 12
+      weeklyBookings: parseInt(statsRow.weekly_bookings) || 0,
+      activeTravelers: parseInt(statsRow.active_travelers) || 0,
+      destinations: parseInt(statsRow.destinations) || 0,
+      totalServices: parseInt(statsRow.total_services) || 0
     };
     
     res.json({
@@ -50,7 +78,8 @@ router.get('/public/recent-activity', async (req, res) => {
     console.error('❌ Error fetching public recent activity:', error);
     res.status(500).json({
       success: false,
-      message: 'Error fetching recent activity'
+      message: 'Error fetching recent activity',
+      error: error.message
     });
   }
 });
