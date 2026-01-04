@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import { API_URL } from '../../utils/api';
 
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { login } = useAuth();
   const [status, setStatus] = useState('processing');
   const [error, setError] = useState('');
 
@@ -14,7 +12,6 @@ const OAuthCallback = () => {
     const handleOAuthCallback = async () => {
       try {
         const token = searchParams.get('token');
-        const userType = searchParams.get('user_type');
         const errorParam = searchParams.get('error');
 
         if (errorParam) {
@@ -29,9 +26,8 @@ const OAuthCallback = () => {
           return;
         }
 
-        // Store token and login user
-        localStorage.setItem('token', token);
-        
+        console.log('🔐 OAuth callback - verifying token...');
+
         // Verify token and get user data
         const response = await fetch(`${API_URL}/auth/me`, {
           headers: {
@@ -40,33 +36,39 @@ const OAuthCallback = () => {
         });
 
         if (response.ok) {
-          const userData = await response.json();
-          await login(userData.user, token);
+          const data = await response.json();
           
-          setStatus('success');
-          
-          // Redirect based on user type
-          setTimeout(() => {
-            if (userType === 'service_provider') {
-              navigate('/dashboard');
-            } else if (userType === 'traveler') {
-              navigate('/dashboard');
-            } else {
-              navigate('/');
-            }
-          }, 2000);
+          if (data.success && data.user) {
+            // Store user with token
+            const userWithToken = { ...data.user, token };
+            localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
+            
+            console.log('✅ OAuth login successful:', data.user.email);
+            setStatus('success');
+            
+            // Redirect based on user type
+            setTimeout(() => {
+              if (data.user.userType === 'service_provider') {
+                navigate('/service-provider-dashboard');
+              } else {
+                navigate('/');
+              }
+            }, 1500);
+          } else {
+            throw new Error('Invalid user data received');
+          }
         } else {
           throw new Error('Failed to verify authentication');
         }
       } catch (error) {
-        console.error('OAuth callback error:', error);
+        console.error('❌ OAuth callback error:', error);
         setError('Authentication verification failed. Please try logging in again.');
         setStatus('error');
       }
     };
 
     handleOAuthCallback();
-  }, [searchParams, navigate, login]);
+  }, [searchParams, navigate]);
 
   const handleRetry = () => {
     navigate('/login');
@@ -90,7 +92,7 @@ const OAuthCallback = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
               </svg>
             </div>
-            <h2 className="text-xl font-semibold mb-2 text-green-600">Authentication Successful!</h2>
+            <h2 className="text-xl font-semibold mb-2 text-green-600">Welcome Back!</h2>
             <p className="text-gray-600">Redirecting you to your dashboard...</p>
           </div>
         )}

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import Header from '../../components/ui/Header';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
@@ -9,15 +8,23 @@ import { API_URL } from '../../utils/api';
 const GoogleRoleSelection = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [googleData, setGoogleData] = useState(null);
   const [selectedRole, setSelectedRole] = useState('');
   const [phone, setPhone] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [isNewUserFlow, setIsNewUserFlow] = useState(false);
 
   useEffect(() => {
-    // Get Google data from URL params
+    // Check if this is a new user flow (from "Sign up with Google" button)
+    const newUser = searchParams.get('newUser');
+    if (newUser === 'true') {
+      setIsNewUserFlow(true);
+      return;
+    }
+
+    // Get Google data from URL params (from OAuth callback)
     const googleDataParam = searchParams.get('googleData');
     if (googleDataParam) {
       try {
@@ -28,15 +35,18 @@ const GoogleRoleSelection = () => {
         setError('Invalid Google data. Please try again.');
       }
     } else {
-      setError('No Google data found. Please try signing in again.');
+      // No Google data and not new user flow - redirect to login
+      setError('No registration data found. Please try signing in again.');
     }
   }, [searchParams]);
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
+    setError('');
   };
 
-  const handleSubmit = async (e) => {
+  // Handle new user flow - redirect to Google OAuth after role selection
+  const handleNewUserSubmit = async (e) => {
     e.preventDefault();
     
     if (!selectedRole) {
@@ -46,6 +56,42 @@ const GoogleRoleSelection = () => {
 
     if (!phone) {
       setError('Phone number is required');
+      return;
+    }
+
+    if (selectedRole === 'provider' && !companyName) {
+      setError('Company/Business name is required for service providers');
+      return;
+    }
+
+    // Store selection in sessionStorage for after OAuth
+    sessionStorage.setItem('google_registration_data', JSON.stringify({
+      userType: selectedRole === 'provider' ? 'service_provider' : 'traveler',
+      phone,
+      companyName: selectedRole === 'provider' ? companyName : null
+    }));
+
+    // Redirect to Google OAuth
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://isafarinetworkglobal-2.onrender.com/api';
+    window.location.href = `${apiUrl}/auth/google`;
+  };
+
+  // Handle OAuth callback flow - complete registration
+  const handleOAuthSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedRole) {
+      setError('Please select how you want to use iSafari Global');
+      return;
+    }
+
+    if (!phone) {
+      setError('Phone number is required');
+      return;
+    }
+
+    if (selectedRole === 'provider' && !companyName) {
+      setError('Company/Business name is required for service providers');
       return;
     }
 
@@ -66,7 +112,8 @@ const GoogleRoleSelection = () => {
           lastName: googleData.lastName,
           avatarUrl: googleData.avatarUrl,
           userType: selectedRole === 'provider' ? 'service_provider' : 'traveler',
-          phone: phone
+          phone: phone,
+          companyName: selectedRole === 'provider' ? companyName : undefined
         })
       });
 
@@ -94,7 +141,8 @@ const GoogleRoleSelection = () => {
     }
   };
 
-  if (!googleData && !error) {
+  // Loading state
+  if (!isNewUserFlow && !googleData && !error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -117,15 +165,36 @@ const GoogleRoleSelection = () => {
                   className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-primary/20"
                 />
               )}
-              <h1 className="text-3xl font-display font-medium text-foreground mb-2">
-                Welcome, {googleData?.firstName}!
-              </h1>
-              <p className="text-muted-foreground">
-                Complete your registration to start using iSafari Global
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Signed in as: {googleData?.email}
-              </p>
+              {isNewUserFlow ? (
+                <>
+                  <div className="w-20 h-20 rounded-full mx-auto mb-4 bg-primary/10 flex items-center justify-center">
+                    <svg className="w-10 h-10" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                  </div>
+                  <h1 className="text-3xl font-display font-medium text-foreground mb-2">
+                    Sign up with Google
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Choose your account type and provide your details to get started
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-3xl font-display font-medium text-foreground mb-2">
+                    Welcome, {googleData?.firstName}!
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Complete your registration to start using iSafari Global
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Signed in as: {googleData?.email}
+                  </p>
+                </>
+              )}
             </div>
 
             {/* Error Display */}
@@ -138,7 +207,7 @@ const GoogleRoleSelection = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={isNewUserFlow ? handleNewUserSubmit : handleOAuthSubmit} className="space-y-6">
               {/* Role Selection */}
               <div>
                 <h2 className="text-lg font-semibold text-foreground mb-4">
@@ -204,6 +273,26 @@ const GoogleRoleSelection = () => {
                 </div>
               </div>
 
+              {/* Company Name - Only for Service Providers */}
+              {selectedRole === 'provider' && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Company / Business Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="Enter your company or business name"
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    required={selectedRole === 'provider'}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    This will be displayed to travelers
+                  </p>
+                </div>
+              )}
+
               {/* Phone Number */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
@@ -232,15 +321,40 @@ const GoogleRoleSelection = () => {
                 {isLoading ? (
                   <>
                     <Icon name="Loader2" size={20} className="animate-spin" />
-                    Creating Account...
+                    {isNewUserFlow ? 'Connecting to Google...' : 'Creating Account...'}
                   </>
                 ) : (
                   <>
-                    <Icon name="UserPlus" size={20} />
-                    Complete Registration
+                    {isNewUserFlow ? (
+                      <>
+                        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                          <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                          <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                          <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                          <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Continue with Google
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="UserPlus" size={20} />
+                        Complete Registration
+                      </>
+                    )}
                   </>
                 )}
               </Button>
+
+              {/* Back to Login */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => navigate('/login')}
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  ← Back to Login
+                </button>
+              </div>
             </form>
 
             <div className="mt-6 pt-6 border-t border-border text-center">
