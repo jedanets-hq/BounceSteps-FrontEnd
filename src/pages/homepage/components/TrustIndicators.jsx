@@ -6,9 +6,16 @@ import { API_URL } from '../../../utils/api';
 const TrustIndicators = () => {
   const [partnerships, setPartnerships] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalTravelers: 0,
+    averageRating: 0,
+    totalDestinations: 0,
+    totalBookings: 0
+  });
 
   useEffect(() => {
     fetchTrustedPartners();
+    fetchTrustStats();
   }, []);
 
   const fetchTrustedPartners = async () => {
@@ -25,6 +32,28 @@ const TrustIndicators = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchTrustStats = async () => {
+    try {
+      const response = await fetch(`${API_URL}/admin/public/trust-stats`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setStats(data.stats);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching trust stats:', err);
+    }
+  };
+
+  // Format number with K+ suffix
+  const formatNumber = (num) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(num >= 10000 ? 0 : 1) + 'K+';
+    }
+    return num.toString();
   };
 
   const certifications = [
@@ -123,23 +152,31 @@ const TrustIndicators = () => {
           </div>
         )}
 
-        {/* Trust Statistics */}
+        {/* Trust Statistics - Real Data from Database */}
         <div className="mt-12 sm:mt-16 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 text-center">
           <div className="bg-card p-4 sm:p-6 rounded-lg border border-border">
-            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">99.9%</div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Uptime Guarantee</div>
+            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">
+              {stats.totalBookings > 0 ? formatNumber(stats.totalBookings) : '0'}
+            </div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Total Bookings</div>
           </div>
           <div className="bg-card p-4 sm:p-6 rounded-lg border border-border">
-            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">50K+</div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Satisfied Travelers</div>
+            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">
+              {stats.totalTravelers > 0 ? formatNumber(stats.totalTravelers) : '0'}
+            </div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Registered Travelers</div>
           </div>
           <div className="bg-card p-4 sm:p-6 rounded-lg border border-border">
-            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">4.9/5</div>
+            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">
+              {stats.averageRating > 0 ? stats.averageRating.toFixed(1) + '/5' : 'N/A'}
+            </div>
             <div className="text-xs sm:text-sm text-muted-foreground">Average Rating</div>
           </div>
           <div className="bg-card p-4 sm:p-6 rounded-lg border border-border">
-            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">150+</div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Countries Covered</div>
+            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">
+              {stats.totalDestinations > 0 ? stats.totalDestinations : '0'}
+            </div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Destinations</div>
           </div>
         </div>
       </div>

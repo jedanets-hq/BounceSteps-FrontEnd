@@ -13,6 +13,61 @@ const isAdmin = (req, res, next) => {
 };
 
 // ==========================================
+// PUBLIC ENDPOINTS (No Auth Required)
+// ==========================================
+
+// Public trust statistics for homepage
+router.get('/public/trust-stats', async (req, res) => {
+  try {
+    // Get total travelers (users with user_type = 'traveler')
+    const travelersResult = await pool.query(
+      "SELECT COUNT(*) FROM users WHERE user_type = 'traveler'"
+    );
+    const totalTravelers = parseInt(travelersResult.rows[0]?.count || 0);
+
+    // Get total bookings
+    const bookingsResult = await pool.query(
+      "SELECT COUNT(*) FROM bookings WHERE status IN ('confirmed', 'completed')"
+    );
+    const totalBookings = parseInt(bookingsResult.rows[0]?.count || 0);
+
+    // Get average rating from reviews
+    const ratingsResult = await pool.query(
+      "SELECT AVG(rating) as avg_rating FROM reviews WHERE rating IS NOT NULL"
+    );
+    const averageRating = parseFloat(ratingsResult.rows[0]?.avg_rating || 0);
+
+    // Get unique destinations (locations from services)
+    const destinationsResult = await pool.query(
+      "SELECT COUNT(DISTINCT location) FROM services WHERE is_active = true AND location IS NOT NULL"
+    );
+    const totalDestinations = parseInt(destinationsResult.rows[0]?.count || 0);
+
+    res.json({
+      success: true,
+      stats: {
+        totalTravelers,
+        totalBookings,
+        averageRating,
+        totalDestinations
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching trust stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching trust statistics',
+      stats: {
+        totalTravelers: 0,
+        totalBookings: 0,
+        averageRating: 0,
+        totalDestinations: 0
+      }
+    });
+  }
+});
+
+// ==========================================
 // CATEGORIES & DESTINATIONS
 // ==========================================
 
