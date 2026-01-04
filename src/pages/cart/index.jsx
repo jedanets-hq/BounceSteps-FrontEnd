@@ -6,6 +6,7 @@ import Header from '../../components/ui/Header';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import { PaymentModal, BookingConfirmation } from '../../components/PaymentSystem';
+import { API_URL } from '../../utils/api';
 
 const CartPage = () => {
   const { user, isAuthenticated } = useAuth();
@@ -13,6 +14,7 @@ const CartPage = () => {
   const navigate = useNavigate();
   const [showPayment, setShowPayment] = useState(false);
   const [booking, setBooking] = useState(null);
+  const [preOrderingItem, setPreOrderingItem] = useState(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -32,6 +34,56 @@ const CartPage = () => {
 
   const handleContinueShopping = () => {
     navigate('/journey-planner');
+  };
+
+  // Handle Pre-Order - creates booking and removes from cart
+  const handlePreOrder = async (item) => {
+    try {
+      setPreOrderingItem(item.id);
+      
+      const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+      const token = userData.token;
+
+      if (!token) {
+        alert('Please login to create a pre-order');
+        setPreOrderingItem(null);
+        return;
+      }
+
+      const serviceId = item.service_id || item.serviceId;
+      if (!serviceId) {
+        alert('Error: Service ID not found for this item');
+        setPreOrderingItem(null);
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          serviceId: parseInt(serviceId),
+          bookingDate: new Date().toISOString().split('T')[0],
+          participants: item.quantity || 1
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        await removeFromCart(item.id);
+        alert(`✅ Pre-order created for "${item.title}"!\n\nYour request has been sent to the provider.`);
+      } else {
+        alert('Failed to create pre-order: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error creating pre-order:', error);
+      alert('Error creating pre-order. Please try again.');
+    } finally {
+      setPreOrderingItem(null);
+    }
   };
 
   if (!isAuthenticated) {
@@ -196,6 +248,21 @@ const CartPage = () => {
                             
                             {/* Action Buttons */}
                             <div className="flex items-center space-x-2">
+                              {/* Pre-Order Button */}
+                              <button
+                                onClick={() => handlePreOrder(item)}
+                                disabled={preOrderingItem === item.id}
+                                className="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                                title="Create Pre-Order"
+                              >
+                                {preOrderingItem === item.id ? (
+                                  <Icon name="Loader2" size={16} className="animate-spin" />
+                                ) : (
+                                  <Icon name="Clock" size={16} />
+                                )}
+                                <span className="text-sm font-medium hidden sm:inline">Pre-Order</span>
+                              </button>
+                              
                               {/* Delete/Remove Button */}
                               <button
                                 onClick={() => {

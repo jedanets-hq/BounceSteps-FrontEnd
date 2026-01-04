@@ -227,6 +227,7 @@ const Login = () => {
                   Sign up{suggestedRole === 'traveler' ? ' as Traveler' : ''}
                 </Link>
               </p>
+
               <div className="mt-4 pt-4 border-t border-border">
                 <p className="text-xs text-muted-foreground text-center">
                   Powered by <span className="font-semibold">JEDA NETWORKS</span>

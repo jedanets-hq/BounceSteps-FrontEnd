@@ -272,7 +272,7 @@ router.get('/google/callback',
       
       // Check if user needs to complete registration (new Google user)
       if (req.user.needsRegistration) {
-        // Redirect to registration page with Google data
+        // Redirect to role selection page with Google data
         const googleData = encodeURIComponent(JSON.stringify({
           googleId: req.user.googleId,
           email: req.user.email,
@@ -280,7 +280,7 @@ router.get('/google/callback',
           lastName: req.user.lastName,
           avatarUrl: req.user.avatarUrl
         }));
-        return res.redirect(`${frontendUrl}/register?googleData=${googleData}`);
+        return res.redirect(`${frontendUrl}/google-role-selection?googleData=${googleData}`);
       }
       
       // Existing user - generate token and redirect
@@ -323,6 +323,312 @@ router.get('/me', passport.authenticate('jwt', { session: false }), async (req, 
     res.status(500).json({
       success: false,
       message: 'Failed to get user information'
+    });
+  }
+});
+
+// Complete Google Registration - For new Google users who need to select user type
+router.post('/google/complete-registration', async (req, res) => {
+  try {
+    const { 
+      googleId, email, firstName, lastName, avatarUrl, userType,
+      phone, serviceLocation, serviceCategories, locationData, 
+      companyName, businessType, description 
+    } = req.body;
+
+    // Validate required fields
+    if (!googleId || !email || !userType) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: googleId, email, and userType are required'
+      });
+    }
+
+    // Check if user already exists by Google ID
+    let existingUser = await User.findByGoogleId(googleId);
+    if (existingUser) {
+      // User already exists, just log them in
+      const token = generateToken(existingUser);
+      return res.json({
+        success: true,
+        message: 'Login successful',
+        user: {
+          id: existingUser.id,
+          email: existingUser.email,
+          firstName: existingUser.first_name,
+          lastName: existingUser.last_name,
+          userType: existingUser.user_type,
+          phone: existingUser.phone,
+          isVerified: existingUser.is_verified,
+          avatar: existingUser.avatar_url
+        },
+        token
+      });
+    }
+
+    // Check if email already exists
+    existingUser = await User.findByEmail(email.toLowerCase().trim());
+    if (existingUser) {
+      // Link Google account to existing user
+      await User.update(existingUser.id, { google_id: googleId, avatar_url: avatarUrl });
+      const token = generateToken(existingUser);
+      return res.json({
+        success: true,
+        message: 'Google account linked successfully',
+        user: {
+          id: existingUser.id,
+          email: existingUser.email,
+          firstName: existingUser.first_name,
+          lastName: existingUser.last_name,
+          userType: existingUser.user_type,
+          phone: existingUser.phone,
+          isVerified: existingUser.is_verified,
+          avatar: avatarUrl || existingUser.avatar_url
+        },
+        token
+      });
+    }
+
+    // Create new user with Google data
+    const newUser = await User.create({
+      email: email.toLowerCase().trim(),
+      password: null, // No password for Google users
+      first_name: firstName,
+      last_name: lastName,
+      phone: phone || null,
+      user_type: userType,
+      google_id: googleId,
+      avatar_url: avatarUrl,
+      is_verified: true // Google users are auto-verified
+    });
+
+    // Create service provider profile if user is a service provider
+    if (userType === 'service_provider') {
+      const businessName = companyName || `${firstName} ${lastName}'s Business`;
+      
+      const providerLocationData = locationData || {};
+      const serviceLocationString = serviceLocation || 
+        `${providerLocationData.street || ''}, ${providerLocationData.ward || ''}, ${providerLocationData.district || ''}, ${providerLocationData.region || ''}, Tanzania`
+        .replace(/^, |, , /g, ', ').replace(/^, /, '').trim();
+      
+      await ServiceProvider.create({
+        user_id: newUser.id,
+        business_name: businessName,
+        business_type: businessType || 'General Services',
+        description: description || `Professional services provided by ${businessName}`,
+        location: serviceLocationString,
+        service_location: serviceLocationString,
+        country: providerLocationData.country || 'Tanzania',
+        region: providerLocationData.region || '',
+        district: providerLocationData.district || '',
+        area: providerLocationData.street || providerLocationData.area || '',
+        ward: providerLocationData.ward || '',
+        location_data: providerLocationData,
+        service_categories: serviceCategories || []
+      });
+    }
+
+    // Generate token
+    const token = generateToken(newUser);
+
+    // Build response
+    const responseUser = {
+      id: newUser.id,
+      email: newUser.email,
+      firstName: newUser.first_name,
+      lastName: newUser.last_name,
+      userType: newUser.user_type,
+      phone: newUser.phone,
+      isVerified: true,
+      avatar: avatarUrl
+    };
+
+    // Add provider data for service providers
+    if (userType === 'service_provider') {
+      responseUser.companyName = companyName || `${firstName} ${lastName}'s Business`;
+      responseUser.businessName = companyName || `${firstName} ${lastName}'s Business`;
+      responseUser.businessType = businessType || 'General Services';
+      responseUser.description = description || '';
+      responseUser.serviceLocation = serviceLocation || '';
+      responseUser.serviceCategories = serviceCategories || [];
+      responseUser.locationData = locationData || {};
+    }
+
+    console.log('✅ Google registration completed for:', email);
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful',
+      user: responseUser,
+      token
+    });
+
+  } catch (error) {
+    console.error('Google registration completion error:', error);
+    
+    if (error.code === '23505') {
+      return res.status(400).json({
+        success: false,
+        message: 'An account with this email already exists',
+        field: 'email'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Registration failed. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// Google Registration Completion - For new Google users who need to select role
+router.post('/google/complete-registration', async (req, res) => {
+  try {
+    const { googleId, email, firstName, lastName, avatarUrl, userType, phone,
+      serviceLocation, serviceCategories, locationData, companyName, businessType, description } = req.body;
+
+    // Validate required fields
+    if (!googleId || !email || !userType) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: googleId, email, and userType are required'
+      });
+    }
+
+    // Check if user already exists by Google ID
+    let existingUser = await User.findByGoogleId(googleId);
+    if (existingUser) {
+      // User already exists, just log them in
+      const token = generateToken(existingUser);
+      return res.json({
+        success: true,
+        message: 'User already registered, logged in successfully',
+        user: {
+          id: existingUser.id,
+          email: existingUser.email,
+          firstName: existingUser.first_name,
+          lastName: existingUser.last_name,
+          userType: existingUser.user_type,
+          phone: existingUser.phone,
+          isVerified: existingUser.is_verified,
+          avatar: existingUser.avatar_url
+        },
+        token
+      });
+    }
+
+    // Check if email already exists
+    existingUser = await User.findByEmail(email.toLowerCase().trim());
+    if (existingUser) {
+      // Link Google account to existing user
+      await User.update(existingUser.id, { google_id: googleId, avatar_url: avatarUrl });
+      const token = generateToken(existingUser);
+      return res.json({
+        success: true,
+        message: 'Google account linked to existing user',
+        user: {
+          id: existingUser.id,
+          email: existingUser.email,
+          firstName: existingUser.first_name,
+          lastName: existingUser.last_name,
+          userType: existingUser.user_type,
+          phone: existingUser.phone,
+          isVerified: existingUser.is_verified,
+          avatar: avatarUrl || existingUser.avatar_url
+        },
+        token
+      });
+    }
+
+    // Create new user with Google data
+    const newUser = await User.create({
+      email: email.toLowerCase().trim(),
+      password: null, // No password for Google users
+      first_name: firstName,
+      last_name: lastName,
+      phone: phone || null,
+      user_type: userType,
+      google_id: googleId,
+      avatar_url: avatarUrl,
+      is_verified: true // Google users are auto-verified
+    });
+
+    // Create service provider profile if user is a service provider
+    if (userType === 'service_provider') {
+      const businessName = companyName || `${firstName} ${lastName}'s Business`;
+      const providerLocationData = locationData || {};
+      const serviceLocationString = serviceLocation || 
+        `${providerLocationData.street || ''}, ${providerLocationData.ward || ''}, ${providerLocationData.district || ''}, ${providerLocationData.region || ''}, Tanzania`
+        .replace(/^, |, , /g, ', ').replace(/^, /, '').trim();
+      
+      await ServiceProvider.create({
+        user_id: newUser.id,
+        business_name: businessName,
+        business_type: businessType || 'General Services',
+        description: description || `Professional services provided by ${businessName}`,
+        location: serviceLocationString,
+        service_location: serviceLocationString,
+        country: providerLocationData.country || 'Tanzania',
+        region: providerLocationData.region || '',
+        district: providerLocationData.district || '',
+        area: providerLocationData.street || providerLocationData.area || '',
+        ward: providerLocationData.ward || '',
+        location_data: providerLocationData,
+        service_categories: serviceCategories || []
+      });
+    }
+
+    // Generate token
+    const token = generateToken(newUser);
+
+    // Build response
+    const responseUser = {
+      id: newUser.id,
+      email: newUser.email,
+      firstName: newUser.first_name,
+      lastName: newUser.last_name,
+      userType: newUser.user_type,
+      phone: newUser.phone,
+      isVerified: newUser.is_verified,
+      avatar: newUser.avatar_url
+    };
+
+    // Add provider data for service providers
+    if (userType === 'service_provider') {
+      responseUser.companyName = companyName || `${firstName} ${lastName}'s Business`;
+      responseUser.businessName = companyName || `${firstName} ${lastName}'s Business`;
+      responseUser.businessType = businessType || 'General Services';
+      responseUser.description = description || '';
+      responseUser.serviceLocation = serviceLocation || '';
+      responseUser.serviceCategories = serviceCategories || [];
+      responseUser.locationData = locationData || {};
+    }
+
+    console.log('✅ Google registration completed for:', email);
+
+    res.status(201).json({
+      success: true,
+      message: 'Google registration completed successfully',
+      user: responseUser,
+      token
+    });
+
+  } catch (error) {
+    console.error('Google registration completion error:', error);
+    
+    if (error.code === '23505') {
+      return res.status(400).json({
+        success: false,
+        message: 'An account with this email already exists',
+        field: 'email'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Registration failed. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

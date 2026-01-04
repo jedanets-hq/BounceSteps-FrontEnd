@@ -13,6 +13,8 @@ import ServiceBooking from './pages/service-booking';
 import Login from './pages/auth/login';
 import Register from './pages/auth/register';
 import ForgotPassword from './pages/auth/forgot-password';
+import GoogleRoleSelection from './pages/auth/GoogleRoleSelection';
+import OAuthCallback from './pages/auth/OAuthCallback';
 import Profile from './pages/profile';
 import About from './pages/about';
 import Dashboard from './pages/dashboard';
@@ -38,6 +40,8 @@ const Routes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/google-role-selection" element={<GoogleRoleSelection />} />
+        <Route path="/auth/callback" element={<OAuthCallback />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/about" element={<About />} />
         <Route path="/dashboard" element={<Dashboard />} />
