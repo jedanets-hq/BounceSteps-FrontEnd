@@ -153,8 +153,8 @@ export const authAPI = {
   },
 
   googleLogin: () => {
-    // Use demo login instead of real OAuth to avoid 400 errors
-    window.location.href = `${API_BASE_URL}/auth/demo-login`;
+    // Redirect to Google OAuth endpoint
+    window.location.href = `${API_BASE_URL}/auth/google`;
   },
 
   completeGoogleRegistration: async (userType, phone) => {

@@ -255,20 +255,41 @@ router.post('/login', getValidationMiddleware('login'), async (req, res) => {
   }
 });
 
+// Google OAuth - Start authentication
+router.get('/google', 
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    prompt: 'select_account'
+  })
+);
+
 // Google OAuth callback
 router.get('/google/callback', 
-  passport.authenticate('google', { session: false }),
+  passport.authenticate('google', { session: false, failureRedirect: '/login?error=google_auth_failed' }),
   async (req, res) => {
     try {
-      const token = generateToken(req.user);
+      const frontendUrl = process.env.FRONTEND_URL || 'https://isafari-tz.netlify.app';
       
-      // Redirect to frontend with token
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4028';
+      // Check if user needs to complete registration (new Google user)
+      if (req.user.needsRegistration) {
+        // Redirect to registration page with Google data
+        const googleData = encodeURIComponent(JSON.stringify({
+          googleId: req.user.googleId,
+          email: req.user.email,
+          firstName: req.user.firstName,
+          lastName: req.user.lastName,
+          avatarUrl: req.user.avatarUrl
+        }));
+        return res.redirect(`${frontendUrl}/register?googleData=${googleData}`);
+      }
+      
+      // Existing user - generate token and redirect
+      const token = generateToken(req.user);
       res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
     } catch (error) {
       console.error('Google OAuth callback error:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4028';
-      res.redirect(`${frontendUrl}/auth/error?message=Authentication failed`);
+      const frontendUrl = process.env.FRONTEND_URL || 'https://isafari-tz.netlify.app';
+      res.redirect(`${frontendUrl}/login?error=auth_failed`);
     }
   }
 );

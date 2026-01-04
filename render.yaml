@@ -13,11 +13,21 @@ services:
       - key: PORT
         value: 10000
       - key: JWT_SECRET
-        value: isafari_global_super_secret_jwt_key_2024_production
+        sync: false
+        # Set in Render Dashboard
       - key: SESSION_SECRET
-        value: isafari_session_secret_key_2024
+        sync: false
+        # Set in Render Dashboard
       - key: FRONTEND_URL
         value: https://isafari-tz.netlify.app
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+        # Set in Render Dashboard
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+        # Set in Render Dashboard
+      - key: GOOGLE_CALLBACK_URL
+        value: https://isafarinetworkglobal-2.onrender.com/api/auth/google/callback
       - key: DATABASE_URL
         sync: false
-        # Set in Render Dashboard: postgresql://isafarinetworksglobal1_user:fzPZYzx9T3hwZmS1NQ0eOufpNKsQRxMR@dpg-d51v8vfgi27c73fkeeq0-a/isafarinetworksglobal1
+        # Set in Render Dashboard
