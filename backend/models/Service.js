@@ -37,20 +37,16 @@ class Service {
       bookings_count = 0,
       average_rating = 0.00,
       total_bookings = 0,
-      // Payment methods
       payment_methods = {},
-      // Contact information
       contact_info = {}
     } = serviceData;
 
-    // Normalize location fields for consistent storage and filtering
     const normalizedRegion = normalizeLocation(region);
     const normalizedDistrict = normalizeLocation(district);
     const normalizedArea = normalizeLocation(area);
     const normalizedLocation = normalizeLocation(location);
     const normalizedCountry = normalizeLocation(country) || 'Tanzania';
 
-    // Log location normalization for debugging
     console.log('📍 [SERVICE CREATE] Normalized location:', {
       region: normalizedRegion,
       district: normalizedDistrict,

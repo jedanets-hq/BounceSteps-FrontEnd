@@ -45,6 +45,11 @@ class Review {
     const keys = Object.keys(conditions);
     const values = Object.values(conditions);
     
+    if (keys.length === 0) {
+      const result = await pool.query('SELECT * FROM reviews LIMIT 1');
+      return result.rows[0];
+    }
+    
     const whereClause = keys.map((key, index) => `${key} = $${index + 1}`).join(' AND ');
     const query = `SELECT * FROM reviews WHERE ${whereClause} LIMIT 1`;
     
@@ -101,6 +106,10 @@ class Review {
   static async findByIdAndUpdate(id, updateData) {
     const keys = Object.keys(updateData);
     const values = Object.values(updateData);
+
+    if (keys.length === 0) {
+      return this.findById(id);
+    }
 
     const setClause = keys.map((key, index) => `${key} = $${index + 2}`).join(', ');
     const query = `
