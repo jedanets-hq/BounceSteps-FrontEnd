@@ -12,28 +12,45 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     callbackURL: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback"
   }, async (accessToken, refreshToken, profile, done) => {
   try {
+    const googleEmail = profile.emails[0].value.toLowerCase();
+    
     // Check if user already exists by Google ID
     let user = await User.findByGoogleId(profile.id);
     
-    if (!user) {
-      // Check by email
-      user = await User.findByEmail(profile.emails[0].value.toLowerCase());
+    if (user) {
+      // Existing Google user - just log them in
+      console.log('✅ Existing Google user found by google_id:', user.email);
+      return done(null, user);
     }
+    
+    // Check by email - user might have registered with email first
+    user = await User.findByEmail(googleEmail);
 
     if (user) {
-      // User exists, update Google ID if not set
-      if (!user.google_id) {
-        await User.update(user.id, { google_id: profile.id });
-      }
+      // User exists with email, link Google account
+      console.log('🔗 Linking Google account to existing email user:', user.email);
+      
+      // Determine new auth_provider
+      const newAuthProvider = user.password ? 'both' : 'google';
+      
+      await User.update(user.id, { 
+        google_id: profile.id,
+        avatar_url: user.avatar_url || profile.photos[0]?.value,
+        auth_provider: newAuthProvider
+      });
+      
+      // Refresh user data
+      user = await User.findById(user.id);
       return done(null, user);
     }
 
-    // Create new user - but we need user_type, so redirect to registration
+    // New user - needs to select role before completing registration
+    console.log('🆕 New Google user, needs role selection:', googleEmail);
     const userData = {
       googleId: profile.id,
-      email: profile.emails[0].value,
-      firstName: profile.name.givenName,
-      lastName: profile.name.familyName,
+      email: googleEmail,
+      firstName: profile.name.givenName || '',
+      lastName: profile.name.familyName || '',
       avatarUrl: profile.photos[0]?.value,
       needsRegistration: true
     };

@@ -266,7 +266,7 @@ router.get('/analytics/dashboard', authenticateJWT, isAdmin, async (req, res) =>
 // Get all users with filters
 router.get('/users', authenticateJWT, isAdmin, async (req, res) => {
   try {
-    const { role, status, search, page = 1, limit = 20 } = req.query;
+    const { role, status, search, authProvider, page = 1, limit = 20 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
     
     let query = 'SELECT * FROM users WHERE 1=1';
@@ -283,6 +283,17 @@ router.get('/users', authenticateJWT, isAdmin, async (req, res) => {
       query += ` AND is_active = true`;
     } else if (status === 'suspended') {
       query += ` AND is_active = false`;
+    }
+
+    // Filter by auth provider (google, email, both)
+    if (authProvider) {
+      if (authProvider === 'google') {
+        query += ` AND (auth_provider IN ('google', 'both') OR google_id IS NOT NULL)`;
+      } else if (authProvider === 'email') {
+        query += ` AND (auth_provider = 'email' OR (auth_provider IS NULL AND google_id IS NULL))`;
+      } else if (authProvider === 'both') {
+        query += ` AND auth_provider = 'both'`;
+      }
     }
 
     if (search) {
@@ -302,7 +313,7 @@ router.get('/users', authenticateJWT, isAdmin, async (req, res) => {
 
     const result = await pool.query(query, values);
     
-    // Format users for frontend
+    // Format users for frontend with auth provider info
     const users = result.rows.map(u => ({
       id: u.id,
       name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Unknown',
@@ -312,17 +323,25 @@ router.get('/users', authenticateJWT, isAdmin, async (req, res) => {
       status: u.is_active ? 'active' : 'suspended',
       avatar: u.avatar_url,
       createdAt: u.created_at,
-      lastActive: u.last_login || u.updated_at
+      lastActive: u.last_login || u.updated_at,
+      // Auth provider fields for Google badge display
+      authProvider: u.auth_provider || (u.google_id ? 'google' : 'email'),
+      isGoogleUser: !!(u.google_id || u.auth_provider === 'google' || u.auth_provider === 'both'),
+      googleId: u.google_id ? true : false
     }));
 
-    // Get stats
-    let stats = { total: 0, travelers: 0, providers: 0, activeToday: 0 };
+    // Get stats including Google users count
+    let stats = { total: 0, travelers: 0, providers: 0, activeToday: 0, googleUsers: 0 };
     try {
+      const googleUsersResult = await pool.query(
+        `SELECT COUNT(*) FROM users WHERE google_id IS NOT NULL OR auth_provider IN ('google', 'both')`
+      );
       stats = {
         total: await User.countDocuments(),
         travelers: await User.countDocuments({ user_type: 'traveler' }),
         providers: await User.countDocuments({ user_type: 'service_provider' }),
-        activeToday: 0
+        activeToday: 0,
+        googleUsers: parseInt(googleUsersResult.rows[0].count)
       };
     } catch (e) {
       console.log('User stats error:', e.message);

@@ -79,7 +79,7 @@ export const UsersPage = {
                     ${Components.statCard('Total Users', Utils.formatNumber(data.stats?.total || 0), 'users', null, 'primary')}
                     ${Components.statCard('Travelers', Utils.formatNumber(data.stats?.travelers || 0), 'user-tie', null, 'secondary')}
                     ${Components.statCard('Providers', Utils.formatNumber(data.stats?.providers || 0), 'briefcase', null, 'accent')}
-                    ${Components.statCard('Active Today', Utils.formatNumber(data.stats?.activeToday || 0), 'user-check', null, 'success')}
+                    ${Components.statCard('Google Users', Utils.formatNumber(data.stats?.googleUsers || 0), 'google', null, 'success')}
                 </div>
 
                 <!-- Filters -->
@@ -102,6 +102,16 @@ export const UsersPage = {
                     { value: 'active', label: 'Active' },
                     { value: 'suspended', label: 'Suspended' },
                     { value: 'pending', label: 'Pending' }
+                ]
+            },
+            {
+                type: 'select',
+                key: 'authProvider',
+                placeholder: 'Auth Method',
+                options: [
+                    { value: 'google', label: 'Google Sign-In' },
+                    { value: 'email', label: 'Email/Password' },
+                    { value: 'both', label: 'Both Methods' }
                 ]
             },
             { type: 'date', key: 'dateFrom', placeholder: 'From Date' },
@@ -141,16 +151,19 @@ export const UsersPage = {
                 <div class="user-cell">
                     <img src="${Utils.getAvatarUrl(row.name, row.avatar)}" alt="${row.name}" class="user-cell-avatar">
                     <div class="user-cell-info">
-                        <div class="user-cell-name">${row.name}</div>
+                        <div class="user-cell-name">
+                            ${row.name}
+                            ${row.isGoogleUser ? '<span class="google-badge" title="Google Sign-In"><i class="fab fa-google"></i></span>' : ''}
+                        </div>
                         <div class="user-cell-email">${row.email}</div>
                     </div>
                 </div>
             `},
             { key: 'phone', label: 'Phone', sortable: false, formatter: (val) => Utils.formatPhone(val) },
             { key: 'role', label: 'Role', sortable: true, formatter: (val) => Utils.getRoleBadge(val) },
+            { key: 'authProvider', label: 'Auth', sortable: true, formatter: (val) => Utils.getAuthProviderBadge ? Utils.getAuthProviderBadge(val) : `<span class="badge badge-${val === 'google' ? 'info' : val === 'both' ? 'warning' : 'secondary'}">${val || 'email'}</span>` },
             { key: 'status', label: 'Status', sortable: true, formatter: (val) => Utils.getStatusBadge(val) },
-            { key: 'createdAt', label: 'Joined', sortable: true, formatter: (val) => Utils.formatDate(val) },
-            { key: 'lastActive', label: 'Last Active', sortable: true, formatter: (val) => Utils.timeAgo(val) }
+            { key: 'createdAt', label: 'Joined', sortable: true, formatter: (val) => Utils.formatDate(val) }
         ];
 
         const actions = [
@@ -263,7 +276,10 @@ export const UsersPage = {
                 <div class="user-details-header">
                     <img src="${Utils.getAvatarUrl(user.name, user.avatar)}" alt="${user.name}" class="user-details-avatar">
                     <div>
-                        <h3>${user.name}</h3>
+                        <h3>
+                            ${user.name}
+                            ${user.isGoogleUser ? '<span class="google-badge" title="Google Sign-In"><i class="fab fa-google"></i></span>' : ''}
+                        </h3>
                         <p>${user.email}</p>
                     </div>
                 </div>
@@ -275,6 +291,10 @@ export const UsersPage = {
                     <div class="detail-row">
                         <span class="detail-label">Role:</span>
                         <span class="detail-value">${Utils.getRoleBadge(user.role)}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Auth Method:</span>
+                        <span class="detail-value">${Utils.getAuthProviderBadge(user.authProvider)}</span>
                     </div>
                     <div class="detail-row">
                         <span class="detail-label">Status:</span>

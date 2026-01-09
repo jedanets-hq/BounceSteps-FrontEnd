@@ -5,6 +5,62 @@ import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import { API_URL } from '../../utils/api';
 
+// Session storage key and expiration time (10 minutes)
+const GOOGLE_REGISTRATION_KEY = 'google_registration_data';
+const SESSION_EXPIRATION_MS = 10 * 60 * 1000; // 10 minutes
+
+/**
+ * Validates if stored session data is still valid (not expired)
+ * @param {Object} data - Session data with timestamp
+ * @returns {boolean} - True if data is valid and not expired
+ */
+const isSessionDataValid = (data) => {
+  if (!data || !data.timestamp) return false;
+  const now = Date.now();
+  return (now - data.timestamp) < SESSION_EXPIRATION_MS;
+};
+
+/**
+ * Stores role selection data in sessionStorage with timestamp
+ * @param {Object} data - Role selection data
+ */
+const storeRoleSelection = (data) => {
+  const dataWithTimestamp = {
+    ...data,
+    timestamp: Date.now()
+  };
+  sessionStorage.setItem(GOOGLE_REGISTRATION_KEY, JSON.stringify(dataWithTimestamp));
+};
+
+/**
+ * Retrieves and validates role selection from sessionStorage
+ * @returns {Object|null} - Valid session data or null
+ */
+const getStoredRoleSelection = () => {
+  try {
+    const stored = sessionStorage.getItem(GOOGLE_REGISTRATION_KEY);
+    if (!stored) return null;
+    
+    const data = JSON.parse(stored);
+    if (isSessionDataValid(data)) {
+      return data;
+    }
+    // Clear expired data
+    sessionStorage.removeItem(GOOGLE_REGISTRATION_KEY);
+    return null;
+  } catch (e) {
+    console.error('Error reading session storage:', e);
+    return null;
+  }
+};
+
+/**
+ * Clears role selection from sessionStorage
+ */
+const clearRoleSelection = () => {
+  sessionStorage.removeItem(GOOGLE_REGISTRATION_KEY);
+};
+
 const GoogleRoleSelection = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -21,6 +77,14 @@ const GoogleRoleSelection = () => {
     const newUser = searchParams.get('newUser');
     if (newUser === 'true') {
       setIsNewUserFlow(true);
+      
+      // Check for previously stored role selection (in case of OAuth redirect back)
+      const storedData = getStoredRoleSelection();
+      if (storedData) {
+        setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
+        setPhone(storedData.phone || '');
+        setCompanyName(storedData.companyName || '');
+      }
       return;
     }
 
@@ -30,13 +94,32 @@ const GoogleRoleSelection = () => {
       try {
         const data = JSON.parse(decodeURIComponent(googleDataParam));
         setGoogleData(data);
+        
+        // Check for stored role selection from before OAuth
+        const storedData = getStoredRoleSelection();
+        if (storedData) {
+          setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
+          setPhone(storedData.phone || '');
+          setCompanyName(storedData.companyName || '');
+        }
       } catch (e) {
         console.error('Error parsing Google data:', e);
         setError('Invalid Google data. Please try again.');
       }
     } else {
-      // No Google data and not new user flow - redirect to login
-      setError('No registration data found. Please try signing in again.');
+      // No Google data and not new user flow - check if role was lost during OAuth
+      const storedData = getStoredRoleSelection();
+      if (storedData) {
+        // Role data exists but Google data is missing - redirect to start OAuth again
+        setIsNewUserFlow(true);
+        setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
+        setPhone(storedData.phone || '');
+        setCompanyName(storedData.companyName || '');
+        setError('Please complete the Google sign-in process.');
+      } else {
+        // No data at all - redirect to login
+        setError('No registration data found. Please try signing in again.');
+      }
     }
   }, [searchParams]);
 
@@ -49,6 +132,7 @@ const GoogleRoleSelection = () => {
   const handleNewUserSubmit = async (e) => {
     e.preventDefault();
     
+    // Validate role selection is mandatory
     if (!selectedRole) {
       setError('Please select how you want to use iSafari Global');
       return;
@@ -64,12 +148,15 @@ const GoogleRoleSelection = () => {
       return;
     }
 
-    // Store selection in sessionStorage for after OAuth
-    sessionStorage.setItem('google_registration_data', JSON.stringify({
+    setIsLoading(true);
+    setError('');
+
+    // Store selection in sessionStorage with timestamp for after OAuth
+    storeRoleSelection({
       userType: selectedRole === 'provider' ? 'service_provider' : 'traveler',
       phone,
       companyName: selectedRole === 'provider' ? companyName : null
-    }));
+    });
 
     // Redirect to Google OAuth
     const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://isafarinetworkglobal-2.onrender.com/api';
@@ -80,6 +167,7 @@ const GoogleRoleSelection = () => {
   const handleOAuthSubmit = async (e) => {
     e.preventDefault();
     
+    // Validate role selection is mandatory
     if (!selectedRole) {
       setError('Please select how you want to use iSafari Global');
       return;
@@ -120,11 +208,14 @@ const GoogleRoleSelection = () => {
       const data = await response.json();
 
       if (data.success) {
+        // Clear session storage after successful registration
+        clearRoleSelection();
+        
         // Store user data and token
         const userWithToken = { ...data.user, token: data.token };
         localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
         
-        // Navigate to appropriate dashboard
+        // Navigate to appropriate dashboard based on role
         if (selectedRole === 'provider') {
           navigate('/service-provider-dashboard');
         } else {

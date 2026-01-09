@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
 import ScrollToTop from "components/ScrollToTop";
 import ErrorBoundary from "components/ErrorBoundary";
+import ProtectedRoute from "components/ProtectedRoute";
 import NotFound from "pages/NotFound";
 import TravelerDashboard from './pages/traveler-dashboard';
 import ProviderPartnershipPortal from './pages/provider-partnership-portal';
@@ -27,11 +28,8 @@ const Routes = () => {
       <ErrorBoundary>
       <ScrollToTop />
       <RouterRoutes>
-        {/* Define your route here */}
+        {/* Public routes */}
         <Route path="/" element={<Homepage />} />
-        <Route path="/traveler-dashboard" element={<TravelerDashboard />} />
-        <Route path="/provider-partnership-portal" element={<ProviderPartnershipPortal />} />
-        <Route path="/service-provider-dashboard" element={<Dashboard />} />
         <Route path="/services-overview" element={<ServicesOverview />} />
         <Route path="/homepage" element={<Homepage />} />
         <Route path="/journey-planner" element={<JourneyPlanner />} />
@@ -42,11 +40,43 @@ const Routes = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/google-role-selection" element={<GoogleRoleSelection />} />
         <Route path="/auth/callback" element={<OAuthCallback />} />
-        <Route path="/profile" element={<Profile />} />
         <Route path="/about" element={<About />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/cart" element={<CartPage />} />
         <Route path="/provider/:providerId" element={<ProviderProfile />} />
+        
+        {/* Protected routes - require authentication */}
+        <Route path="/profile" element={
+          <ProtectedRoute requireAuth={true}>
+            <Profile />
+          </ProtectedRoute>
+        } />
+        <Route path="/cart" element={
+          <ProtectedRoute requireAuth={true}>
+            <CartPage />
+          </ProtectedRoute>
+        } />
+        
+        {/* Role-specific dashboard routes */}
+        <Route path="/traveler-dashboard" element={
+          <ProtectedRoute requireAuth={true} allowedRoles={['traveler']}>
+            <TravelerDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/service-provider-dashboard" element={
+          <ProtectedRoute requireAuth={true} allowedRoles={['service_provider']}>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard" element={
+          <ProtectedRoute requireAuth={true} allowedRoles={['service_provider']}>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/provider-partnership-portal" element={
+          <ProtectedRoute requireAuth={true} allowedRoles={['service_provider']}>
+            <ProviderPartnershipPortal />
+          </ProtectedRoute>
+        } />
+        
         <Route path="*" element={<NotFound />} />
       </RouterRoutes>
       </ErrorBoundary>

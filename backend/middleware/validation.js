@@ -97,7 +97,10 @@ const validationSets = {
   
   login: [
     validationRules.email,
-    validationRules.password
+    // Don't validate password length for login - just check it exists
+    body('password')
+      .notEmpty()
+      .withMessage('Password is required')
   ],
   
   updateProfile: [

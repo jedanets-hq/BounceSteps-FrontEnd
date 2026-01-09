@@ -1393,3 +1393,40 @@
     color: var(--color-text-secondary);
     margin-bottom: var(--spacing-lg);
 }
+
+
+/* ==========================================
+   Google Badge Styles
+   ========================================== */
+
+.google-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335);
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.google-badge i {
+    font-size: 10px;
+    color: white;
+}
+
+.user-cell-name {
+    display: flex;
+    align-items: center;
+}
+
+/* Auth Provider Badge Colors */
+.badge-info {
+    background-color: #3B82F6;
+    color: white;
+}
+
+.badge-info i.fa-google {
+    color: white;
+}

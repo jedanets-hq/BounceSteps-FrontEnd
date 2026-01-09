@@ -362,6 +362,14 @@ router.post('/google/complete-registration', async (req, res) => {
       });
     }
 
+    // Validate userType is valid
+    if (!['traveler', 'service_provider'].includes(userType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid account type selected. Must be "traveler" or "service_provider"'
+      });
+    }
+
     // Check if user already exists by Google ID
     let existingUser = await User.findByGoogleId(googleId);
     if (existingUser) {
@@ -379,7 +387,8 @@ router.post('/google/complete-registration', async (req, res) => {
           userType: existingUser.user_type,
           phone: existingUser.phone,
           isVerified: existingUser.is_verified,
-          avatar: existingUser.avatar_url
+          avatar: existingUser.avatar_url,
+          authProvider: existingUser.auth_provider
         },
         token
       });
@@ -388,10 +397,16 @@ router.post('/google/complete-registration', async (req, res) => {
     // Check if email already exists (user registered with email, now linking Google)
     existingUser = await User.findByEmail(email.toLowerCase().trim());
     if (existingUser) {
-      // Link Google account to existing user
-      await User.update(existingUser.id, { google_id: googleId, avatar_url: avatarUrl });
+      // Link Google account to existing user - update auth_provider to 'both' if they have password
+      const newAuthProvider = existingUser.password ? 'both' : 'google';
+      await User.update(existingUser.id, { 
+        google_id: googleId, 
+        avatar_url: avatarUrl || existingUser.avatar_url,
+        auth_provider: newAuthProvider
+      });
+      
       const token = generateToken(existingUser);
-      console.log('✅ Google account linked to existing user:', existingUser.email);
+      console.log('✅ Google account linked to existing user:', existingUser.email, 'auth_provider:', newAuthProvider);
       return res.json({
         success: true,
         message: 'Google account linked successfully',
@@ -403,13 +418,14 @@ router.post('/google/complete-registration', async (req, res) => {
           userType: existingUser.user_type,
           phone: existingUser.phone,
           isVerified: existingUser.is_verified,
-          avatar: avatarUrl || existingUser.avatar_url
+          avatar: avatarUrl || existingUser.avatar_url,
+          authProvider: newAuthProvider
         },
         token
       });
     }
 
-    // Create new user with Google data
+    // Create new user with Google data - auth_provider will be 'google'
     const newUser = await User.create({
       email: email.toLowerCase().trim(),
       password: null, // No password for Google users
@@ -419,10 +435,11 @@ router.post('/google/complete-registration', async (req, res) => {
       user_type: userType,
       google_id: googleId,
       avatar_url: avatarUrl,
-      is_verified: true // Google users are auto-verified
+      is_verified: true, // Google users are auto-verified
+      auth_provider: 'google'
     });
 
-    console.log('✅ New Google user created:', newUser.id, newUser.email);
+    console.log('✅ New Google user created:', newUser.id, newUser.email, 'auth_provider: google');
 
     // Create service provider profile if user is a service provider
     if (userType === 'service_provider') {
@@ -463,7 +480,8 @@ router.post('/google/complete-registration', async (req, res) => {
       userType: newUser.user_type,
       phone: newUser.phone,
       isVerified: true,
-      avatar: avatarUrl
+      avatar: avatarUrl,
+      authProvider: 'google'
     };
 
     // Add provider data for service providers

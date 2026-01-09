@@ -8,18 +8,96 @@ const OAuthCallback = () => {
   const [status, setStatus] = useState('processing');
   const [error, setError] = useState('');
 
+  /**
+   * Get the appropriate dashboard path based on user role
+   * Implements role-based redirection as per Requirements 3.2, 3.3
+   */
+  const getDashboardPath = (userType) => {
+    switch (userType) {
+      case 'service_provider':
+        return '/service-provider-dashboard';
+      case 'traveler':
+        return '/traveler-dashboard';
+      case 'admin':
+        return '/admin';
+      default:
+        // Default to home for unknown roles
+        console.warn('⚠️ Unknown user type:', userType, '- redirecting to home');
+        return '/';
+    }
+  };
+
+  /**
+   * Clear any stored role selection data from sessionStorage
+   * Called after successful registration/login
+   */
+  const clearRoleSelectionData = () => {
+    try {
+      sessionStorage.removeItem('google_registration_data');
+      console.log('🧹 Cleared role selection data from session');
+    } catch (e) {
+      console.warn('Could not clear session storage:', e);
+    }
+  };
+
   useEffect(() => {
     const handleOAuthCallback = async () => {
       try {
         const token = searchParams.get('token');
         const errorParam = searchParams.get('error');
+        const needsRegistration = searchParams.get('needsRegistration');
 
+        // Handle OAuth errors
         if (errorParam) {
+          console.error('❌ OAuth error param:', errorParam);
           setError('Authentication failed. Please try again.');
           setStatus('error');
           return;
         }
 
+        // Check if this is a new user needing registration
+        if (needsRegistration === 'true') {
+          console.log('📝 New user needs registration - checking for role selection');
+          
+          // Check if role was selected before OAuth
+          const storedData = sessionStorage.getItem('google_registration_data');
+          if (!storedData) {
+            console.log('⚠️ No role selection found - redirecting to role selection');
+            setError('Please select your account type before signing up.');
+            setStatus('error');
+            // Redirect to role selection after a short delay
+            setTimeout(() => {
+              navigate('/auth/google-role-selection', { 
+                state: { 
+                  returnFromOAuth: true,
+                  googleData: searchParams.get('googleData') 
+                }
+              });
+            }, 2000);
+            return;
+          }
+
+          // Parse stored role data
+          const roleData = JSON.parse(storedData);
+          
+          // Check if role selection has expired (10 minutes)
+          const TEN_MINUTES = 10 * 60 * 1000;
+          if (Date.now() - roleData.timestamp > TEN_MINUTES) {
+            console.log('⚠️ Role selection expired - redirecting to role selection');
+            clearRoleSelectionData();
+            setError('Your session expired. Please select your account type again.');
+            setStatus('error');
+            setTimeout(() => {
+              navigate('/auth/google-role-selection');
+            }, 2000);
+            return;
+          }
+
+          console.log('✅ Role selection found:', roleData.userType);
+          // Continue with registration flow - the backend should handle this
+        }
+
+        // Validate token presence
         if (!token) {
           setError('No authentication token received.');
           setStatus('error');
@@ -43,26 +121,30 @@ const OAuthCallback = () => {
             const userWithToken = { ...data.user, token };
             localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
             
-            console.log('✅ OAuth login successful:', data.user.email);
+            // Clear role selection data after successful login
+            clearRoleSelectionData();
+            
+            console.log('✅ OAuth login successful:', data.user.email, '- Role:', data.user.userType);
             setStatus('success');
+            
+            // Get the correct dashboard path based on user role
+            const dashboardPath = getDashboardPath(data.user.userType);
+            console.log('🚀 Redirecting to:', dashboardPath);
             
             // Redirect based on user type
             setTimeout(() => {
-              if (data.user.userType === 'service_provider') {
-                navigate('/service-provider-dashboard');
-              } else {
-                navigate('/');
-              }
+              navigate(dashboardPath);
             }, 1500);
           } else {
             throw new Error('Invalid user data received');
           }
         } else {
-          throw new Error('Failed to verify authentication');
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || 'Failed to verify authentication');
         }
       } catch (error) {
         console.error('❌ OAuth callback error:', error);
-        setError('Authentication verification failed. Please try logging in again.');
+        setError(error.message || 'Authentication verification failed. Please try logging in again.');
         setStatus('error');
       }
     };
@@ -72,6 +154,34 @@ const OAuthCallback = () => {
 
   const handleRetry = () => {
     navigate('/login');
+  };
+
+  const handleBackToLogin = () => {
+    clearRoleSelectionData();
+    navigate('/login');
+  };
+
+  // Get user-friendly dashboard name for display
+  const getDashboardDisplayName = () => {
+    const storedUser = localStorage.getItem('isafari_user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        switch (user.userType) {
+          case 'service_provider':
+            return 'Service Provider Dashboard';
+          case 'traveler':
+            return 'Traveler Dashboard';
+          case 'admin':
+            return 'Admin Dashboard';
+          default:
+            return 'your dashboard';
+        }
+      } catch (e) {
+        return 'your dashboard';
+      }
+    }
+    return 'your dashboard';
   };
 
   return (
@@ -93,7 +203,7 @@ const OAuthCallback = () => {
               </svg>
             </div>
             <h2 className="text-xl font-semibold mb-2 text-green-600">Welcome Back!</h2>
-            <p className="text-gray-600">Redirecting you to your dashboard...</p>
+            <p className="text-gray-600">Redirecting you to {getDashboardDisplayName()}...</p>
           </div>
         )}
 
@@ -106,12 +216,20 @@ const OAuthCallback = () => {
             </div>
             <h2 className="text-xl font-semibold mb-2 text-red-600">Authentication Failed</h2>
             <p className="text-gray-600 mb-4">{error}</p>
-            <button
-              onClick={handleRetry}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Try Again
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={handleRetry}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={handleBackToLogin}
+                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Back to Login
+              </button>
+            </div>
           </div>
         )}
       </div>

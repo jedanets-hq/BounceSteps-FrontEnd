@@ -155,6 +155,26 @@ export const Utils = {
     },
 
     /**
+     * Get auth provider badge HTML
+     */
+    getAuthProviderBadge(authProvider) {
+        const providerMap = {
+            'google': { class: 'info', icon: 'fab fa-google', text: 'Google' },
+            'email': { class: 'secondary', icon: 'fas fa-envelope', text: 'Email' },
+            'both': { class: 'warning', icon: 'fas fa-link', text: 'Both' }
+        };
+
+        const config = providerMap[authProvider] || providerMap['email'];
+
+        return `
+            <span class="badge badge-${config.class}">
+                <i class="${config.icon}"></i>
+                ${config.text}
+            </span>
+        `;
+    },
+
+    /**
      * Show toast notification
      */
     showToast(message, type = 'info', duration = 3000) {
