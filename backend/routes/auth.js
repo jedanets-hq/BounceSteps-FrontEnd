@@ -286,16 +286,24 @@ router.get('/google/callback',
       
       // Check if user needs to complete registration (new Google user)
       if (req.user.needsRegistration) {
-        // Redirect to role selection page with Google data
-        const googleData = encodeURIComponent(JSON.stringify({
+        // Create Google data object
+        const googleDataObj = {
           googleId: req.user.googleId,
           email: req.user.email,
           firstName: req.user.firstName,
           lastName: req.user.lastName,
           avatarUrl: req.user.avatarUrl
-        }));
+        };
+        
+        // Use Base64 encoding for safer URL transmission
+        // This avoids double-encoding issues with URL parameters
+        const googleDataBase64 = Buffer.from(JSON.stringify(googleDataObj)).toString('base64');
+        
         console.log('🔄 New Google user, redirecting to role selection');
-        return res.redirect(`${frontendUrl}/google-role-selection?googleData=${googleData}`);
+        console.log('📧 Email:', req.user.email);
+        
+        // Redirect with base64 encoded data
+        return res.redirect(`${frontendUrl}/google-role-selection?googleData=${googleDataBase64}`);
       }
       
       // Existing user - generate token and redirect
