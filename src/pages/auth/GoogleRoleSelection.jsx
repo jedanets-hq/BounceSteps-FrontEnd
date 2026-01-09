@@ -73,9 +73,13 @@ const GoogleRoleSelection = () => {
   const [isNewUserFlow, setIsNewUserFlow] = useState(false);
 
   useEffect(() => {
+    console.log('🔍 GoogleRoleSelection mounted');
+    console.log('🔍 URL search params:', window.location.search);
+    
     // Check if this is a new user flow (from "Sign up with Google" button)
     const newUser = searchParams.get('newUser');
     if (newUser === 'true') {
+      console.log('📝 New user flow detected');
       setIsNewUserFlow(true);
       
       // Check for previously stored role selection (in case of OAuth redirect back)
@@ -90,34 +94,101 @@ const GoogleRoleSelection = () => {
 
     // Get Google data from URL params (from OAuth callback)
     const googleDataParam = searchParams.get('googleData');
+    console.log('🔍 googleData param:', googleDataParam ? 'exists (length: ' + googleDataParam.length + ')' : 'missing');
+    
     if (googleDataParam) {
       try {
-        const data = JSON.parse(decodeURIComponent(googleDataParam));
-        setGoogleData(data);
+        // Try multiple decoding strategies
+        let decodedData = googleDataParam;
+        let parseSuccess = false;
+        let parsedData = null;
         
-        // Check for stored role selection from before OAuth
-        const storedData = getStoredRoleSelection();
-        if (storedData) {
-          setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
-          setPhone(storedData.phone || '');
-          setCompanyName(storedData.companyName || '');
+        // Strategy 1: Direct parse (if already decoded by browser)
+        try {
+          parsedData = JSON.parse(googleDataParam);
+          parseSuccess = true;
+          console.log('✅ Strategy 1 (direct parse) worked');
+        } catch (e1) {
+          console.log('⚠️ Strategy 1 failed, trying decode...');
+        }
+        
+        // Strategy 2: Single decode then parse
+        if (!parseSuccess) {
+          try {
+            decodedData = decodeURIComponent(googleDataParam);
+            parsedData = JSON.parse(decodedData);
+            parseSuccess = true;
+            console.log('✅ Strategy 2 (single decode) worked');
+          } catch (e2) {
+            console.log('⚠️ Strategy 2 failed, trying double decode...');
+          }
+        }
+        
+        // Strategy 3: Double decode (for double-encoded URLs)
+        if (!parseSuccess) {
+          try {
+            decodedData = decodeURIComponent(decodeURIComponent(googleDataParam));
+            parsedData = JSON.parse(decodedData);
+            parseSuccess = true;
+            console.log('✅ Strategy 3 (double decode) worked');
+          } catch (e3) {
+            console.log('⚠️ Strategy 3 failed');
+          }
+        }
+        
+        // Strategy 4: Replace URL-encoded characters manually
+        if (!parseSuccess) {
+          try {
+            decodedData = googleDataParam
+              .replace(/%7B/g, '{')
+              .replace(/%7D/g, '}')
+              .replace(/%22/g, '"')
+              .replace(/%3A/g, ':')
+              .replace(/%2C/g, ',')
+              .replace(/%40/g, '@')
+              .replace(/%2F/g, '/')
+              .replace(/%3D/g, '=');
+            parsedData = JSON.parse(decodedData);
+            parseSuccess = true;
+            console.log('✅ Strategy 4 (manual replace) worked');
+          } catch (e4) {
+            console.log('⚠️ Strategy 4 failed');
+          }
+        }
+        
+        if (parseSuccess && parsedData) {
+          console.log('✅ Google data parsed successfully:', parsedData.email);
+          setGoogleData(parsedData);
+          
+          // Check for stored role selection from before OAuth
+          const storedData = getStoredRoleSelection();
+          if (storedData) {
+            setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
+            setPhone(storedData.phone || '');
+            setCompanyName(storedData.companyName || '');
+          }
+        } else {
+          throw new Error('All parsing strategies failed');
         }
       } catch (e) {
-        console.error('Error parsing Google data:', e);
-        setError('Invalid Google data. Please try again.');
+        console.error('❌ Error parsing Google data:', e);
+        console.error('❌ Raw googleData (first 200 chars):', googleDataParam.substring(0, 200));
+        setError('Invalid Google data format. Please try signing in again.');
       }
     } else {
       // No Google data and not new user flow - check if role was lost during OAuth
       const storedData = getStoredRoleSelection();
       if (storedData) {
         // Role data exists but Google data is missing - redirect to start OAuth again
+        console.log('⚠️ Role data exists but no Google data');
         setIsNewUserFlow(true);
         setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
         setPhone(storedData.phone || '');
         setCompanyName(storedData.companyName || '');
         setError('Please complete the Google sign-in process.');
       } else {
-        // No data at all - redirect to login
+        // No data at all - show error but don't redirect immediately
+        console.log('⚠️ No registration data found');
         setError('No registration data found. Please try signing in again.');
       }
     }
@@ -232,14 +303,20 @@ const GoogleRoleSelection = () => {
     }
   };
 
-  // Loading state
+  // Loading state - show briefly while parsing URL params
   if (!isNewUserFlow && !googleData && !error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading registration data...</p>
+        </div>
       </div>
     );
   }
+
+  // Show form if we have googleData OR if it's new user flow OR if there's an error (to show error message)
+  // This ensures the page doesn't stay blank
 
   return (
     <div className="min-h-screen bg-background">
