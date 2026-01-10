@@ -36,6 +36,11 @@ class StoryLike {
     const keys = Object.keys(conditions);
     const values = Object.values(conditions);
     
+    if (keys.length === 0) {
+      const result = await pool.query('SELECT * FROM story_likes LIMIT 1');
+      return result.rows[0];
+    }
+    
     const whereClause = keys.map((key, index) => `${key} = $${index + 1}`).join(' AND ');
     const query = `SELECT * FROM story_likes WHERE ${whereClause} LIMIT 1`;
     
@@ -74,6 +79,10 @@ class StoryLike {
   static async deleteOne(conditions) {
     const keys = Object.keys(conditions);
     const values = Object.values(conditions);
+    
+    if (keys.length === 0) {
+      return null;
+    }
     
     const whereClause = keys.map((key, index) => `${key} = $${index + 1}`).join(' AND ');
     const query = `DELETE FROM story_likes WHERE ${whereClause} RETURNING *`;

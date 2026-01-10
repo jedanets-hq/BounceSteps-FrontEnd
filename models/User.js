@@ -13,15 +13,28 @@ class User {
       google_id,
       avatar_url,
       is_verified = false,
-      is_active = true
+      is_active = true,
+      auth_provider = null // Will be auto-determined if not provided
     } = userData;
+
+    // Auto-determine auth_provider based on credentials
+    let finalAuthProvider = auth_provider;
+    if (!finalAuthProvider) {
+      if (google_id && password) {
+        finalAuthProvider = 'both';
+      } else if (google_id) {
+        finalAuthProvider = 'google';
+      } else {
+        finalAuthProvider = 'email';
+      }
+    }
 
     const query = `
       INSERT INTO users (
         email, password, first_name, last_name, phone, user_type,
-        google_id, avatar_url, is_verified, is_active
+        google_id, avatar_url, is_verified, is_active, auth_provider
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
     `;
 
@@ -35,7 +48,8 @@ class User {
       google_id,
       avatar_url,
       is_verified,
-      is_active
+      is_active,
+      finalAuthProvider
     ];
 
     try {

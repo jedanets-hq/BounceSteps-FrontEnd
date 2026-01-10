@@ -9,36 +9,71 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback"
-  }, async (accessToken, refreshToken, profile, done) => {
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback",
+    passReqToCallback: true // Enable access to request object
+  }, async (req, accessToken, refreshToken, profile, done) => {
   try {
+    const googleEmail = profile.emails[0].value.toLowerCase();
+    
+    // Get flow type from state parameter (passed via OAuth state)
+    // The state is available in req.query.state during callback
+    const flowType = req.query?.state || 'login';
+    const isRegistrationFlow = flowType === 'register';
+    
+    console.log('🔍 Google OAuth - flowType:', flowType, 'isRegistrationFlow:', isRegistrationFlow, 'email:', googleEmail);
+    
     // Check if user already exists by Google ID
     let user = await User.findByGoogleId(profile.id);
     
-    if (!user) {
-      // Check by email
-      user = await User.findByEmail(profile.emails[0].value.toLowerCase());
+    if (user) {
+      // Existing Google user - just log them in
+      console.log('✅ Existing Google user found by google_id:', user.email);
+      return done(null, user);
     }
+    
+    // Check by email - user might have registered with email first
+    user = await User.findByEmail(googleEmail);
 
     if (user) {
-      // User exists, update Google ID if not set
-      if (!user.google_id) {
-        await User.update(user.id, { google_id: profile.id });
-      }
+      // User exists with email, link Google account
+      console.log('🔗 Linking Google account to existing email user:', user.email);
+      
+      // Determine new auth_provider
+      const newAuthProvider = user.password ? 'both' : 'google';
+      
+      await User.update(user.id, { 
+        google_id: profile.id,
+        avatar_url: user.avatar_url || profile.photos[0]?.value,
+        auth_provider: newAuthProvider
+      });
+      
+      // Refresh user data
+      user = await User.findById(user.id);
       return done(null, user);
     }
 
-    // Create new user - but we need user_type, so redirect to registration
-    const userData = {
-      googleId: profile.id,
-      email: profile.emails[0].value,
-      firstName: profile.name.givenName,
-      lastName: profile.name.familyName,
-      avatarUrl: profile.photos[0]?.value,
-      needsRegistration: true
-    };
-
-    return done(null, userData);
+    // NEW USER - Check if this is registration flow or login flow
+    if (isRegistrationFlow) {
+      // Registration flow - allow new user to complete registration
+      console.log('🆕 New Google user in REGISTRATION flow:', googleEmail);
+      const userData = {
+        googleId: profile.id,
+        email: googleEmail,
+        firstName: profile.name.givenName || '',
+        lastName: profile.name.familyName || '',
+        avatarUrl: profile.photos[0]?.value,
+        needsRegistration: true
+      };
+      return done(null, userData);
+    } else {
+      // LOGIN flow - user not registered, reject
+      console.log('❌ Google user NOT REGISTERED (login flow):', googleEmail);
+      const userData = {
+        email: googleEmail,
+        notRegistered: true
+      };
+      return done(null, userData);
+    }
   } catch (error) {
     console.error('❌ Google OAuth Error:', error);
     return done(error, null);
