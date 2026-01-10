@@ -117,24 +117,55 @@ const OAuthCallback = () => {
           const data = await response.json();
           
           if (data.success && data.user) {
-            // Store user with token
+            // Store user with token FIRST
             const userWithToken = { ...data.user, token };
-            localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
+            
+            // CRITICAL: Use synchronous localStorage write and verify it was saved
+            try {
+              localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
+              
+              // Verify the data was actually saved
+              const savedData = localStorage.getItem('isafari_user');
+              if (!savedData) {
+                throw new Error('Failed to save user data to localStorage');
+              }
+              
+              const parsedSaved = JSON.parse(savedData);
+              if (!parsedSaved.token || !parsedSaved.userType) {
+                throw new Error('Saved user data is incomplete');
+              }
+              
+              console.log('✅ OAuth login successful:', data.user.email, '- Role:', data.user.userType);
+              console.log('🔑 Token verified in localStorage');
+              
+            } catch (storageError) {
+              console.error('❌ localStorage error:', storageError);
+              throw new Error('Failed to save login data. Please try again.');
+            }
             
             // Clear role selection data after successful login
             clearRoleSelectionData();
             
-            console.log('✅ OAuth login successful:', data.user.email, '- Role:', data.user.userType);
             setStatus('success');
             
             // Get the correct dashboard path based on user role
             const dashboardPath = getDashboardPath(data.user.userType);
             console.log('🚀 Redirecting to:', dashboardPath);
             
-            // Redirect based on user type
+            // Use longer delay to ensure localStorage is fully committed before navigation
+            // This prevents race condition where page loads before data is available
             setTimeout(() => {
-              navigate(dashboardPath);
-            }, 1500);
+              // Double-check localStorage before redirect
+              const finalCheck = localStorage.getItem('isafari_user');
+              if (!finalCheck) {
+                console.error('❌ localStorage lost data before redirect!');
+                setError('Session data was lost. Please try again.');
+                setStatus('error');
+                return;
+              }
+              
+              window.location.href = dashboardPath;
+            }, 500);
           } else {
             throw new Error('Invalid user data received');
           }

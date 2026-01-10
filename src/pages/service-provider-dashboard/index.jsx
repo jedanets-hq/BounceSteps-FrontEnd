@@ -37,9 +37,58 @@ const ServiceProviderDashboard = () => {
 
   // Redirect to login if not authenticated
   useEffect(() => {
-    if (!isLoading && !user) {
-      navigate('/login');
+    // Wait for auth to finish loading
+    if (isLoading) return;
+    
+    // If user exists in context, we're good
+    if (user && user.userType === 'service_provider') return;
+    
+    // Check localStorage directly as fallback (handles race conditions after OAuth)
+    try {
+      const savedUser = localStorage.getItem('isafari_user');
+      if (savedUser) {
+        const userData = JSON.parse(savedUser);
+        if (userData && userData.token && userData.userType === 'service_provider') {
+          // User exists in localStorage but not in context yet - wait for context to update
+          console.log('⏳ [ProviderDashboard] User in localStorage, waiting for context...');
+          // Give AuthContext more time to sync
+          return;
+        }
+        // User exists but wrong role - redirect to correct dashboard
+        if (userData && userData.token && userData.userType === 'traveler') {
+          console.log('🔄 [ProviderDashboard] User is traveler, redirecting...');
+          navigate('/traveler-dashboard');
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('Error checking localStorage:', e);
     }
+    
+    // Add a small delay before redirecting to login to handle OAuth race conditions
+    const redirectTimer = setTimeout(() => {
+      // Double-check localStorage one more time
+      try {
+        const savedUser = localStorage.getItem('isafari_user');
+        if (savedUser) {
+          const userData = JSON.parse(savedUser);
+          if (userData && userData.token && userData.userType === 'service_provider') {
+            console.log('✅ [ProviderDashboard] User found on delayed check, staying on page');
+            // Force a re-render by updating state
+            window.location.reload();
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Error on delayed localStorage check:', e);
+      }
+      
+      // No user anywhere - redirect to login
+      console.log('🔒 [ProviderDashboard] No user found, redirecting to login');
+      navigate('/login');
+    }, 500);
+    
+    return () => clearTimeout(redirectTimer);
   }, [user, isLoading, navigate]);
 
   // Close mobile menu when clicking outside
@@ -271,8 +320,30 @@ const ServiceProviderDashboard = () => {
     );
   }
 
-  // Return null while redirecting
+  // Check localStorage directly as fallback (handles race conditions after OAuth)
   if (!user) {
+    // Try to get user from localStorage directly
+    try {
+      const savedUser = localStorage.getItem('isafari_user');
+      if (savedUser) {
+        const userData = JSON.parse(savedUser);
+        if (userData && userData.token && userData.userType === 'service_provider') {
+          // User exists in localStorage but not in context yet - show loading
+          return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+              <div className="text-center">
+                <Icon name="Loader2" size={48} className="animate-spin text-primary mx-auto mb-4" />
+                <p className="text-muted-foreground">Initializing your dashboard...</p>
+              </div>
+            </div>
+          );
+        }
+      }
+    } catch (e) {
+      console.error('Error checking localStorage:', e);
+    }
+    
+    // No user at all - redirect to login
     return null;
   }
 

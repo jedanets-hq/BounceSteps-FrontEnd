@@ -82,7 +82,18 @@ const Register = () => {
   };
 
   const navigate = useNavigate();
-  const { register, loginWithGoogle } = useAuth();
+  const { register, loginWithGoogle, user, isLoading: authLoading } = useAuth();
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      console.log('✅ User already logged in, redirecting to dashboard');
+      const dashboardPath = user.userType === 'service_provider' 
+        ? '/service-provider-dashboard' 
+        : '/traveler-dashboard';
+      navigate(dashboardPath, { replace: true });
+    }
+  }, [authLoading, user, navigate]);
 
   const handleGoogleRegister = async () => {
     // Redirect to Google Role Selection page first

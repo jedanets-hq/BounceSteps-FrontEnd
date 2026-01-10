@@ -16,11 +16,22 @@ const Login = () => {
   const [searchParams] = useSearchParams();
 
   const navigate = useNavigate();
-  const { login, error: authError } = useAuth();
+  const { login, user, isLoading: authLoading, error: authError } = useAuth();
 
   // Get redirect and role from URL params - default to home page for travelers
   const redirectTo = searchParams.get('redirect') || '/';
   const suggestedRole = searchParams.get('role');
+  
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      console.log('✅ User already logged in, redirecting to dashboard');
+      const dashboardPath = user.userType === 'service_provider' 
+        ? '/service-provider-dashboard' 
+        : '/traveler-dashboard';
+      navigate(dashboardPath, { replace: true });
+    }
+  }, [authLoading, user, navigate]);
   
   // Check for Google OAuth errors (e.g., not_registered)
   useEffect(() => {

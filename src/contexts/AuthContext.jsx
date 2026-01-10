@@ -38,8 +38,17 @@ export const AuthProvider = ({ children }) => {
         try {
           const userData = JSON.parse(savedUser);
           if (userData && userData.token) {
-            console.log('✅ [AuthContext] User session restored:', userData.email);
-            setUser(userData);
+            // Validate that essential fields exist
+            if (!userData.email || !userData.userType) {
+              console.warn('⚠️ [AuthContext] User data incomplete, clearing...');
+              localStorage.removeItem('isafari_user');
+            } else {
+              console.log('✅ [AuthContext] User session restored:', userData.email, '- Role:', userData.userType);
+              setUser(userData);
+            }
+          } else {
+            console.warn('⚠️ [AuthContext] No token in saved user, clearing...');
+            localStorage.removeItem('isafari_user');
           }
         } catch (error) {
           console.error('❌ [AuthContext] Error parsing saved user:', error);
@@ -53,7 +62,55 @@ export const AuthProvider = ({ children }) => {
       console.log('✅ [AuthContext] Initialization complete');
     };
 
+    // Run immediately first to check localStorage
     initializeAuth();
+    
+    // Also run after a small delay to catch OAuth redirects where localStorage might be set after initial load
+    const timer = setTimeout(() => {
+      // Re-check localStorage if user is still null (handles OAuth redirect race condition)
+      if (!user) {
+        const savedUser = localStorage.getItem('isafari_user');
+        if (savedUser) {
+          try {
+            const userData = JSON.parse(savedUser);
+            if (userData && userData.token && userData.email && userData.userType) {
+              console.log('✅ [AuthContext] User found on delayed check:', userData.email);
+              setUser(userData);
+            }
+          } catch (e) {
+            console.error('Error on delayed localStorage check:', e);
+          }
+        }
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Listen for storage changes (handles cross-tab login/logout and OAuth redirects)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'isafari_user') {
+        console.log('🔄 [AuthContext] Storage change detected');
+        if (e.newValue) {
+          try {
+            const userData = JSON.parse(e.newValue);
+            if (userData && userData.token && userData.email && userData.userType) {
+              console.log('✅ [AuthContext] User updated from storage:', userData.email);
+              setUser(userData);
+            }
+          } catch (error) {
+            console.error('❌ [AuthContext] Error parsing storage change:', error);
+          }
+        } else {
+          console.log('ℹ️ [AuthContext] User cleared from storage');
+          setUser(null);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Set error message and clear it after 5 seconds

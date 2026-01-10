@@ -1,11 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import Header from '../../components/ui/Header';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import { API_URL } from '../../utils/api';
 import LocationSelector from '../../components/LocationSelector';
 import { serviceCategories as allServiceCategories } from '../../data/locations';
+
+// Lazy load Header to prevent context errors from blocking the page
+const Header = React.lazy(() => import('../../components/ui/Header'));
+
+// Simple header fallback that doesn't use any contexts
+const SimpleHeader = () => (
+  <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+    <div className="max-w-7xl mx-auto">
+      <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+        <a href="/" className="flex items-center space-x-3">
+          <img 
+            src="/assets/images/isafari-logo.png" 
+            alt="iSafari Global" 
+            className="h-10 w-auto"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        </a>
+        <a href="/login" className="text-sm text-gray-600 hover:text-gray-900">
+          ← Back to Login
+        </a>
+      </div>
+    </div>
+  </header>
+);
+
+// Error boundary specifically for Header
+class HeaderErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.warn('Header failed to load, using simple header:', error.message);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <SimpleHeader />;
+    }
+    return this.props.children;
+  }
+}
 
 // Session storage key and expiration time (10 minutes)
 const GOOGLE_REGISTRATION_KEY = 'google_registration_data';
@@ -64,6 +112,34 @@ const clearRoleSelection = () => {
 };
 
 /**
+ * Safely decode Base64 string (handles URL-safe base64 and padding)
+ * @param {string} str - Base64 encoded string
+ * @returns {string} - Decoded string
+ */
+const safeBase64Decode = (str) => {
+  // Replace URL-safe characters back to standard base64
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  
+  // Add padding if needed
+  const padding = base64.length % 4;
+  if (padding) {
+    base64 += '='.repeat(4 - padding);
+  }
+  
+  // Decode using atob
+  try {
+    return atob(base64);
+  } catch (e) {
+    // Try decodeURIComponent first for URL-encoded base64
+    try {
+      return atob(decodeURIComponent(base64));
+    } catch (e2) {
+      throw new Error('Base64 decode failed');
+    }
+  }
+};
+
+/**
  * Safely parse Google data from URL parameter with multiple decoding strategies
  * @param {string} googleDataParam - URL encoded Google data
  * @returns {Object|null} - Parsed Google data or null
@@ -72,31 +148,66 @@ const parseGoogleData = (googleDataParam) => {
   if (!googleDataParam) return null;
   
   console.log('🔍 Attempting to parse googleData, length:', googleDataParam.length);
+  console.log('🔍 First 50 chars:', googleDataParam.substring(0, 50));
+  
+  // CRITICAL FIX: Check for duplicated base64 data (bug where data is repeated twice)
+  // This happens when the same base64 string is concatenated with itself
+  const checkForDuplicatedData = (param) => {
+    // If length is even and > 100, check if first half equals second half
+    if (param.length > 100 && param.length % 2 === 0) {
+      const halfLength = param.length / 2;
+      const firstHalf = param.substring(0, halfLength);
+      const secondHalf = param.substring(halfLength);
+      if (firstHalf === secondHalf) {
+        console.log('⚠️ Detected duplicated base64 data, using first half');
+        return firstHalf;
+      }
+    }
+    return param;
+  };
+  
+  // Clean the parameter first
+  let cleanParam = checkForDuplicatedData(googleDataParam);
   
   const strategies = [
-    // Strategy 1: Direct parse (browser may have already decoded)
+    // Strategy 1: Base64 decode FIRST (backend uses base64 encoding)
     () => {
-      const result = JSON.parse(googleDataParam);
-      console.log('✅ Strategy 1 (direct parse) worked');
-      return result;
-    },
-    // Strategy 2: Single decodeURIComponent
-    () => {
-      const decoded = decodeURIComponent(googleDataParam);
+      const decoded = safeBase64Decode(cleanParam);
       const result = JSON.parse(decoded);
-      console.log('✅ Strategy 2 (single decode) worked');
+      console.log('✅ Strategy 1 (base64 decode) worked');
       return result;
     },
-    // Strategy 3: Double decodeURIComponent (for double-encoded URLs)
+    // Strategy 2: URL decode then Base64 decode
     () => {
-      const decoded = decodeURIComponent(decodeURIComponent(googleDataParam));
+      const urlDecoded = decodeURIComponent(cleanParam);
+      const decoded = safeBase64Decode(urlDecoded);
       const result = JSON.parse(decoded);
-      console.log('✅ Strategy 3 (double decode) worked');
+      console.log('✅ Strategy 2 (URL + base64 decode) worked');
       return result;
     },
-    // Strategy 4: Manual URL character replacement
+    // Strategy 3: Direct parse (browser may have already decoded)
     () => {
-      const decoded = googleDataParam
+      const result = JSON.parse(cleanParam);
+      console.log('✅ Strategy 3 (direct parse) worked');
+      return result;
+    },
+    // Strategy 4: Single decodeURIComponent
+    () => {
+      const decoded = decodeURIComponent(cleanParam);
+      const result = JSON.parse(decoded);
+      console.log('✅ Strategy 4 (single decode) worked');
+      return result;
+    },
+    // Strategy 5: Double decodeURIComponent (for double-encoded URLs)
+    () => {
+      const decoded = decodeURIComponent(decodeURIComponent(cleanParam));
+      const result = JSON.parse(decoded);
+      console.log('✅ Strategy 5 (double decode) worked');
+      return result;
+    },
+    // Strategy 6: Manual URL character replacement
+    () => {
+      const decoded = cleanParam
         .replace(/%7B/gi, '{')
         .replace(/%7D/gi, '}')
         .replace(/%22/gi, '"')
@@ -108,15 +219,22 @@ const parseGoogleData = (googleDataParam) => {
         .replace(/%20/gi, ' ')
         .replace(/\+/g, ' ');
       const result = JSON.parse(decoded);
-      console.log('✅ Strategy 4 (manual replace) worked');
+      console.log('✅ Strategy 6 (manual replace) worked');
       return result;
     },
-    // Strategy 5: Base64 decode (in case backend uses base64)
+    // Strategy 7: Try with original param if clean param failed (fallback)
     () => {
-      const decoded = atob(googleDataParam);
-      const result = JSON.parse(decoded);
-      console.log('✅ Strategy 5 (base64 decode) worked');
-      return result;
+      if (cleanParam !== googleDataParam) {
+        const decoded = safeBase64Decode(googleDataParam);
+        // Try to extract valid JSON from potentially corrupted data
+        const jsonMatch = decoded.match(/\{[^}]+\}/);
+        if (jsonMatch) {
+          const result = JSON.parse(jsonMatch[0]);
+          console.log('✅ Strategy 7 (extract JSON from corrupted data) worked');
+          return result;
+        }
+      }
+      throw new Error('No valid JSON found');
     }
   ];
   
@@ -152,19 +270,66 @@ const GoogleRoleSelection = () => {
   const [isNewUserFlow, setIsNewUserFlow] = useState(false);
   // CRITICAL: Track initialization state to prevent blank screen
   const [isInitialized, setIsInitialized] = useState(false);
-  // Track if auto-registration should happen
-  const [shouldAutoRegister, setShouldAutoRegister] = useState(false);
   
   // Service Provider specific fields - Location and Categories
   const [serviceLocation, setServiceLocation] = useState({ region: '', district: '', ward: '', street: '' });
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [description, setDescription] = useState('');
 
+  // Check if user is already logged in and redirect to dashboard
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem('isafari_user');
+      if (savedUser) {
+        const userData = JSON.parse(savedUser);
+        if (userData && userData.token && userData.userType) {
+          console.log('✅ User already logged in, redirecting to dashboard');
+          const dashboardPath = userData.userType === 'service_provider' 
+            ? '/service-provider-dashboard' 
+            : '/traveler-dashboard';
+          window.location.href = dashboardPath;
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Error checking existing user:', e);
+    }
+  }, []);
+
+  // Debug log on every render
+  console.log('🔄 GoogleRoleSelection render:', {
+    isInitialized,
+    isLoading,
+    error: error ? 'has error' : 'no error',
+    googleData: googleData ? 'has data' : 'no data',
+    isNewUserFlow,
+    selectedRole
+  });
+
   // Auto-complete registration function - called when we have both googleData and storedData
   const autoCompleteRegistration = async (gData, sData) => {
     console.log('🚀 Auto-completing registration with stored data...');
-    setIsLoading(true);
-    setError('');
+    console.log('📧 Google Data:', gData?.email);
+    console.log('📋 Stored Data:', sData?.userType);
+    
+    // Validate inputs before proceeding
+    if (!gData || !gData.googleId || !gData.email) {
+      console.error('❌ Invalid Google data for auto-registration');
+      setError('Invalid Google data. Please try again.');
+      setIsLoading(false);
+      setIsNewUserFlow(true);
+      setIsInitialized(true);
+      return;
+    }
+    
+    if (!sData || !sData.userType || !sData.phone) {
+      console.error('❌ Invalid stored data for auto-registration');
+      setError('Please fill in all required fields and try again.');
+      setIsLoading(false);
+      setIsNewUserFlow(true);
+      setIsInitialized(true);
+      return;
+    }
 
     try {
       // Determine role
@@ -174,12 +339,19 @@ const GoogleRoleSelection = () => {
       const finalFirstName = role === 'traveler' && sData.firstName ? sData.firstName : gData.firstName;
       const finalLastName = role === 'traveler' && sData.lastName ? sData.lastName : gData.lastName;
 
+      console.log('📤 Sending registration request to:', `${API_URL}/auth/google/complete-registration`);
+      
+      // Set timeout for fetch to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
       // Register the Google user with stored role and details
       const response = await fetch(`${API_URL}/auth/google/complete-registration`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        signal: controller.signal,
         body: JSON.stringify({
           googleId: gData.googleId,
           email: gData.email,
@@ -195,34 +367,130 @@ const GoogleRoleSelection = () => {
           description: role === 'provider' ? sData.description : undefined
         })
       });
+      
+      clearTimeout(timeoutId);
 
       const data = await response.json();
+      console.log('📥 Registration response:', data.success ? 'SUCCESS' : 'FAILED', data.message || '');
 
       if (data.success) {
         // Clear session storage after successful registration
         clearRoleSelection();
         
-        // Store user data and token
+        // Store user data and token FIRST before navigation
         const userWithToken = { ...data.user, token: data.token };
-        localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
         
-        console.log('✅ Auto-registration successful! Redirecting...');
+        // CRITICAL: Use synchronous localStorage write and verify it was saved
+        try {
+          localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
+          
+          // Verify the data was actually saved
+          const savedData = localStorage.getItem('isafari_user');
+          if (!savedData) {
+            throw new Error('Failed to save user data to localStorage');
+          }
+          
+          const parsedSaved = JSON.parse(savedData);
+          if (!parsedSaved.token || !parsedSaved.userType) {
+            throw new Error('Saved user data is incomplete');
+          }
+          
+          console.log('✅ Auto-registration successful!');
+          console.log('👤 User type:', data.user.userType);
+          console.log('🔑 Token verified in localStorage');
+          
+        } catch (storageError) {
+          console.error('❌ localStorage error:', storageError);
+          setError('Failed to save login data. Please try again.');
+          setIsLoading(false);
+          setIsInitialized(true);
+          return;
+        }
         
         // Navigate to appropriate dashboard based on role
-        if (role === 'provider') {
-          navigate('/service-provider-dashboard');
-        } else {
-          navigate('/');
+        const targetPath = role === 'provider' ? '/service-provider-dashboard' : '/traveler-dashboard';
+        console.log('🚀 Redirecting to:', targetPath);
+        
+        // CRITICAL: Dispatch storage event to notify AuthContext immediately
+        // This ensures the context updates before navigation
+        try {
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'isafari_user',
+            newValue: JSON.stringify(userWithToken),
+            url: window.location.href
+          }));
+          console.log('📢 Storage event dispatched to notify AuthContext');
+        } catch (e) {
+          console.warn('Could not dispatch storage event:', e);
         }
+        
+        // Use longer delay to ensure localStorage is fully committed before navigation
+        // This prevents race condition where page loads before data is available
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Double-check localStorage before redirect
+        const finalCheck = localStorage.getItem('isafari_user');
+        if (!finalCheck) {
+          console.error('❌ localStorage lost data before redirect!');
+          setError('Session data was lost. Please try again.');
+          setIsLoading(false);
+          setIsInitialized(true);
+          return;
+        }
+        
+        // Use window.location.href for navigation (allows back button)
+        // This is more reliable than replace() for OAuth flows
+        window.location.href = targetPath;
       } else {
         console.error('❌ Auto-registration failed:', data.message);
         setError(data.message || 'Registration failed. Please try again.');
         setIsLoading(false);
+        setIsInitialized(true);
+        // Restore form state from stored data so user can retry
+        setSelectedRole(role);
+        setPhone(sData.phone || '');
+        if (role === 'provider') {
+          setCompanyName(sData.companyName || '');
+          if (sData.locationData) setServiceLocation(sData.locationData);
+          if (sData.serviceCategories) setSelectedCategories(sData.serviceCategories);
+          if (sData.description) setDescription(sData.description);
+        } else {
+          if (sData.firstName) setFirstName(sData.firstName);
+          if (sData.lastName) setLastName(sData.lastName);
+        }
+        // Show form so user can retry - but keep googleData flow (NOT newUserFlow)
+        setIsNewUserFlow(false);
       }
     } catch (err) {
       console.error('❌ Auto-registration error:', err);
-      setError('Registration failed. Please try again.');
+      
+      // Handle specific error types
+      let errorMessage = 'Registration failed. Please try again.';
+      if (err.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please check your connection and try again.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setIsLoading(false);
+      setIsInitialized(true);
+      
+      // Restore form state from stored data so user can retry
+      const role = sData.userType === 'service_provider' ? 'provider' : 'traveler';
+      setSelectedRole(role);
+      setPhone(sData.phone || '');
+      if (role === 'provider') {
+        setCompanyName(sData.companyName || '');
+        if (sData.locationData) setServiceLocation(sData.locationData);
+        if (sData.serviceCategories) setSelectedCategories(sData.serviceCategories);
+        if (sData.description) setDescription(sData.description);
+      } else {
+        if (sData.firstName) setFirstName(sData.firstName);
+        if (sData.lastName) setLastName(sData.lastName);
+      }
+      // Show form so user can retry - but keep googleData flow (NOT newUserFlow)
+      setIsNewUserFlow(false);
     }
   };
 
@@ -232,13 +500,29 @@ const GoogleRoleSelection = () => {
     console.log('🔍 Full URL:', window.location.href);
     console.log('🔍 URL search params:', window.location.search);
     
+    // Flag to prevent double initialization
+    let isSubscribed = true;
+    
+    // CRITICAL: Set a maximum timeout to prevent infinite loading
+    const maxTimeoutId = setTimeout(() => {
+      if (!isSubscribed) return;
+      console.log('⚠️ Max timeout reached - forcing initialization');
+      if (!isInitialized) {
+        setIsNewUserFlow(true);
+        setError('Loading took too long. Please try again.');
+        setIsInitialized(true);
+        setIsLoading(false);
+      }
+    }, 10000); // 10 second max timeout
+    
     // Small delay to ensure URL params are fully available
-    const initializeComponent = () => {
+    const initializeComponent = async () => {
       try {
         // Check if this is a new user flow (from "Sign up with Google" button)
         const newUser = searchParams.get('newUser');
         if (newUser === 'true') {
           console.log('📝 New user flow detected');
+          if (!isSubscribed) return;
           setIsNewUserFlow(true);
           
           // Check for previously stored role selection (in case of OAuth redirect back)
@@ -273,11 +557,19 @@ const GoogleRoleSelection = () => {
         const googleDataParam = searchParams.get('googleData');
         console.log('🔍 googleData param:', googleDataParam ? `exists (length: ${googleDataParam.length})` : 'missing');
         
+        // CRITICAL DEBUG: Log the raw parameter for troubleshooting
+        if (googleDataParam) {
+          console.log('🔍 googleData first 100 chars:', googleDataParam.substring(0, 100));
+          console.log('🔍 googleData last 50 chars:', googleDataParam.substring(googleDataParam.length - 50));
+        }
+        
         if (googleDataParam) {
           // Use the robust parsing function
           const parsedData = parseGoogleData(googleDataParam);
           
           if (parsedData) {
+            console.log('✅ Successfully parsed Google data for:', parsedData.email);
+            if (!isSubscribed) return;
             setGoogleData(parsedData);
             
             // Check for stored role selection from before OAuth
@@ -286,9 +578,11 @@ const GoogleRoleSelection = () => {
               // We have both Google data and stored registration data
               // AUTO-COMPLETE REGISTRATION immediately!
               console.log('🎯 Both googleData and storedData found - auto-completing registration!');
+              setIsInitialized(true); // Set initialized FIRST to show loading state
               setIsLoading(true);
+              
+              // Call auto-complete registration (don't await - let it run async)
               autoCompleteRegistration(parsedData, storedData);
-              setIsInitialized(true);
               return;
             } else {
               // No stored data or incomplete - show form for user to fill
@@ -305,17 +599,23 @@ const GoogleRoleSelection = () => {
                 }
                 if (storedData.description) setDescription(storedData.description);
               }
+              setIsInitialized(true);
             }
           } else {
             // Parsing failed - show form with error instead of blank screen
-            console.error('❌ Failed to parse Google data');
+            console.error('❌ Failed to parse Google data - showing form anyway');
+            if (!isSubscribed) return;
             setError('Unable to process Google sign-in data. Please try again.');
             // Still show the form so user can retry
             setIsNewUserFlow(true);
+            setIsInitialized(true);
+            return;
           }
         } else {
           // No Google data - check if this is a return from OAuth
           const storedData = getStoredRoleSelection();
+          if (!isSubscribed) return;
+          
           if (storedData) {
             // Role data exists but Google data is missing
             console.log('⚠️ Role data exists but no Google data - showing form');
@@ -341,27 +641,34 @@ const GoogleRoleSelection = () => {
               setDescription(storedData.description);
             }
             setError('Please complete the Google sign-in process.');
+            setIsInitialized(true);
           } else {
             // No data at all - show form with error (NOT blank screen)
             console.log('⚠️ No registration data found - showing form');
             setIsNewUserFlow(true);
             setError('No registration data found. Please select your account type and try again.');
+            setIsInitialized(true);
           }
         }
       } catch (err) {
         console.error('❌ Initialization error:', err);
+        console.error('❌ Error stack:', err.stack);
+        if (!isSubscribed) return;
         // On any error, show the form instead of blank screen
         setIsNewUserFlow(true);
         setError('An error occurred. Please try signing up again.');
-      } finally {
-        // ALWAYS mark as initialized to prevent infinite loading
         setIsInitialized(true);
       }
     };
 
     // Run initialization with a small delay to ensure URL is fully parsed
     const timer = setTimeout(initializeComponent, 100);
-    return () => clearTimeout(timer);
+    
+    return () => {
+      isSubscribed = false;
+      clearTimeout(timer);
+      clearTimeout(maxTimeoutId);
+    };
   }, [searchParams]);
 
   const handleRoleSelect = (role) => {
@@ -521,28 +828,77 @@ const GoogleRoleSelection = () => {
       });
 
       const data = await response.json();
+      console.log('📥 Registration response:', data.success ? 'SUCCESS' : 'FAILED');
 
       if (data.success) {
         // Clear session storage after successful registration
         clearRoleSelection();
         
-        // Store user data and token
+        // Store user data and token with verification
         const userWithToken = { ...data.user, token: data.token };
-        localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
+        
+        try {
+          localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
+          
+          // Verify the data was actually saved
+          const savedData = localStorage.getItem('isafari_user');
+          if (!savedData) {
+            throw new Error('Failed to save user data to localStorage');
+          }
+          
+          const parsedSaved = JSON.parse(savedData);
+          if (!parsedSaved.token || !parsedSaved.userType) {
+            throw new Error('Saved user data is incomplete');
+          }
+          
+          console.log('✅ Registration successful!');
+          console.log('👤 User type:', data.user.userType);
+          console.log('🔑 Token verified in localStorage');
+          
+        } catch (storageError) {
+          console.error('❌ localStorage error:', storageError);
+          setError('Failed to save login data. Please try again.');
+          setIsLoading(false);
+          return;
+        }
         
         // Navigate to appropriate dashboard based on role
-        if (selectedRole === 'provider') {
-          navigate('/service-provider-dashboard');
-        } else {
-          navigate('/');
+        const targetPath = selectedRole === 'provider' ? '/service-provider-dashboard' : '/traveler-dashboard';
+        console.log('🚀 Redirecting to:', targetPath);
+        
+        // CRITICAL: Dispatch storage event to notify AuthContext immediately
+        try {
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'isafari_user',
+            newValue: JSON.stringify(userWithToken),
+            url: window.location.href
+          }));
+          console.log('📢 Storage event dispatched to notify AuthContext');
+        } catch (e) {
+          console.warn('Could not dispatch storage event:', e);
         }
+        
+        // Use longer delay to ensure localStorage is fully committed
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Double-check localStorage before redirect
+        const finalCheck = localStorage.getItem('isafari_user');
+        if (!finalCheck) {
+          console.error('❌ localStorage lost data before redirect!');
+          setError('Session data was lost. Please try again.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Use window.location.href for more reliable navigation after OAuth
+        window.location.href = targetPath;
       } else {
         setError(data.message || 'Registration failed. Please try again.');
+        setIsLoading(false);
       }
     } catch (err) {
       console.error('Registration error:', err);
       setError('Registration failed. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -550,24 +906,37 @@ const GoogleRoleSelection = () => {
   // Loading state - show ONLY during initial parsing, with timeout protection
   if (!isInitialized) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading registration data...</p>
-          <p className="text-xs text-muted-foreground mt-2">Please wait...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading registration data...</p>
+          <p className="text-xs text-gray-400 mt-2">Please wait...</p>
+          {/* Fallback button in case loading takes too long */}
+          <button 
+            onClick={() => {
+              setIsNewUserFlow(true);
+              setIsInitialized(true);
+              setIsLoading(false);
+            }}
+            className="mt-6 text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            Taking too long? Click here to continue
+          </button>
         </div>
       </div>
     );
   }
 
-  // Show loading screen during auto-registration
-  if (isLoading && googleData && !error) {
+  // Show loading screen during auto-registration or any loading state
+  if (isLoading && !error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Creating your account...</p>
-          <p className="text-xs text-muted-foreground mt-2">Please wait while we set up your profile</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {googleData ? 'Creating your account...' : 'Processing...'}
+          </p>
+          <p className="text-xs text-gray-400 mt-2">Please wait while we set up your profile</p>
         </div>
       </div>
     );
@@ -578,7 +947,11 @@ const GoogleRoleSelection = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <HeaderErrorBoundary>
+        <Suspense fallback={<SimpleHeader />}>
+          <Header />
+        </Suspense>
+      </HeaderErrorBoundary>
       <main className="pt-20 pb-12">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-card rounded-lg shadow-lg p-8">
