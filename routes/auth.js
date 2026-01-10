@@ -295,6 +295,7 @@ router.get('/google/callback', (req, res, next) => {
   // Get flow type from state parameter
   const flowType = req.query.state || 'login';
   console.log('🔄 Google OAuth callback - flow type:', flowType);
+  console.log('🌐 FRONTEND_URL:', process.env.FRONTEND_URL);
   
   // Store flow type for passport strategy to use
   req.googleFlowType = flowType;
@@ -302,13 +303,18 @@ router.get('/google/callback', (req, res, next) => {
   passport.authenticate('google', { session: false, failureRedirect: '/login?error=google_auth_failed' })(req, res, next);
 }, async (req, res) => {
     try {
+      // CRITICAL: Use production frontend URL
       const frontendUrl = process.env.FRONTEND_URL || 'https://isafari-tz.netlify.app';
       const flowType = req.googleFlowType || 'login';
+      
+      console.log('📍 Redirecting to frontend:', frontendUrl);
       
       // Check if user is NOT registered and tried to LOGIN
       if (req.user.notRegistered) {
         console.log('❌ User not registered, redirecting to login with error:', req.user.email);
-        return res.redirect(`${frontendUrl}/login?error=not_registered&email=${encodeURIComponent(req.user.email)}`);
+        const redirectUrl = `${frontendUrl}/login?error=not_registered&email=${encodeURIComponent(req.user.email)}`;
+        console.log('🔗 Redirect URL:', redirectUrl);
+        return res.redirect(redirectUrl);
       }
       
       // Check if user needs to complete registration (new Google user in REGISTRATION flow)
