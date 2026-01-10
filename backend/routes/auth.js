@@ -269,22 +269,55 @@ router.post('/login', getValidationMiddleware('login'), async (req, res) => {
   }
 });
 
-// Google OAuth - Start authentication
-router.get('/google', 
+// Google OAuth - Start authentication for LOGIN (existing users only)
+router.get('/google', (req, res, next) => {
+  // Store flow type in state parameter (more reliable than session for cross-origin)
+  console.log('🔐 Google OAuth LOGIN flow started');
   passport.authenticate('google', { 
     scope: ['profile', 'email'],
-    prompt: 'select_account'
-  })
-);
+    prompt: 'select_account',
+    state: 'login' // Pass flow type via state parameter
+  })(req, res, next);
+});
+
+// Google OAuth - Start authentication for REGISTRATION (new users)
+router.get('/google/register', (req, res, next) => {
+  console.log('📝 Google OAuth REGISTRATION flow started');
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    prompt: 'select_account',
+    state: 'register' // Pass flow type via state parameter
+  })(req, res, next);
+});
 
 // Google OAuth callback
-router.get('/google/callback', 
-  passport.authenticate('google', { session: false, failureRedirect: '/login?error=google_auth_failed' }),
-  async (req, res) => {
+router.get('/google/callback', (req, res, next) => {
+  // Get flow type from state parameter
+  const flowType = req.query.state || 'login';
+  console.log('🔄 Google OAuth callback - flow type:', flowType);
+  console.log('🌐 FRONTEND_URL:', process.env.FRONTEND_URL);
+  
+  // Store flow type for passport strategy to use
+  req.googleFlowType = flowType;
+  
+  passport.authenticate('google', { session: false, failureRedirect: '/login?error=google_auth_failed' })(req, res, next);
+}, async (req, res) => {
     try {
+      // CRITICAL: Use production frontend URL
       const frontendUrl = process.env.FRONTEND_URL || 'https://isafari-tz.netlify.app';
+      const flowType = req.googleFlowType || 'login';
       
-      // Check if user needs to complete registration (new Google user)
+      console.log('📍 Redirecting to frontend:', frontendUrl);
+      
+      // Check if user is NOT registered and tried to LOGIN
+      if (req.user.notRegistered) {
+        console.log('❌ User not registered, redirecting to login with error:', req.user.email);
+        const redirectUrl = `${frontendUrl}/login?error=not_registered&email=${encodeURIComponent(req.user.email)}`;
+        console.log('🔗 Redirect URL:', redirectUrl);
+        return res.redirect(redirectUrl);
+      }
+      
+      // Check if user needs to complete registration (new Google user in REGISTRATION flow)
       if (req.user.needsRegistration) {
         // Create Google data object
         const googleDataObj = {
@@ -296,13 +329,12 @@ router.get('/google/callback',
         };
         
         // Use Base64 encoding for safer URL transmission
-        // This avoids double-encoding issues with URL parameters
         const googleDataBase64 = Buffer.from(JSON.stringify(googleDataObj)).toString('base64');
         
-        console.log('🔄 New Google user, redirecting to role selection');
+        console.log('🔄 New Google user in registration flow, redirecting to complete registration');
         console.log('📧 Email:', req.user.email);
         
-        // Redirect with base64 encoded data
+        // Redirect to role selection with Google data
         return res.redirect(`${frontendUrl}/google-role-selection?googleData=${googleDataBase64}`);
       }
       

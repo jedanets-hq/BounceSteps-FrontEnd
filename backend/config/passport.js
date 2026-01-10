@@ -9,10 +9,18 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback"
-  }, async (accessToken, refreshToken, profile, done) => {
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/auth/google/callback",
+    passReqToCallback: true // Enable access to request object
+  }, async (req, accessToken, refreshToken, profile, done) => {
   try {
     const googleEmail = profile.emails[0].value.toLowerCase();
+    
+    // Get flow type from state parameter (passed via OAuth state)
+    // The state is available in req.query.state during callback
+    const flowType = req.query?.state || 'login';
+    const isRegistrationFlow = flowType === 'register';
+    
+    console.log('🔍 Google OAuth - flowType:', flowType, 'isRegistrationFlow:', isRegistrationFlow, 'email:', googleEmail);
     
     // Check if user already exists by Google ID
     let user = await User.findByGoogleId(profile.id);
@@ -44,18 +52,28 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       return done(null, user);
     }
 
-    // New user - needs to select role before completing registration
-    console.log('🆕 New Google user, needs role selection:', googleEmail);
-    const userData = {
-      googleId: profile.id,
-      email: googleEmail,
-      firstName: profile.name.givenName || '',
-      lastName: profile.name.familyName || '',
-      avatarUrl: profile.photos[0]?.value,
-      needsRegistration: true
-    };
-
-    return done(null, userData);
+    // NEW USER - Check if this is registration flow or login flow
+    if (isRegistrationFlow) {
+      // Registration flow - allow new user to complete registration
+      console.log('🆕 New Google user in REGISTRATION flow:', googleEmail);
+      const userData = {
+        googleId: profile.id,
+        email: googleEmail,
+        firstName: profile.name.givenName || '',
+        lastName: profile.name.familyName || '',
+        avatarUrl: profile.photos[0]?.value,
+        needsRegistration: true
+      };
+      return done(null, userData);
+    } else {
+      // LOGIN flow - user not registered, reject
+      console.log('❌ Google user NOT REGISTERED (login flow):', googleEmail);
+      const userData = {
+        email: googleEmail,
+        notRegistered: true
+      };
+      return done(null, userData);
+    }
   } catch (error) {
     console.error('❌ Google OAuth Error:', error);
     return done(error, null);
