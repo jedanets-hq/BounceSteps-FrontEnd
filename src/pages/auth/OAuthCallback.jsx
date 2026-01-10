@@ -67,7 +67,7 @@ const OAuthCallback = () => {
             setStatus('error');
             // Redirect to role selection after a short delay
             setTimeout(() => {
-              navigate('/auth/google-role-selection', { 
+              navigate('/google-role-selection', { 
                 state: { 
                   returnFromOAuth: true,
                   googleData: searchParams.get('googleData') 
@@ -88,7 +88,7 @@ const OAuthCallback = () => {
             setError('Your session expired. Please select your account type again.');
             setStatus('error');
             setTimeout(() => {
-              navigate('/auth/google-role-selection');
+              navigate('/google-role-selection');
             }, 2000);
             return;
           }

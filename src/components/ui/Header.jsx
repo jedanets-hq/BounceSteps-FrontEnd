@@ -151,13 +151,77 @@ const Header = () => {
               <Icon name={isDark ? 'Sun' : 'Moon'} size={20} />
             </button>
             
-            {user?.userType === 'provider' && (
-              <Link to="/provider-partnership-portal">
-                <Button size="sm" onClick={(e) => e.stopPropagation()}>
-                  <Icon name="Plus" size={16} />
-                  Add Service
-                </Button>
-              </Link>
+            {isAuthenticated && (
+              <>
+                {/* Cart Button for logged in users */}
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
+                  title="Shopping Cart"
+                >
+                  <Icon name="ShoppingCart" size={20} />
+                  {getCartCount() > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                      {getCartCount()}
+                    </span>
+                  )}
+                </button>
+                
+                {/* User Menu */}
+                <div className="relative group">
+                  <button className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200">
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                      <span className="text-primary-foreground text-sm font-medium">
+                        {user?.firstName?.charAt(0) || 'U'}
+                      </span>
+                    </div>
+                    <span className="hidden xl:inline">{user?.firstName}</span>
+                    <Icon name="ChevronDown" size={16} />
+                  </button>
+                  
+                  <div className="absolute top-full right-0 mt-2 w-56 bg-popover border border-border rounded-lg shadow-warm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-1 group-hover:translate-y-0">
+                    <div className="py-2">
+                      <div className="px-4 py-2 border-b border-border">
+                        <p className="text-sm font-medium text-foreground">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-xs text-muted-foreground">{user?.email}</p>
+                        <p className="text-xs text-primary mt-1">
+                          {user?.userType === 'traveler' ? '🧳 Traveler' : '🏢 Service Provider'}
+                        </p>
+                      </div>
+                      <Link
+                        to="/profile"
+                        className="flex items-center space-x-3 px-4 py-2 text-sm text-popover-foreground hover:bg-muted transition-colors"
+                      >
+                        <Icon name="User" size={16} />
+                        <span>My Profile</span>
+                      </Link>
+                      <Link
+                        to={user?.userType === 'traveler' ? '/traveler-dashboard' : '/service-provider-dashboard'}
+                        className="flex items-center space-x-3 px-4 py-2 text-sm text-popover-foreground hover:bg-muted transition-colors"
+                      >
+                        <Icon name="LayoutDashboard" size={16} />
+                        <span>Dashboard</span>
+                      </Link>
+                      <button
+                        onClick={logout}
+                        className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <Icon name="LogOut" size={16} />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {user?.userType === 'service_provider' && (
+                  <Link to="/provider-partnership-portal">
+                    <Button size="sm" onClick={(e) => e.stopPropagation()}>
+                      <Icon name="Plus" size={16} />
+                      Add Service
+                    </Button>
+                  </Link>
+                )}
+              </>
             )}
           </div>
 
@@ -201,8 +265,8 @@ const Header = () => {
                 </button>
               </div>
               
-              <div className="pt-4 border-t border-border space-y-2">
-                {isAuthenticated ? (
+              {isAuthenticated && (
+                <div className="pt-4 border-t border-border space-y-2">
                   <div className="flex items-center space-x-3 px-4 py-3 bg-muted rounded-lg">
                     <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                       <span className="text-primary-foreground text-sm font-medium">
@@ -218,23 +282,8 @@ const Header = () => {
                       </p>
                     </div>
                   </div>
-                ) : (
-                  <>
-                    <Link to="/login">
-                      <Button variant="outline" fullWidth onClick={(e) => e.stopPropagation()}>
-                        <Icon name="LogIn" size={16} />
-                        Sign In
-                      </Button>
-                    </Link>
-                    <Link to="/register">
-                      <Button variant="default" fullWidth onClick={(e) => e.stopPropagation()}>
-                        <Icon name="UserPlus" size={16} />
-                        Start Journey
-                      </Button>
-                    </Link>
-                  </>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         )}

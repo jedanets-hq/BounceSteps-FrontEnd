@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Header from '../../components/ui/Header';
@@ -21,6 +21,20 @@ const Login = () => {
   // Get redirect and role from URL params - default to home page for travelers
   const redirectTo = searchParams.get('redirect') || '/';
   const suggestedRole = searchParams.get('role');
+  
+  // Check for Google OAuth errors (e.g., not_registered)
+  useEffect(() => {
+    const googleError = searchParams.get('error');
+    const notRegisteredEmail = searchParams.get('email');
+    
+    if (googleError === 'not_registered') {
+      setError(`This email "${notRegisteredEmail || ''}" is not registered. Please sign up first using the registration page.`);
+    } else if (googleError === 'google_auth_failed') {
+      setError('Google authentication failed. Please try again.');
+    } else if (googleError === 'auth_failed') {
+      setError('Authentication failed. Please try again.');
+    }
+  }, [searchParams]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -53,8 +67,9 @@ const Login = () => {
   // Handle "Continue with Google" - for existing users (direct OAuth)
   const handleGoogleLogin = () => {
     // Redirect to backend Google OAuth endpoint
-    const backendUrl = import.meta.env.VITE_API_URL || 'https://isafari-backend.onrender.com';
-    window.location.href = `${backendUrl}/auth/google`;
+    // Google OAuth endpoint is at /api/auth/google
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://isafarinetworkglobal-2.onrender.com/api';
+    window.location.href = `${apiUrl}/auth/google`;
   };
 
   return (
@@ -120,19 +135,23 @@ const Login = () => {
               <div className={`mb-6 p-4 rounded-lg ${
                 (error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') 
                   ? 'bg-orange-100 border border-orange-300' 
-                  : 'bg-destructive/10 border border-destructive/20'
+                  : (error || authError)?.includes('not registered')
+                    ? 'bg-blue-50 border border-blue-200'
+                    : 'bg-destructive/10 border border-destructive/20'
               }`}>
                 <div className="flex items-start space-x-3">
                   <Icon 
-                    name={(error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') ? 'ShieldX' : 'AlertCircle'} 
+                    name={(error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') ? 'ShieldX' : (error || authError)?.includes('not registered') ? 'Info' : 'AlertCircle'} 
                     size={20} 
-                    className={(error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') ? 'text-orange-600 mt-0.5' : 'text-destructive mt-0.5'} 
+                    className={(error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') ? 'text-orange-600 mt-0.5' : (error || authError)?.includes('not registered') ? 'text-blue-600 mt-0.5' : 'text-destructive mt-0.5'} 
                   />
                   <div>
                     <p className={`text-sm font-medium ${
                       (error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') 
                         ? 'text-orange-800' 
-                        : 'text-destructive'
+                        : (error || authError)?.includes('not registered')
+                          ? 'text-blue-800'
+                          : 'text-destructive'
                     }`}>
                       {error || authError}
                     </p>
@@ -140,6 +159,15 @@ const Login = () => {
                       <p className="text-xs text-orange-600 mt-1">
                         Wasiliana na: support@isafari.co.tz
                       </p>
+                    )}
+                    {(error || authError)?.includes('not registered') && (
+                      <Link 
+                        to="/register" 
+                        className="inline-flex items-center mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        <Icon name="UserPlus" size={14} className="mr-1" />
+                        Click here to register
+                      </Link>
                     )}
                   </div>
                 </div>

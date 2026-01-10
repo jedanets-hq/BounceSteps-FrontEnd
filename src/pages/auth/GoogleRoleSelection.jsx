@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import { API_URL } from '../../utils/api';
+import LocationSelector from '../../components/LocationSelector';
+import { serviceCategories as allServiceCategories } from '../../data/locations';
 
 // Session storage key and expiration time (10 minutes)
 const GOOGLE_REGISTRATION_KEY = 'google_registration_data';
@@ -144,9 +146,85 @@ const GoogleRoleSelection = () => {
   const [selectedRole, setSelectedRole] = useState('');
   const [phone, setPhone] = useState('');
   const [companyName, setCompanyName] = useState('');
+  // Name fields for traveler
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isNewUserFlow, setIsNewUserFlow] = useState(false);
   // CRITICAL: Track initialization state to prevent blank screen
   const [isInitialized, setIsInitialized] = useState(false);
+  // Track if auto-registration should happen
+  const [shouldAutoRegister, setShouldAutoRegister] = useState(false);
+  
+  // Service Provider specific fields - Location and Categories
+  const [serviceLocation, setServiceLocation] = useState({ region: '', district: '', ward: '', street: '' });
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [description, setDescription] = useState('');
+
+  // Auto-complete registration function - called when we have both googleData and storedData
+  const autoCompleteRegistration = async (gData, sData) => {
+    console.log('🚀 Auto-completing registration with stored data...');
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Determine role
+      const role = sData.userType === 'service_provider' ? 'provider' : 'traveler';
+      
+      // Use user-entered names for travelers, Google names for providers
+      const finalFirstName = role === 'traveler' && sData.firstName ? sData.firstName : gData.firstName;
+      const finalLastName = role === 'traveler' && sData.lastName ? sData.lastName : gData.lastName;
+
+      // Register the Google user with stored role and details
+      const response = await fetch(`${API_URL}/auth/google/complete-registration`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          googleId: gData.googleId,
+          email: gData.email,
+          firstName: finalFirstName,
+          lastName: finalLastName,
+          avatarUrl: gData.avatarUrl,
+          userType: sData.userType,
+          phone: sData.phone,
+          companyName: role === 'provider' ? sData.companyName : undefined,
+          serviceLocation: sData.serviceLocation,
+          serviceCategories: role === 'provider' ? sData.serviceCategories : undefined,
+          locationData: role === 'provider' ? sData.locationData : undefined,
+          description: role === 'provider' ? sData.description : undefined
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Clear session storage after successful registration
+        clearRoleSelection();
+        
+        // Store user data and token
+        const userWithToken = { ...data.user, token: data.token };
+        localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
+        
+        console.log('✅ Auto-registration successful! Redirecting...');
+        
+        // Navigate to appropriate dashboard based on role
+        if (role === 'provider') {
+          navigate('/service-provider-dashboard');
+        } else {
+          navigate('/');
+        }
+      } else {
+        console.error('❌ Auto-registration failed:', data.message);
+        setError(data.message || 'Registration failed. Please try again.');
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error('❌ Auto-registration error:', err);
+      setError('Registration failed. Please try again.');
+      setIsLoading(false);
+    }
+  };
 
   // Initialize component - runs once on mount
   useEffect(() => {
@@ -169,6 +247,23 @@ const GoogleRoleSelection = () => {
             setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
             setPhone(storedData.phone || '');
             setCompanyName(storedData.companyName || '');
+            // Restore name fields for travelers
+            if (storedData.firstName) {
+              setFirstName(storedData.firstName);
+            }
+            if (storedData.lastName) {
+              setLastName(storedData.lastName);
+            }
+            // Restore location and categories for service providers
+            if (storedData.locationData) {
+              setServiceLocation(storedData.locationData);
+            }
+            if (storedData.serviceCategories && storedData.serviceCategories.length > 0) {
+              setSelectedCategories(storedData.serviceCategories);
+            }
+            if (storedData.description) {
+              setDescription(storedData.description);
+            }
           }
           setIsInitialized(true);
           return;
@@ -187,10 +282,29 @@ const GoogleRoleSelection = () => {
             
             // Check for stored role selection from before OAuth
             const storedData = getStoredRoleSelection();
-            if (storedData) {
-              setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
-              setPhone(storedData.phone || '');
-              setCompanyName(storedData.companyName || '');
+            if (storedData && storedData.userType && storedData.phone) {
+              // We have both Google data and stored registration data
+              // AUTO-COMPLETE REGISTRATION immediately!
+              console.log('🎯 Both googleData and storedData found - auto-completing registration!');
+              setIsLoading(true);
+              autoCompleteRegistration(parsedData, storedData);
+              setIsInitialized(true);
+              return;
+            } else {
+              // No stored data or incomplete - show form for user to fill
+              console.log('⚠️ No complete stored data - showing form');
+              if (storedData) {
+                setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
+                setPhone(storedData.phone || '');
+                setCompanyName(storedData.companyName || '');
+                if (storedData.firstName) setFirstName(storedData.firstName);
+                if (storedData.lastName) setLastName(storedData.lastName);
+                if (storedData.locationData) setServiceLocation(storedData.locationData);
+                if (storedData.serviceCategories && storedData.serviceCategories.length > 0) {
+                  setSelectedCategories(storedData.serviceCategories);
+                }
+                if (storedData.description) setDescription(storedData.description);
+              }
             }
           } else {
             // Parsing failed - show form with error instead of blank screen
@@ -209,6 +323,23 @@ const GoogleRoleSelection = () => {
             setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
             setPhone(storedData.phone || '');
             setCompanyName(storedData.companyName || '');
+            // Restore name fields for travelers
+            if (storedData.firstName) {
+              setFirstName(storedData.firstName);
+            }
+            if (storedData.lastName) {
+              setLastName(storedData.lastName);
+            }
+            // Restore location and categories for service providers
+            if (storedData.locationData) {
+              setServiceLocation(storedData.locationData);
+            }
+            if (storedData.serviceCategories && storedData.serviceCategories.length > 0) {
+              setSelectedCategories(storedData.serviceCategories);
+            }
+            if (storedData.description) {
+              setDescription(storedData.description);
+            }
             setError('Please complete the Google sign-in process.');
           } else {
             // No data at all - show form with error (NOT blank screen)
@@ -258,19 +389,55 @@ const GoogleRoleSelection = () => {
       return;
     }
 
+    // Validate traveler name fields
+    if (selectedRole === 'traveler') {
+      if (!firstName.trim()) {
+        setError('First name is required');
+        return;
+      }
+      if (!lastName.trim()) {
+        setError('Last name is required');
+        return;
+      }
+    }
+
+    // Validate service provider location and categories
+    if (selectedRole === 'provider') {
+      if (!serviceLocation.region || !serviceLocation.district) {
+        setError('Please select your service location (Region and District are required)');
+        return;
+      }
+      if (selectedCategories.length === 0) {
+        setError('Please select at least one service category');
+        return;
+      }
+    }
+
     setIsLoading(true);
     setError('');
+
+    // Build service location string for providers
+    const serviceLocationString = selectedRole === 'provider' 
+      ? `${serviceLocation.street}, ${serviceLocation.ward}, ${serviceLocation.district}, ${serviceLocation.region}, Tanzania`
+          .replace(/^, |, , /g, ', ').replace(/^, /, '').trim()
+      : null;
 
     // Store selection in sessionStorage with timestamp for after OAuth
     storeRoleSelection({
       userType: selectedRole === 'provider' ? 'service_provider' : 'traveler',
       phone,
-      companyName: selectedRole === 'provider' ? companyName : null
+      companyName: selectedRole === 'provider' ? companyName : null,
+      firstName: selectedRole === 'traveler' ? firstName.trim() : null,
+      lastName: selectedRole === 'traveler' ? lastName.trim() : null,
+      serviceLocation: serviceLocationString,
+      serviceCategories: selectedRole === 'provider' ? selectedCategories : [],
+      locationData: selectedRole === 'provider' ? serviceLocation : null,
+      description: selectedRole === 'provider' ? description : null
     });
 
-    // Redirect to Google OAuth
+    // Redirect to Google OAuth - use /auth/google/register for registration flow
     const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://isafarinetworkglobal-2.onrender.com/api';
-    window.location.href = `${apiUrl}/auth/google`;
+    window.location.href = `${apiUrl}/auth/google/register`;
   };
 
   // Handle OAuth callback flow - complete registration
@@ -293,10 +460,44 @@ const GoogleRoleSelection = () => {
       return;
     }
 
+    // Validate traveler name fields
+    if (selectedRole === 'traveler') {
+      if (!firstName.trim()) {
+        setError('First name is required');
+        return;
+      }
+      if (!lastName.trim()) {
+        setError('Last name is required');
+        return;
+      }
+    }
+
+    // Validate service provider location and categories
+    if (selectedRole === 'provider') {
+      if (!serviceLocation.region || !serviceLocation.district) {
+        setError('Please select your service location (Region and District are required)');
+        return;
+      }
+      if (selectedCategories.length === 0) {
+        setError('Please select at least one service category');
+        return;
+      }
+    }
+
     setIsLoading(true);
     setError('');
 
     try {
+      // Build service location string for providers
+      const serviceLocationString = selectedRole === 'provider' 
+        ? `${serviceLocation.street}, ${serviceLocation.ward}, ${serviceLocation.district}, ${serviceLocation.region}, Tanzania`
+            .replace(/^, |, , /g, ', ').replace(/^, /, '').trim()
+        : undefined;
+
+      // Use user-entered names for travelers, Google names for providers
+      const finalFirstName = selectedRole === 'traveler' ? firstName.trim() : googleData.firstName;
+      const finalLastName = selectedRole === 'traveler' ? lastName.trim() : googleData.lastName;
+
       // Register the Google user with selected role
       const response = await fetch(`${API_URL}/auth/google/complete-registration`, {
         method: 'POST',
@@ -306,12 +507,16 @@ const GoogleRoleSelection = () => {
         body: JSON.stringify({
           googleId: googleData.googleId,
           email: googleData.email,
-          firstName: googleData.firstName,
-          lastName: googleData.lastName,
+          firstName: finalFirstName,
+          lastName: finalLastName,
           avatarUrl: googleData.avatarUrl,
           userType: selectedRole === 'provider' ? 'service_provider' : 'traveler',
           phone: phone,
-          companyName: selectedRole === 'provider' ? companyName : undefined
+          companyName: selectedRole === 'provider' ? companyName : undefined,
+          serviceLocation: serviceLocationString,
+          serviceCategories: selectedRole === 'provider' ? selectedCategories : undefined,
+          locationData: selectedRole === 'provider' ? serviceLocation : undefined,
+          description: selectedRole === 'provider' ? description : undefined
         })
       });
 
@@ -350,6 +555,19 @@ const GoogleRoleSelection = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading registration data...</p>
           <p className="text-xs text-muted-foreground mt-2">Please wait...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading screen during auto-registration
+  if (isLoading && googleData && !error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Creating your account...</p>
+          <p className="text-xs text-muted-foreground mt-2">Please wait while we set up your profile</p>
         </div>
       </div>
     );
@@ -501,6 +719,41 @@ const GoogleRoleSelection = () => {
                 </div>
               )}
 
+              {/* Name Fields - Only for Travelers */}
+              {selectedRole === 'traveler' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      First Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Enter your first name"
+                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      required={selectedRole === 'traveler'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Last Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Enter your last name"
+                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      required={selectedRole === 'traveler'}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    This name will be used for your account and displayed to service providers
+                  </p>
+                </div>
+              )}
+
               {/* Phone Number */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
@@ -518,6 +771,76 @@ const GoogleRoleSelection = () => {
                   We'll use this to contact you about your bookings
                 </p>
               </div>
+
+              {/* Service Location - Only for Service Providers */}
+              {selectedRole === 'provider' && (
+                <div className="border border-border rounded-lg p-4 bg-muted/30">
+                  <h4 className="font-medium text-foreground mb-4 flex items-center">
+                    <Icon name="MapPin" size={18} className="mr-2" />
+                    Service Location (Tanzania) *
+                  </h4>
+                  <LocationSelector
+                    value={serviceLocation}
+                    onChange={setServiceLocation}
+                    required={true}
+                    showWard={true}
+                    showStreet={true}
+                  />
+                </div>
+              )}
+
+              {/* Service Categories - Only for Service Providers */}
+              {selectedRole === 'provider' && (
+                <div className="border border-border rounded-lg p-4 bg-muted/30">
+                  <h4 className="font-medium text-foreground mb-4 flex items-center">
+                    <Icon name="Briefcase" size={18} className="mr-2" />
+                    Service Categories *
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {Object.keys(allServiceCategories).map((category) => (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCategories(prev =>
+                            prev.includes(category)
+                              ? prev.filter(c => c !== category)
+                              : [...prev, category]
+                          );
+                        }}
+                        className={`p-3 text-sm rounded-lg border transition-all flex items-center justify-center ${
+                          selectedCategories.includes(category)
+                            ? 'bg-secondary text-secondary-foreground border-secondary shadow-md'
+                            : 'bg-background border-border hover:border-secondary hover:shadow-sm'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedCategories.length > 0 && (
+                    <div className="mt-3 text-sm text-muted-foreground">
+                      Selected: {selectedCategories.join(', ')}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Business Description - Only for Service Providers */}
+              {selectedRole === 'provider' && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Business Description
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Tell us about your business and services..."
+                  />
+                </div>
+              )}
 
               {/* Submit Button */}
               <Button

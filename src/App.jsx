@@ -10,6 +10,7 @@ import HomePage from './pages/homepage';
 import LoginPage from './pages/auth/login';
 import RegisterPage from './pages/auth/register';
 import OAuthCallback from './pages/auth/OAuthCallback';
+import GoogleRoleSelection from './pages/auth/GoogleRoleSelection';
 import Dashboard from './pages/dashboard';
 import TravelerDashboard from './pages/traveler-dashboard';
 import ServiceProviderDashboard from './pages/service-provider-dashboard';
@@ -40,6 +41,7 @@ function App() {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/auth/callback" element={<OAuthCallback />} />
+                  <Route path="/google-role-selection" element={<GoogleRoleSelection />} />
                   <Route path="/test-dashboard" element={<TestDashboard />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/traveler-dashboard" element={<TravelerDashboard />} />

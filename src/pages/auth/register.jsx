@@ -85,14 +85,9 @@ const Register = () => {
   const { register, loginWithGoogle } = useAuth();
 
   const handleGoogleRegister = async () => {
-    const result = await loginWithGoogle();
-    
-    if (result.success) {
-      alert('Google registration successful! Welcome to iSafari Global.');
-      navigate('/');
-    } else {
-      alert('Google registration failed. Please try again.');
-    }
+    // Redirect to Google Role Selection page first
+    // User will select role, then continue with Google OAuth
+    navigate('/google-role-selection?newUser=true');
   };
 
   const handleSubmit = async (e) => {
