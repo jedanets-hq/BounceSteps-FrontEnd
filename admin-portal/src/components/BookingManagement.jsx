@@ -3,7 +3,7 @@ import {
   Search, Filter, Calendar, CheckCircle, XCircle, 
   Clock, Eye, DollarSign, User, Package, MapPin
 } from 'lucide-react';
-import { bookingsAPI } from '../../../utils/api';
+import { bookingsAPI } from '../utils/api';
 
 const BookingManagement = () => {
   const [bookings, setBookings] = useState([]);

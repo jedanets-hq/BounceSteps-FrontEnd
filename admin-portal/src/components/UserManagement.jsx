@@ -5,7 +5,7 @@ import {
   MoreVertical, X, CheckCircle, XCircle, AlertCircle,
   Building2, Star, TrendingUp, Shield
 } from 'lucide-react';
-import { userAPI } from '../../../utils/api';
+import api from '../utils/api';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);

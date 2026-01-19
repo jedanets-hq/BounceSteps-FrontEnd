@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, Download, Search, Filter } from 'lucide-react';
-import { paymentsAPI } from '../../../utils/api';
+import { paymentsAPI } from '../utils/api';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const PaymentManagement = () => {

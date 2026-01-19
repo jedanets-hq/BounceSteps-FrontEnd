@@ -5,7 +5,7 @@ import {
   Clock, CheckCircle, XCircle, AlertCircle
 } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { servicesAPI, bookingsAPI, paymentsAPI, userAPI } from '../../../utils/api';
+import api from '../utils/api';
 
 const DashboardOverview = () => {
   const [stats, setStats] = useState({
@@ -34,15 +34,10 @@ const DashboardOverview = () => {
       setLoading(true);
       
       // Fetch real analytics data from admin endpoint
-      const analyticsResponse = await fetch('http://localhost:5000/api/admin/analytics/dashboard', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const analyticsResponse = await api.get('/admin/analytics/dashboard');
       
-      if (analyticsResponse.ok) {
-        const analyticsData = await analyticsResponse.json();
+      if (analyticsResponse.data && analyticsResponse.data.success && analyticsResponse.data.stats) {
+        const analyticsData = analyticsResponse.data;
         
         if (analyticsData.success && analyticsData.stats) {
           setStats({

@@ -5,7 +5,7 @@ import {
   DollarSign, Users, Calendar, TrendingUp, Award,
   X, MoreVertical, Image as ImageIcon
 } from 'lucide-react';
-import { servicesAPI } from '../../../utils/api';
+import { servicesAPI } from '../utils/api';
 
 const ServiceManagement = () => {
   const [services, setServices] = useState([]);

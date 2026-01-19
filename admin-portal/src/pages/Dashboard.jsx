@@ -1,46 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { 
   LayoutDashboard, Users, Package, Calendar, DollarSign, 
   FileText, Settings, BarChart3, MessageSquare, Bell,
-  TrendingUp, Shield, Award, MapPin, Star, Clock,
-  Search, Filter, Download, Upload, Edit, Trash2,
-  CheckCircle, XCircle, AlertCircle, Eye, MoreVertical,
-  ChevronDown, ChevronRight, RefreshCw, Plus, X,
-  UserCheck, UserX, Building2, Globe, Mail, Phone
+  TrendingUp, Search
 } from 'lucide-react';
-import DashboardOverview from './components/DashboardOverview';
-import UserManagement from './components/UserManagement';
-import ServiceManagement from './components/ServiceManagement';
-import BookingManagement from './components/BookingManagement';
-import PaymentManagement from './components/PaymentManagement';
-import ContentManagement from './components/ContentManagement';
-import AnalyticsReports from './components/AnalyticsReports';
-import SystemSettings from './components/SystemSettings';
-import SupportTickets from './components/SupportTickets';
-import PromotionsMarketing from './components/PromotionsMarketing';
 
-const AdminPortal = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+// Import components
+import DashboardOverview from '../components/DashboardOverview';
+import UserManagement from '../components/UserManagement';
+import ServiceManagement from '../components/ServiceManagement';
+import BookingManagement from '../components/BookingManagement';
+import PaymentManagement from '../components/PaymentManagement';
+import ContentManagement from '../components/ContentManagement';
+import AnalyticsReports from '../components/AnalyticsReports';
+import SystemSettings from '../components/SystemSettings';
+import SupportTickets from '../components/SupportTickets';
+import PromotionsMarketing from '../components/PromotionsMarketing';
+
+const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
-
-  // Check if user is admin (you can add admin role to user model)
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    
-    // For now, allow access. Later add admin role check:
-    // if (user.role !== 'admin') {
-    //   navigate('/');
-    // }
-  }, [user, navigate]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -81,10 +61,6 @@ const AdminPortal = () => {
         return <DashboardOverview />;
     }
   };
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -144,10 +120,6 @@ const AdminPortal = () => {
                         <p className="text-sm text-gray-900">New service pending approval</p>
                         <p className="text-xs text-gray-500 mt-1">2 minutes ago</p>
                       </div>
-                      <div className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
-                        <p className="text-sm text-gray-900">Payment received: TZS 500,000</p>
-                        <p className="text-xs text-gray-500 mt-1">1 hour ago</p>
-                      </div>
                     </div>
                   </div>
                 )}
@@ -156,20 +128,13 @@ const AdminPortal = () => {
               {/* User Menu */}
               <div className="flex items-center space-x-3">
                 <div className="hidden md:block text-right">
-                  <p className="text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</p>
+                  <p className="text-sm font-medium text-gray-900">Admin User</p>
                   <p className="text-xs text-gray-500">Administrator</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
-                  {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                  AU
                 </div>
               </div>
-
-              <button
-                onClick={logout}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
-              >
-                Logout
-              </button>
             </div>
           </div>
         </div>
@@ -211,4 +176,4 @@ const AdminPortal = () => {
   );
 };
 
-export default AdminPortal;
+export default Dashboard;

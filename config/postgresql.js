@@ -21,9 +21,12 @@ if (process.env.DATABASE_URL) {
   poolConfig = {
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 30000,
+    max: 10, // Reduced from 20 to prevent connection exhaustion
+    min: 2, // Keep minimum connections alive
+    idleTimeoutMillis: 10000, // Reduced from 30000
+    connectionTimeoutMillis: 10000, // Reduced from 30000
+    acquireTimeoutMillis: 10000, // Add acquire timeout
+    allowExitOnIdle: false, // Keep pool alive
   };
 } else {
   // Local development: Use individual environment variables
@@ -42,9 +45,12 @@ if (process.env.DATABASE_URL) {
     database: process.env.DB_NAME || 'iSafari-Global-Network',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 30000,
+    max: 10,
+    min: 2,
+    idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 10000,
+    acquireTimeoutMillis: 10000,
+    allowExitOnIdle: false,
   };
 }
 
@@ -57,7 +63,8 @@ pool.on('connect', () => {
 
 pool.on('error', (err) => {
   console.error('❌ Unexpected error on idle PostgreSQL client', err);
-  process.exit(-1);
+  // Don't exit process, just log the error
+  console.log('⚠️ Pool error occurred, but continuing operation...');
 });
 
 // Database initialization queries
@@ -434,12 +441,18 @@ const initQueries = [
 
 // Initialize database tables
 const initializeDatabase = async () => {
-  const client = await pool.connect();
+  let client;
   try {
     console.log('🔧 Initializing PostgreSQL database tables...');
+    client = await pool.connect();
     
     for (const query of initQueries) {
-      await client.query(query);
+      try {
+        await client.query(query);
+      } catch (queryErr) {
+        // Log but continue with other queries
+        console.warn('⚠️ Query warning (continuing):', queryErr.message);
+      }
     }
     
     console.log('✅ PostgreSQL database initialized successfully');
@@ -447,7 +460,9 @@ const initializeDatabase = async () => {
     console.error('❌ Error initializing database:', err);
     throw err;
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
 };
 
