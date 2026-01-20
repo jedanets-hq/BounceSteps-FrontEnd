@@ -16,14 +16,17 @@ const poolConfig = process.env.DATABASE_URL
 
 const pool = new Pool(poolConfig);
 
-// Test database connection
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('❌ Error connecting to PostgreSQL database:', err);
-  } else {
+// Connect to PostgreSQL function
+const connectPostgreSQL = async () => {
+  try {
+    const client = await pool.connect();
     console.log('✅ Connected to PostgreSQL database');
-    release();
+    client.release();
+    return pool;
+  } catch (error) {
+    console.error('❌ Error connecting to PostgreSQL database:', error);
+    throw error;
   }
-});
+};
 
-module.exports = { pool };
+module.exports = { pool, connectPostgreSQL };
