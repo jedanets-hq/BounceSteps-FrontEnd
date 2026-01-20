@@ -351,10 +351,13 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
     );
   }
 
-  const pendingBookings = bookings.filter(b => b.status === 'pending');
-  const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
-  const rejectedBookings = bookings.filter(b => b.status === 'cancelled');
-  const completedBookings = bookings.filter(b => b.status === 'completed');
+  // Ensure bookings is always an array before filtering
+  const safeBookings = Array.isArray(bookings) ? bookings : [];
+  
+  const pendingBookings = safeBookings.filter(b => b.status === 'pending');
+  const confirmedBookings = safeBookings.filter(b => b.status === 'confirmed');
+  const rejectedBookings = safeBookings.filter(b => b.status === 'cancelled');
+  const completedBookings = safeBookings.filter(b => b.status === 'completed');
 
   const statusConfigs = {
     pending: {

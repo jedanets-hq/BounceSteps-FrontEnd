@@ -30,13 +30,13 @@ const TrendingServices = () => {
       const response = await fetch(`${API_URL}/services/featured/slides`);
       const data = await response.json();
       
-      if (data.success && data.services && data.services.length > 0) {
+      if (data.success && Array.isArray(data.services) && data.services.length > 0) {
         setServices(data.services);
       } else {
         // Fallback to regular services if no featured services
         const fallbackResponse = await fetch(`${API_URL}/services?limit=12`);
         const fallbackData = await fallbackResponse.json();
-        if (fallbackData.success && fallbackData.data) {
+        if (fallbackData.success && Array.isArray(fallbackData.data)) {
           // Map service_providers data to services format
           const mappedServices = fallbackData.data.map(provider => ({
             id: provider.id,
@@ -52,10 +52,14 @@ const TrendingServices = () => {
             status: 'active'
           }));
           setServices(mappedServices);
+        } else {
+          // No data available - set empty array
+          setServices([]);
         }
       }
     } catch (err) {
       console.error('Error fetching trending services:', err);
+      setServices([]); // Set empty array on error
     } finally {
       setLoading(false);
     }

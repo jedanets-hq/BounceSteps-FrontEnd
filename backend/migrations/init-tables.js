@@ -57,11 +57,32 @@ async function initializeTables() {
     `);
     console.log('✅ Service providers table ready');
     
+    // Create services table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS services (
+        id SERIAL PRIMARY KEY,
+        provider_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        category VARCHAR(100),
+        location TEXT,
+        price DECIMAL(10,2),
+        currency VARCHAR(10) DEFAULT 'TZS',
+        images JSONB,
+        status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'pending')),
+        is_featured BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✅ Services table ready');
+    
     // Create bookings table
     await client.query(`
       CREATE TABLE IF NOT EXISTS bookings (
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        service_id INTEGER REFERENCES services(id) ON DELETE CASCADE,
         provider_id INTEGER REFERENCES service_providers(id) ON DELETE CASCADE,
         service_type VARCHAR(100),
         booking_date TIMESTAMP,
@@ -81,7 +102,12 @@ async function initializeTables() {
       CREATE INDEX IF NOT EXISTS idx_users_user_type ON users(user_type);
       CREATE INDEX IF NOT EXISTS idx_users_auth_provider ON users(auth_provider);
       CREATE INDEX IF NOT EXISTS idx_service_providers_user_id ON service_providers(user_id);
+      CREATE INDEX IF NOT EXISTS idx_services_provider_id ON services(provider_id);
+      CREATE INDEX IF NOT EXISTS idx_services_category ON services(category);
+      CREATE INDEX IF NOT EXISTS idx_services_status ON services(status);
+      CREATE INDEX IF NOT EXISTS idx_services_is_featured ON services(is_featured);
       CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
+      CREATE INDEX IF NOT EXISTS idx_bookings_service_id ON bookings(service_id);
       CREATE INDEX IF NOT EXISTS idx_bookings_provider_id ON bookings(provider_id);
       CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
     `);
