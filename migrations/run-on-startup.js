@@ -16,14 +16,9 @@ async function runStartupMigrations() {
     
     // Check if constraint exists and what values it allows
     const constraintCheck = await client.query(`
-      SELECT pg_get_constraintdef(oid) as definitionMtu akijalibu kus continue with google au signup with google You can’t sign in because this app sent an invalid request. You can try again later, or contact the developer about this issue. Learn more about this error
-
-If you are a developer of this app, see error details.
-
-Error 400: redirect_uri_mismatch Access blocked: This app’s request is invalid
-
-Kiroconti
+      SELECT pg_get_constraintdef(oid) as definition
       FROM pg_constraint 
+      WHERE conrelid = 'bookings'::regclass
       AND conname = 'bookings_status_check'
     `);
     
