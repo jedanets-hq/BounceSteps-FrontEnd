@@ -11860,6 +11860,15 @@ const PORT = process.env.PORT || 5000;
 (async () => {
   try {
     console.log('Initializing database tables...');
+    
+    // Initialize iSafari tables first
+    const { initializeTables } = require('./migrations/init-tables');
+    const { runStartupMigrations } = require('./migrations/run-on-startup');
+    
+    await initializeTables();
+    await runStartupMigrations();
+    
+    // Then initialize other tables
     await initializeDatabase();
     await initializeLiveClassesTable();
     await initializeAnnouncementsTable();

@@ -21,7 +21,6 @@ import DestinationDiscovery from './pages/DestinationDiscovery';
 import ServiceBooking from './pages/ServiceBooking';
 import JourneyPlannerEnhanced from './pages/JourneyPlannerEnhanced';
 import Profile from './pages/profile';
-import AdminPortal from './pages/admin-portal';
 import ProviderProfile from './pages/provider-profile';
 import './App.css';
 
@@ -53,7 +52,6 @@ function App() {
                   <Route path="/services" element={<ServiceBooking />} />
                   <Route path="/journey-planner" element={<JourneyPlannerEnhanced />} />
                   <Route path="/profile" element={<Profile />} />
-                  <Route path="/admin-portal" element={<AdminPortal />} />
                   <Route path="/provider/:providerId" element={<ProviderProfile />} />
                   {/* Redirect /cart to traveler dashboard with cart tab */}
                   <Route path="/cart" element={<Navigate to="/traveler-dashboard" state={{ tab: 'cart' }} replace />} />
