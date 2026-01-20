@@ -1,0 +1,414 @@
+import { useState, useEffect } from "react";
+import {
+  Users,
+  Search,
+  Mail,
+  Phone,
+  GraduationCap,
+  BarChart3,
+  Filter,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// Database operations
+const API_BASE_URL = 'https://must-lms-backend.onrender.com/api';
+
+interface StudentsProps {
+  selectedProgramId?: string;
+  selectedProgramName?: string;
+}
+
+export const Students = ({ selectedProgramId, selectedProgramName }: StudentsProps = {}) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  // Start with empty arrays - fetch real data only
+  const [students, setStudents] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [selectedProgramFilter, setSelectedProgramFilter] = useState("all");
+  const [allPrograms, setAllPrograms] = useState<any[]>([]);
+
+  useEffect(() => {
+    const user = localStorage.getItem('currentUser');
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
+
+  // Fetch real students data
+  useEffect(() => {
+    const fetchRealData = async () => {
+      if (!currentUser?.username) return;
+      
+      try {
+        setLoading(true);
+        console.log('=== FETCHING REAL DATA FROM DATABASE ===');
+        console.log('Current User:', currentUser);
+        console.log('API Base URL:', API_BASE_URL);
+        
+        // 1. Get lecturer info using efficient endpoint
+        const lecturerResponse = await fetch(`${API_BASE_URL}/lecturers?username=${encodeURIComponent(currentUser.username)}`);
+        if (!lecturerResponse.ok) {
+          throw new Error('Failed to fetch lecturer');
+        }
+        const lecturerResult = await lecturerResponse.json();
+        console.log('Lecturer API Response:', lecturerResult);
+        
+        let currentLecturer = null;
+        if (lecturerResult.success && lecturerResult.data.length > 0) {
+          currentLecturer = lecturerResult.data[0];
+          console.log('Current Lecturer Found:', currentLecturer);
+        }
+        
+        if (!currentLecturer) {
+          console.log('Lecturer not found in database');
+          setStudents([]);
+          setPrograms([]);
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Found lecturer:', currentLecturer);
+        
+        // 2. Get regular programs using efficient endpoint
+        const programsResponse = await fetch(`${API_BASE_URL}/programs?lecturer_username=${encodeURIComponent(currentUser.username)}`);
+        let lecturerPrograms = [];
+        
+        if (programsResponse.ok) {
+          const programsResult = await programsResponse.json();
+          console.log('Regular Programs API Response:', programsResult);
+          
+          if (programsResult.success) {
+            lecturerPrograms = [...programsResult.data];
+            console.log('Lecturer Regular Programs:', lecturerPrograms.length);
+          }
+        }
+        
+        // 3. Get short-term programs using efficient endpoint
+        const shortTermResponse = await fetch(`${API_BASE_URL}/short-term-programs?lecturer_username=${encodeURIComponent(currentUser.username)}`);
+        if (shortTermResponse.ok) {
+          const shortTermResult = await shortTermResponse.json();
+          console.log('Short-Term Programs API Response:', shortTermResult);
+          
+          if (shortTermResult.success) {
+            const shortTermPrograms = shortTermResult.data;
+            console.log('Lecturer Short-Term Programs:', shortTermPrograms.length);
+            
+            // Convert short-term programs to same format as regular programs
+            const formattedShortTermPrograms = shortTermPrograms.map((program: any) => ({
+              id: `short-${program.id}`,
+              name: program.title,
+              lecturer_name: program.lecturer_name,
+              lecturer_id: program.lecturer_id,
+              course_id: null, // Short-term programs don't have course_id
+              type: 'short-term'
+            }));
+            
+            lecturerPrograms = [...lecturerPrograms, ...formattedShortTermPrograms];
+          }
+        }
+        
+        console.log('Final Lecturer programs:', lecturerPrograms);
+        
+        if (lecturerPrograms.length === 0) {
+          console.log('No programs assigned to this lecturer');
+          setStudents([]);
+          setPrograms([]);
+          setLoading(false);
+          return;
+        }
+        
+        // 3. Get ALL students and filter by lecturer's program courses
+        console.log('=== FETCHING STUDENTS FOR LECTURER PROGRAMS ===');
+        
+        // Get unique course IDs from lecturer's programs
+        const lecturerCourseIds = [...new Set(
+          lecturerPrograms
+            .filter(p => p.course_id) // Only regular programs with course_id
+            .map(p => p.course_id)
+        )];
+        
+        console.log('Lecturer Course IDs:', lecturerCourseIds);
+        
+        // Fetch students using lecturer_id parameter for backend filtering
+        const studentsResponse = await fetch(`${API_BASE_URL}/students?lecturer_id=${currentLecturer.id}&user_type=lecturer`);
+        if (!studentsResponse.ok) {
+          throw new Error('Failed to fetch students');
+        }
+        const studentsResult = await studentsResponse.json();
+        console.log('Lecturer Students API Response:', studentsResult);
+        
+        let lecturerStudents = [];
+        if (studentsResult.success && studentsResult.data) {
+          // Students are already filtered by backend
+          lecturerStudents = studentsResult.data;
+          console.log('✅ Students already filtered by backend:', lecturerStudents.length
+          );
+          console.log(`Filtered ${lecturerStudents.length} students from ${studentsResult.data.length} total students`);
+          console.log('Students in lecturer courses:', lecturerStudents);
+        }
+        
+        // 4. Set all lecturer programs for filter dropdown
+        setPrograms(lecturerPrograms);
+        setAllPrograms(lecturerPrograms);
+        
+        // 5. Set the students data
+        setStudents(lecturerStudents);
+        
+        console.log('=== FINAL DATA SET ===');
+        console.log('Students Count:', lecturerStudents.length);
+        console.log('Programs Count:', lecturerPrograms.length);
+        console.log('Students Data:', lecturerStudents);
+        console.log('Programs Data:', lecturerPrograms);
+        
+      } catch (error) {
+        console.error('Error fetching real data:', error);
+        console.log('API connection failed - check if backend server is running');
+        
+        // Don't use demo data - show empty state
+        setStudents([]);
+        setPrograms([]);
+        setAllPrograms([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRealData();
+  }, [currentUser, selectedProgramId]);
+
+  // Auto-select program filter if specific program is selected from "View Students" button
+  useEffect(() => {
+    if (selectedProgramId) {
+      // Only set filter if coming from "View Students" button
+      setSelectedProgramFilter(selectedProgramId.toString());
+    }
+    // If no selectedProgramId, keep current filter (don't reset to "all")
+  }, [selectedProgramId]);
+
+  // Reset filter to "all" when component first loads or when navigating back to Students category
+  useEffect(() => {
+    if (!selectedProgramId) {
+      setSelectedProgramFilter("all");
+    }
+  }, []);
+
+  const filteredStudents = students.filter(student => {
+    const matchesSearch = student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.registration_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filter by program - show ALL students if "all" selected, otherwise filter by specific program
+    let matchesProgram = true; // Default to true (show all students)
+    
+    if (selectedProgramFilter === "all") {
+      matchesProgram = true; // Show ALL students
+    } else {
+      // Filter by specific program
+      const selectedProgram = programs.find(p => p.id.toString() === selectedProgramFilter);
+      
+      if (selectedProgram) {
+        // For short-term programs (course_id is null or type is 'short-term'), show all students
+        if (selectedProgram.type === 'short-term' || !selectedProgram.course_id) {
+          matchesProgram = true; // Short-term programs apply to all students
+        } else {
+          // For regular programs, match by course_id
+          matchesProgram = selectedProgram.course_id === student.course_id;
+        }
+      } else {
+        matchesProgram = false;
+      }
+    }
+    
+    return matchesSearch && matchesProgram;
+  });
+
+
+  // Debug info (remove in production)
+  // console.log('Current State:', { students, programs, selectedProgramFilter, filteredStudents });
+
+  const getGradeColor = (grade: string) => {
+    if (grade.startsWith('A')) return 'bg-green-100 text-green-800';
+    if (grade.startsWith('B')) return 'bg-blue-100 text-blue-800';
+    if (grade.startsWith('C')) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-gray-100 text-gray-800';
+  };
+
+  // Helper function to get program name for student's course
+  const getStudentProgram = (courseId: number) => {
+    const program = programs.find(p => p.course_id === courseId);
+    return program ? program.name : "No Program";
+  };
+  return (
+    <div className="flex-1 space-y-4 sm:space-y-6 p-3 sm:p-6">
+      
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Students</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Manage and view students in your programs
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            const studentData = filteredStudents.map(s => 
+              `${s.name} (${s.registration_number}) - ${s.email}`
+            ).join('\n');
+            const blob = new Blob([`MUST LMS - Student List Export\n\nTotal Students: ${filteredStudents.length}\n\n${studentData}`], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'student_list.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('Student list exported successfully!');
+          }}
+          className="w-full sm:w-auto text-xs sm:text-sm"
+          size="sm"
+        >
+          <Users className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline">Export Student List</span>
+          <span className="sm:hidden">Export</span>
+        </Button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search students..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 text-sm"
+            />
+          </div>
+        </div>
+        <Select value={selectedProgramFilter} onValueChange={setSelectedProgramFilter}>
+          <SelectTrigger className="w-full sm:w-[200px] text-sm">
+            <SelectValue placeholder="Filter by program" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All My Programs</SelectItem>
+            {programs.map((program) => (
+              <SelectItem key={program.id} value={program.id.toString()}>
+                {program.name || `Program ${program.id}`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid gap-4">
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="text-muted-foreground">Loading students...</div>
+          </div>
+        ) : students.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="text-red-500 font-bold">NO STUDENTS IN ARRAY - CHECK INITIALIZATION</div>
+          </div>
+        ) : filteredStudents.length === 0 ? (
+          <div className="text-center py-8">
+            <Users className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold">No Students Found</h3>
+            <p className="mt-2 text-muted-foreground">
+              {students.length === 0 
+                ? "No students are enrolled in your assigned programs yet."
+                : "No students match the current filter. Try selecting 'All My Programs' or a different program filter."
+              }
+            </p>
+            {programs.length === 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm text-orange-600">
+                  You don't have any programs assigned yet. Contact admin to assign programs to you.
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                >
+                  Refresh Data
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          filteredStudents.map((student) => (
+            <Card key={student.id}>
+              <CardContent className="p-3 sm:p-6">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
+                    <AvatarImage src="" alt={student.name} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-base">
+                      {student.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'ST'}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1 space-y-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
+                      <h3 className="text-base sm:text-lg font-semibold">{student.name || 'Unknown Student'}</h3>
+                      <Badge variant="outline" className="bg-green-100 text-green-800 text-xs w-fit">
+                        Active
+                      </Badge>
+                    </div>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Reg: {student.registration_number || 'No Reg Number'}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">Course: {student.course_name || 'Unknown Course'}</p>
+                    <p className="text-xs sm:text-sm font-medium text-green-600 line-clamp-1">Program: {getStudentProgram(student.course_id)}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">Email: {student.email || 'No Email'}</p>
+                  </div>
+
+                  <div className="hidden md:grid grid-cols-3 gap-4 text-sm">
+                    <div className="text-center">
+                      <p className="font-medium text-xs">Academic Year</p>
+                      <p className="text-sm font-bold text-green-600">{student.academic_year || '2024/2025'}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-medium text-xs">Semester</p>
+                      <p className="text-sm font-bold text-green-600">Sem {student.current_semester || 1}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-medium text-xs">Status</p>
+                      <Badge variant="default" className="text-xs">Active</Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        window.open(`mailto:${student.email}?subject=MUST LMS - Message from Instructor&body=Dear ${student.name},%0D%0A%0D%0A`, '_blank');
+                        alert(`Opening email to ${student.name}...`);
+                      }}
+                      className="text-xs sm:text-sm w-full sm:w-auto"
+                    >
+                      <Mail className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Email</span>
+                      <span className="sm:hidden">📧</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => alert(`Viewing progress for ${student.name}:\n\nStatus: Active\nEnrolled: Yes`)}
+                      className="text-xs sm:text-sm w-full sm:w-auto"
+                    >
+                      <BarChart3 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline">Progress</span>
+                      <span className="sm:hidden">📊</span>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};

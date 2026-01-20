@@ -1,0 +1,373 @@
+import { useState, useEffect } from "react";
+import { Bell, BookOpen, LogOut, Search, User, Menu, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+
+// Database operations
+const API_BASE_URL = 'https://must-lms-backend.onrender.com/api';
+
+interface HeaderProps {
+  onLogout?: () => void;
+  onNavigate?: (section: string) => void;
+  isMobileMenuOpen?: boolean;
+  onMobileMenuChange?: (isOpen: boolean) => void;
+}
+
+export const Header = ({ onLogout, onNavigate, isMobileMenuOpen = false, onMobileMenuChange }: HeaderProps = {}) => {
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [lecturerData, setLecturerData] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [readNotifications, setReadNotifications] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const user = localStorage.getItem('currentUser');
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
+
+  // Load read notifications from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('lecturer_read_notifications');
+    if (stored) {
+      setReadNotifications(new Set(JSON.parse(stored)));
+    }
+  }, []);
+
+  // Fetch notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!currentUser?.username) return;
+      
+      try {
+        // Fetch assignment submissions, live classes, and announcements for current lecturer only
+        const [submissionsRes, liveClassesRes, announcementsRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/assignment-submissions?lecturer_id=${currentUser.id}`),
+          fetch(`${API_BASE_URL}/live-classes?lecturer_id=${currentUser.id}`),
+          fetch(`${API_BASE_URL}/announcements/lecturer?lecturer_id=${currentUser.id}`)
+        ]);
+        
+        const submissions = await submissionsRes.json();
+        const liveClasses = await liveClassesRes.json();
+        const announcements = await announcementsRes.json();
+        
+        console.log('Fetched notifications for lecturer:', currentUser.id);
+        console.log('Submissions:', submissions.data?.length || 0);
+        console.log('Live Classes:', liveClasses.data?.length || 0);
+        console.log('Announcements:', announcements.data?.length || 0);
+        
+        const newNotifications: any[] = [];
+        
+        // Add new submissions - only for current lecturer's assignments
+        if (submissions.success && submissions.data) {
+          const recentSubmissions = submissions.data.filter((s: any) => {
+            const submittedDate = new Date(s.submitted_at);
+            const daysSinceSubmitted = (Date.now() - submittedDate.getTime()) / (1000 * 60 * 60 * 24);
+            const isLecturerSubmission = s.lecturer_id === currentUser.id || 
+                                      s.lecturer_username === currentUser.username;
+            return daysSinceSubmitted <= 2 && isLecturerSubmission; // Last 2 days and for this lecturer
+          });
+          
+          recentSubmissions.slice(0, 10).forEach((s: any) => {
+            newNotifications.push({
+              id: `submission_${s.id || s.student_name}_${s.submitted_at}`,
+              title: '📝 New Submission',
+              message: `${s.student_name} submitted ${s.assignment_title}`,
+              time: new Date(s.submitted_at).toLocaleString(),
+              lecturerId: s.lecturer_id || s.lecturer_username
+            });
+          });
+        }
+        
+        // Add live classes - only for current lecturer
+        if (liveClasses.success && liveClasses.data) {
+          const activeClasses = liveClasses.data.filter((c: any) => {
+            // Only include if it's the current lecturer's class
+            const isLecturerClass = c.lecturer_id === currentUser.id || 
+                                 c.lecturer_username === currentUser.username;
+            return (c.status === 'live' || c.status === 'scheduled') && isLecturerClass;
+          });
+          
+          activeClasses.forEach((c: any) => {
+            newNotifications.push({
+              id: `class_${c.id || c.title}_${c.date}_${c.time}`,
+              title: c.status === 'live' ? '🔴 Live Class Active' : '⏰ Scheduled Class',
+              message: `${c.title} - ${c.program_name}`,
+              time: `${c.date} at ${c.time}`,
+              lecturerId: c.lecturer_id || c.lecturer_username
+            });
+          });
+        }
+        
+        // Add announcements
+        if (announcements.success && announcements.data) {
+          const recentAnnouncements = announcements.data.filter((a: any) => {
+            const createdDate = new Date(a.created_at);
+            const daysSinceCreated = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+            return daysSinceCreated <= 7; // Last 7 days
+          });
+          
+          // Only include announcements created by this lecturer
+          const lecturerAnnouncements = recentAnnouncements.filter((a: any) => {
+            return a.created_by_id === currentUser.id || 
+                   a.created_by === currentUser.username;
+          });
+          
+          lecturerAnnouncements.slice(0, 5).forEach((a: any) => {
+            newNotifications.push({
+              id: `announcement_${a.id || a.title}_${a.created_at}`,
+              title: '📢 Your Announcement',
+              message: a.title,
+              time: new Date(a.created_at).toLocaleString(),
+              lecturerId: a.created_by_id || a.created_by
+            });
+          });
+        }
+        
+        setNotifications(newNotifications);
+        
+        // Calculate unread count
+        const unread = newNotifications.filter(n => !readNotifications.has(n.id)).length;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+    
+    fetchNotifications();
+    // Refresh every 2 minutes
+    const interval = setInterval(fetchNotifications, 120000);
+    return () => clearInterval(interval);
+  }, [currentUser, readNotifications]);
+
+  // Fetch lecturer data
+  useEffect(() => {
+    const fetchLecturerData = async () => {
+      if (!currentUser?.username) return;
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/lecturers`);
+        const result = await response.json();
+        
+        if (result.success) {
+          const lecturer = result.data.find((l: any) => 
+            l.employee_id === currentUser.username
+          );
+          setLecturerData(lecturer);
+        }
+      } catch (error) {
+        console.error('Error fetching lecturer data:', error);
+      }
+    };
+
+    fetchLecturerData();
+  }, [currentUser]);
+
+  const handleNotificationOpen = (open: boolean) => {
+    if (open && notifications.length > 0) {
+      // Mark all current notifications as read
+      const newReadNotifications = new Set(readNotifications);
+      notifications.forEach(n => newReadNotifications.add(n.id));
+      setReadNotifications(newReadNotifications);
+      
+      // Save to localStorage
+      localStorage.setItem('lecturer_read_notifications', JSON.stringify(Array.from(newReadNotifications)));
+      
+      // Update unread count to 0
+      setUnreadCount(0);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser');
+    if (onLogout) {
+      onLogout();
+    } else {
+      window.location.reload();
+    }
+  };
+
+  const handleProfile = () => {
+    if (onNavigate) {
+      onNavigate('profile');
+    }
+  };
+
+  const handleMyPrograms = () => {
+    if (onNavigate) {
+      onNavigate('courses');
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      // Perform actual search
+      const searchResults = document.querySelectorAll('[data-searchable]');
+      let found = false;
+      
+      searchResults.forEach((element) => {
+        const text = element.textContent?.toLowerCase() || '';
+        const searchLower = searchTerm.toLowerCase();
+        
+        if (text.includes(searchLower)) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('bg-yellow-200');
+          setTimeout(() => element.classList.remove('bg-yellow-200'), 3000);
+          found = true;
+        }
+      });
+      
+      if (!found) {
+        alert(`No results found for: "${searchTerm}"`);
+      } else {
+        alert(`Found results for: "${searchTerm}"`);
+      }
+    }
+  };
+
+  const getUserInitials = () => {
+    if (lecturerData?.name) {
+      return lecturerData.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+    }
+    if (currentUser?.username) {
+      return currentUser.username.slice(0, 2).toUpperCase();
+    }
+    return 'LC';
+  };
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-20 md:h-32 items-center justify-between px-2 md:px-4">
+        {/* Logo and Branding */}
+        <div className="flex items-center space-x-2 md:space-x-8">
+          <img src="/must-logo.png" alt="MUST" className="h-20 w-20 md:h-28 md:w-28 object-contain" />
+          <div className="flex flex-col">
+            <span className="text-xl md:text-5xl font-bold text-foreground">MUST</span>
+            <span className="hidden md:block text-lg font-semibold text-primary">Learning Management System</span>
+            <span className="md:hidden text-xs font-semibold text-primary">LMS</span>
+            <span className="text-xs md:text-sm font-medium text-green-600 bg-green-100 px-1 md:px-2 py-0.5 md:py-1 rounded-md">LECTURER</span>
+          </div>
+        </div>
+
+        {/* Search - Hidden on mobile */}
+        <div className="hidden md:flex flex-1 items-center justify-center px-2 md:px-6">
+          <div className="w-full max-w-sm lg:max-w-md">
+            <form onSubmit={handleSearch} className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search courses, modules..."
+                className="pl-10 bg-muted/50"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </form>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center space-x-2 md:space-x-4">
+          {/* Mobile Menu Button - Only visible on mobile */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden"
+            onClick={() => onMobileMenuChange?.(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+
+          {/* Notifications */}
+          <DropdownMenu onOpenChange={handleNotificationOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-red-500">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
+              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {notifications.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  <p>No new notifications</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {notifications.map((notif, index) => (
+                    <div key={index} className="p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0">
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{notif.title}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{notif.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{notif.time}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="" alt="User" />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {lecturerData?.name || currentUser?.username || "Lecturer"}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    Employee ID: {lecturerData?.employee_id || currentUser?.username || "Not assigned"}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onNavigate && onNavigate('dashboard')}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleMyPrograms}>
+                <BookOpen className="mr-2 h-4 w-4" />
+                <span>My Programs</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </header>
+  );
+};

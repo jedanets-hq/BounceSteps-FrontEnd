@@ -6,7 +6,7 @@
 const { Pool } = require('pg');
 
 // Production DATABASE_URL from Render
-const DATABASE_URL = 'postgresql://isafari_db_user:Tz0Tz0Tz0Tz0Tz0Tz0Tz0Tz0Tz0Tz0@dpg-ct5bnhij1k6c73a5rvog-a.oregon-postgres.render.com/isafari_db';
+const DATABASE_URL = 'postgresql://isafarimasterorg_user:IuNv7yEfLRiDQL96cgmsxr2751MiBjsq@dpg-d5nhs5t6ubrc73asfksg-a.frankfurt-postgres.render.com/isafarimasterorg';
 
 console.log('🔄 Connecting to PRODUCTION database...');
 console.log('   URL:', DATABASE_URL.substring(0, 50) + '...');
