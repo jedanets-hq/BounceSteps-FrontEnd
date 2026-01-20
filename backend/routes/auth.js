@@ -133,6 +133,11 @@ router.post('/register', getValidationMiddleware('register'), async (req, res) =
 
   } catch (error) {
     console.error('❌ Registration error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : 'hidden in production'
+    });
     
     // Handle PostgreSQL unique constraint violation
     if (error.code === '23505') {
@@ -144,9 +149,32 @@ router.post('/register', getValidationMiddleware('register'), async (req, res) =
       });
     }
 
+    // Handle database connection errors
+    if (error.message && error.message.includes('connect')) {
+      console.error('❌ Database connection error detected');
+      return res.status(500).json({
+        success: false,
+        message: 'Database connection error. Please try again later.',
+        code: 'DB_CONNECTION_ERROR',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+
+    // Handle missing environment variables
+    if (error.message && error.message.includes('JWT_SECRET')) {
+      console.error('❌ JWT_SECRET not configured');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error. Please contact support.',
+        code: 'CONFIG_ERROR',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Registration failed. Please try again.',
+      code: 'REGISTRATION_ERROR',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

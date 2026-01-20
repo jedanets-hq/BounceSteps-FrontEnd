@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ALWAYS use production backend from .env (no local fallback)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://isafarinetworkglobal-2.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://isafarimasterorg.onrender.com/api';
 const API_URL = API_BASE_URL;
 
 // Log API configuration for verification

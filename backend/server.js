@@ -115,8 +115,60 @@ app.use((err, req, res, next) => {
 // Initialize database and start server
 const PORT = process.env.PORT || 5000;
 
+async function testDatabaseConnection() {
+  try {
+    const { pool } = require('./config/postgresql');
+    const result = await pool.query('SELECT NOW() as now, current_database() as database');
+    console.log('✅ Database connection test successful');
+    console.log('   Database:', result.rows[0].database);
+    console.log('   Timestamp:', result.rows[0].now);
+    return true;
+  } catch (error) {
+    console.error('❌ Database connection test failed:', error.message);
+    console.error('   Make sure DATABASE_URL or DB_* environment variables are set correctly');
+    return false;
+  }
+}
+
+async function testJWTSecret() {
+  if (!process.env.JWT_SECRET) {
+    console.error('❌ JWT_SECRET environment variable is not set!');
+    console.error('   Add JWT_SECRET to your environment variables');
+    return false;
+  }
+  console.log('✅ JWT_SECRET is configured');
+  return true;
+}
+
 async function startServer() {
   try {
+    console.log('');
+    console.log('🌍 ========================================');
+    console.log('🚀 iSafari Global API Server Starting...');
+    console.log('========================================');
+    console.log(`📍 Port: ${PORT}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('');
+    
+    // Test JWT Secret
+    const jwtOk = await testJWTSecret();
+    
+    // Test database connection
+    const dbOk = await testDatabaseConnection();
+    
+    if (!dbOk) {
+      console.warn('⚠️  WARNING: Database connection failed!');
+      console.warn('   Server will start but registration/login will not work');
+      console.warn('   Please check your DATABASE_URL environment variable');
+    }
+    
+    if (!jwtOk) {
+      console.warn('⚠️  WARNING: JWT_SECRET not configured!');
+      console.warn('   Authentication will not work properly');
+    }
+    
+    console.log('');
+    
     // Run startup migrations
     await runStartupMigrations();
     
@@ -129,7 +181,8 @@ async function startServer() {
       console.log(`📍 Port: ${PORT}`);
       console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔒 CORS: Enabled for production domains`);
-      console.log(`🗄️  Database: PostgreSQL (${process.env.DB_NAME || 'isafari_db'})`);
+      console.log(`🗄️  Database: ${dbOk ? '✅ Connected' : '❌ Not Connected'}`);
+      console.log(`🔑 JWT: ${jwtOk ? '✅ Configured' : '❌ Not Configured'}`);
       console.log('========================================');
       console.log('');
     });
