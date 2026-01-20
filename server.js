@@ -308,6 +308,10 @@ const startServer = async () => {
     // Connect to PostgreSQL
     await connectPostgreSQL();
 
+    // Initialize iSafari tables
+    const { initializeISafariTables } = require('./migrations/init-isafari-tables');
+    await initializeISafariTables();
+
     // Run startup migrations (adds 'draft' status to bookings constraint)
     await runStartupMigrations();
 
