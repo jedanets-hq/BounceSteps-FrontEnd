@@ -3,8 +3,8 @@
   command = "npm run build"
 
 [build.environment]
-  VITE_API_BASE_URL = "https://isafarinetworkglobal-2.onrender.com/api"
-  VITE_API_URL = "https://isafarinetworkglobal-2.onrender.com/api"
+  VITE_API_BASE_URL = "https://isafarimasterorg.onrender.com/api"
+  VITE_API_URL = "https://isafarimasterorg.onrender.com/api"
   VITE_FRONTEND_URL = "https://isafari-tz.netlify.app"
   VITE_NODE_ENV = "production"
   NODE_ENV = "production"
@@ -67,8 +67,8 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
 
 [context.production.environment]
-  VITE_API_BASE_URL = "https://isafarinetworkglobal-2.onrender.com/api"
-  VITE_API_URL = "https://isafarinetworkglobal-2.onrender.com/api"
+  VITE_API_BASE_URL = "https://isafarimasterorg.onrender.com/api"
+  VITE_API_URL = "https://isafarimasterorg.onrender.com/api"
   VITE_FRONTEND_URL = "https://isafari-tz.netlify.app"
   VITE_NODE_ENV = "production"
   NODE_ENV = "production"

@@ -5,7 +5,7 @@
 /*    /index.html   200
 
 # API redirects (if needed)
-/api/*  https://isafarinetworkglobal-2.onrender.com/api/:splat  200
+/api/*  https://isafarimasterorg.onrender.com/api/:splat  200
 
 # Security headers
 /*

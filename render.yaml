@@ -26,7 +26,7 @@ services:
         sync: false
         # Set in Render Dashboard
       - key: GOOGLE_CALLBACK_URL
-        value: https://isafarinetworkglobal-2.onrender.com/api/auth/google/callback
+        value: https://isafarimasterorg.onrender.com/api/auth/google/callback
       - key: DATABASE_URL
         sync: false
         # Set in Render Dashboard

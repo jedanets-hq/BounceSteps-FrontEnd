@@ -75,7 +75,7 @@ export const CartProvider = ({ children }) => {
       }
 
       console.log('📥 [CartContext] Loading cart from PRODUCTION database... (attempt', loadAttemptRef.current, ')');
-      console.log('   Backend: https://isafarinetworkglobal-2.onrender.com/api');
+      console.log('   Backend: https://isafarimasterorg.onrender.com/api');
       const response = await cartAPI.getCart();
       
       console.log('📦 [CartContext] Cart response received from PRODUCTION');
@@ -157,7 +157,7 @@ export const CartProvider = ({ children }) => {
       console.log('📤 [CartContext] Adding to PRODUCTION cart');
       console.log('   Service ID:', serviceId);
       console.log('   Service Title:', service.title || service.name);
-      console.log('   Backend: https://isafarinetworkglobal-2.onrender.com/api');
+      console.log('   Backend: https://isafarimasterorg.onrender.com/api');
       console.log('   Database: Production PostgreSQL on Render');
 
       // ALWAYS save to PRODUCTION database - never use localStorage fallback

@@ -743,7 +743,7 @@ const GoogleRoleSelection = () => {
     });
 
     // Redirect to Google OAuth - use /auth/google/register for registration flow
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://isafarinetworkglobal-2.onrender.com/api';
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://isafarimasterorg.onrender.com/api';
     window.location.href = `${apiUrl}/auth/google/register`;
   };
 

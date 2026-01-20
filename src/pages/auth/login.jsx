@@ -79,7 +79,7 @@ const Login = () => {
   const handleGoogleLogin = () => {
     // Redirect to backend Google OAuth endpoint
     // Google OAuth endpoint is at /api/auth/google
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://isafarinetworkglobal-2.onrender.com/api';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://isafarimasterorg.onrender.com/api';
     window.location.href = `${apiUrl}/auth/google`;
   };
 
