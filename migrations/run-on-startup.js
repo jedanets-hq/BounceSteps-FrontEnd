@@ -16,9 +16,14 @@ async function runStartupMigrations() {
     
     // Check if constraint exists and what values it allows
     const constraintCheck = await client.query(`
-      SELECT pg_get_constraintdef(oid) as definition
+      SELECT pg_get_constraintdef(oid) as definitionMtu akijalibu kus continue with google au signup with google You can’t sign in because this app sent an invalid request. You can try again later, or contact the developer about this issue. Learn more about this error
+
+If you are a developer of this app, see error details.
+
+Error 400: redirect_uri_mismatch Access blocked: This app’s request is invalid
+
+Kiroconti
       FROM pg_constraint 
-      WHERE conrelid = 'bookings'::regclass 
       AND conname = 'bookings_status_check'
     `);
     
@@ -42,6 +47,48 @@ async function runStartupMigrations() {
       console.log('   ✅ Bookings status constraint updated!');
     } else {
       console.log('   ✅ Bookings status constraint already includes draft');
+    }
+    
+    // Migration 2: Add auth_provider column for Google Sign-In tracking
+    console.log('   📋 Checking auth_provider column...');
+    
+    const authProviderCheck = await client.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'users' AND column_name = 'auth_provider'
+    `);
+    
+    if (authProviderCheck.rows.length === 0) {
+      console.log('   🔄 Adding auth_provider column...');
+      
+      // Add auth_provider column with CHECK constraint
+      await client.query(`
+        ALTER TABLE users 
+        ADD COLUMN auth_provider VARCHAR(20) DEFAULT 'email' 
+        CHECK (auth_provider IN ('email', 'google', 'both'))
+      `);
+      
+      // Update existing users with google_id to have auth_provider = 'google'
+      await client.query(`
+        UPDATE users 
+        SET auth_provider = 'google' 
+        WHERE google_id IS NOT NULL AND password IS NULL
+      `);
+      
+      // Update existing users with both google_id and password to have auth_provider = 'both'
+      await client.query(`
+        UPDATE users 
+        SET auth_provider = 'both' 
+        WHERE google_id IS NOT NULL AND password IS NOT NULL
+      `);
+      
+      // Create index for auth_provider filtering
+      await client.query(`
+        CREATE INDEX IF NOT EXISTS idx_users_auth_provider ON users(auth_provider)
+      `);
+      
+      console.log('   ✅ auth_provider column added!');
+    } else {
+      console.log('   ✅ auth_provider column already exists');
     }
     
     console.log('✅ Startup migrations completed!');

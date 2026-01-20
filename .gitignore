@@ -1,21 +1,23 @@
-.DS_Store
-node_modules
-.idea
-package-lock.json
-/build
-dist/
-admin-portal/dist/
-.vscode/
-.idea/
-vite.config.*s.*
+# Dependencies
+node_modules/
 
-# Environment files (keep .env.production for reference)
+# Environment files
+.env
 .env.local
 
 # Logs
+logs/
 *.log
 backend.log
 frontend.log
+server.log
+
+# Build output
+build-output.log
+
+# Uploads
+uploads/
 
 # OS files
+.DS_Store
 Thumbs.db
