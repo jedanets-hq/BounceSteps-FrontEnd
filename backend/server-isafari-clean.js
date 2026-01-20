@@ -2,12 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const passport = require('passport');
 const path = require('path');
-require('dotenv').config();
 
 const app = express();
-
-// Import database initialization
-const { runStartupMigrations } = require('./migrations/run-on-startup');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -85,7 +81,7 @@ app.get('/health', (req, res) => {
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'iSafari Global API - Travel & Tourism Platform',
+    message: 'iSafari Global API',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
@@ -112,33 +108,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Initialize database and start server
+// Start server
 const PORT = process.env.PORT || 5000;
-
-async function startServer() {
-  try {
-    // Run startup migrations
-    await runStartupMigrations();
-    
-    // Start server
-    app.listen(PORT, () => {
-      console.log('');
-      console.log('🌍 ========================================');
-      console.log('🚀 iSafari Global API Server Started');
-      console.log('========================================');
-      console.log(`📍 Port: ${PORT}`);
-      console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔒 CORS: Enabled for production domains`);
-      console.log(`🗄️  Database: PostgreSQL (${process.env.DB_NAME || 'isafari_db'})`);
-      console.log('========================================');
-      console.log('');
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
-  }
-}
-
-startServer();
+app.listen(PORT, () => {
+  console.log(`🚀 iSafari Global API running on port ${PORT}`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🌐 CORS enabled for production domains`);
+});
 
 module.exports = app;
