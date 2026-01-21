@@ -26,7 +26,7 @@ router.post('/register', getValidationMiddleware('register'), async (req, res) =
   try {
     const { 
       email, password, firstName, lastName, userType, phone, googleId,
-      serviceLocation, serviceCategories, locationData, companyName, businessType, description
+      serviceLocation, serviceCategories, locationData, companyName, businessName, businessType, description
     } = req.body;
 
     console.log('📝 Registration attempt for:', email, 'userType:', userType);
@@ -73,7 +73,8 @@ router.post('/register', getValidationMiddleware('register'), async (req, res) =
 
     // Create service provider profile if user is a service provider
     if (userType === 'service_provider') {
-      const businessName = companyName || `${firstName} ${lastName}'s Business`;
+      // Accept both businessName and companyName for backwards compatibility
+      const providerBusinessName = businessName || companyName || `${firstName} ${lastName}'s Business`;
       
       // Ensure location data exists
       const providerLocationData = locationData || {};
@@ -83,9 +84,9 @@ router.post('/register', getValidationMiddleware('register'), async (req, res) =
       
       await ServiceProvider.create({
         user_id: newUser.id,
-        business_name: businessName,
+        business_name: providerBusinessName,
         business_type: businessType || 'General Services',
-        description: description || `Professional services provided by ${businessName}`,
+        description: description || `Professional services provided by ${providerBusinessName}`,
         location: serviceLocationString,
         service_location: serviceLocationString,
         country: providerLocationData.country || 'Tanzania',
@@ -115,8 +116,9 @@ router.post('/register', getValidationMiddleware('register'), async (req, res) =
 
     // Add provider data for service providers
     if (userType === 'service_provider') {
-      responseUser.companyName = companyName || `${firstName} ${lastName}'s Business`;
-      responseUser.businessName = companyName || `${firstName} ${lastName}'s Business`;
+      const providerBusinessName = businessName || companyName || `${firstName} ${lastName}'s Business`;
+      responseUser.companyName = providerBusinessName;
+      responseUser.businessName = providerBusinessName;
       responseUser.businessType = businessType || 'General Services';
       responseUser.description = description || '';
       responseUser.serviceLocation = serviceLocation || '';
@@ -417,7 +419,7 @@ router.post('/google/complete-registration', async (req, res) => {
     const { 
       googleId, email, firstName, lastName, avatarUrl, userType,
       phone, serviceLocation, serviceCategories, locationData, 
-      companyName, businessType, description 
+      companyName, businessName, businessType, description 
     } = req.body;
 
     console.log('📝 Google registration completion for:', email, 'userType:', userType);
@@ -511,7 +513,7 @@ router.post('/google/complete-registration', async (req, res) => {
 
     // Create service provider profile if user is a service provider
     if (userType === 'service_provider') {
-      const businessName = companyName || `${firstName} ${lastName}'s Business`;
+      const providerBusinessName = businessName || companyName || `${firstName} ${lastName}'s Business`;
       
       const providerLocationData = locationData || {};
       const serviceLocationString = serviceLocation || 
@@ -520,9 +522,9 @@ router.post('/google/complete-registration', async (req, res) => {
       
       await ServiceProvider.create({
         user_id: newUser.id,
-        business_name: businessName,
+        business_name: providerBusinessName,
         business_type: businessType || 'General Services',
-        description: description || `Professional services provided by ${businessName}`,
+        description: description || `Professional services provided by ${providerBusinessName}`,
         location: serviceLocationString,
         service_location: serviceLocationString,
         country: providerLocationData.country || 'Tanzania',
@@ -554,8 +556,9 @@ router.post('/google/complete-registration', async (req, res) => {
 
     // Add provider data for service providers
     if (userType === 'service_provider') {
-      responseUser.companyName = companyName || `${firstName} ${lastName}'s Business`;
-      responseUser.businessName = companyName || `${firstName} ${lastName}'s Business`;
+      const providerBusinessName = businessName || companyName || `${firstName} ${lastName}'s Business`;
+      responseUser.companyName = providerBusinessName;
+      responseUser.businessName = providerBusinessName;
       responseUser.businessType = businessType || 'General Services';
       responseUser.description = description || '';
       responseUser.serviceLocation = serviceLocation || '';
