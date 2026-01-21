@@ -1,8 +1,29 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../models');
+const passport = require('passport');
 
-// Get all bookings for a user
+// Get all bookings for authenticated user
+router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const result = await pool.query(`
+      SELECT b.*, sp.business_name, sp.business_type 
+      FROM bookings b
+      LEFT JOIN service_providers sp ON b.provider_id = sp.id
+      WHERE b.user_id = $1
+      ORDER BY b.created_at DESC
+    `, [userId]);
+    
+    res.json({ success: true, bookings: result.rows });
+  } catch (error) {
+    console.error('Get bookings error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get bookings' });
+  }
+});
+
+// Get all bookings for a user (by userId param)
 router.get('/user/:userId', async (req, res) => {
   try {
     const result = await pool.query(`
