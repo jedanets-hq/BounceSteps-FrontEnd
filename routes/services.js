@@ -7,6 +7,32 @@ const { authenticateJWT } = require('../middleware/jwtAuth');
 router.get('/', async (req, res) => {
   try {
     const limit = req.query.limit || 100;
+    const category = req.query.category; // Get category filter
+    const search = req.query.search; // Get search query
+    
+    // Build WHERE clause dynamically
+    let whereConditions = ["s.status = 'active'", "s.is_active = true"];
+    let queryParams = [];
+    let paramIndex = 1;
+    
+    // Add category filter if provided
+    if (category && category !== 'all') {
+      whereConditions.push(`s.category = $${paramIndex}`);
+      queryParams.push(category);
+      paramIndex++;
+    }
+    
+    // Add search filter if provided
+    if (search) {
+      whereConditions.push(`(s.title ILIKE $${paramIndex} OR s.description ILIKE $${paramIndex})`);
+      queryParams.push(`%${search}%`);
+      paramIndex++;
+    }
+    
+    // Add limit parameter
+    queryParams.push(limit);
+    
+    const whereClause = whereConditions.join(' AND ');
     
     // Query services table with provider information
     const result = await pool.query(`
@@ -22,10 +48,12 @@ router.get('/', async (req, res) => {
       FROM services s
       LEFT JOIN service_providers sp ON s.provider_id = sp.user_id
       LEFT JOIN users u ON s.provider_id = u.id
-      WHERE s.status = 'active' AND s.is_active = true
+      WHERE ${whereClause}
       ORDER BY s.created_at DESC
-      LIMIT $1
-    `, [limit]);
+      LIMIT $${paramIndex}
+    `, queryParams);
+    
+    console.log(`📦 Services query: category=${category || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
     
     res.json({ 
       success: true, 
