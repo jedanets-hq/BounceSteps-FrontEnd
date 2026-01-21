@@ -20,21 +20,40 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get provider by ID
+// Get provider by ID with their services
 router.get('/:id', async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT sp.*, u.email, u.first_name, u.last_name, u.avatar_url
+    // Get provider details
+    const providerResult = await pool.query(`
+      SELECT sp.*, u.email, u.first_name, u.last_name, u.avatar_url, u.is_verified
       FROM service_providers sp
       JOIN users u ON sp.user_id = u.id
-      WHERE sp.id = $1
+      WHERE sp.user_id = $1
     `, [req.params.id]);
     
-    if (result.rows.length === 0) {
+    if (providerResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Provider not found' });
     }
     
-    res.json({ success: true, data: result.rows[0] });
+    const provider = providerResult.rows[0];
+    
+    // Get provider's services from services table
+    const servicesResult = await pool.query(`
+      SELECT s.*,
+             COUNT(DISTINCT b.id) as review_count,
+             AVG(b.rating) as average_rating
+      FROM services s
+      LEFT JOIN bookings b ON s.id = b.service_id
+      WHERE s.provider_id = $1 AND s.is_active = true AND s.status = 'active'
+      GROUP BY s.id
+      ORDER BY s.created_at DESC
+    `, [req.params.id]);
+    
+    // Add services to provider object
+    provider.services = servicesResult.rows;
+    provider.services_count = servicesResult.rows.length;
+    
+    res.json({ success: true, provider: provider });
   } catch (error) {
     console.error('Get provider error:', error);
     res.status(500).json({ success: false, message: 'Failed to get provider' });
