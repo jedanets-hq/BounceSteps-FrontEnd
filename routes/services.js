@@ -3,57 +3,22 @@ const router = express.Router();
 const { pool } = require('../models');
 const { authenticateJWT } = require('../middleware/jwtAuth');
 
-// Get all services with location filtering
+// Get all services
 router.get('/', async (req, res) => {
   try {
-    const { 
-      limit = 500, 
-      category, 
-      search, 
-      region, 
-      district, 
-      area,
-      categories // Support comma-separated categories
-    } = req.query;
+    const limit = req.query.limit || 100;
+    const category = req.query.category; // Get category filter
+    const search = req.query.search; // Get search query
     
     // Build WHERE clause dynamically
     let whereConditions = ["s.status = 'active'", "s.is_active = true"];
     let queryParams = [];
     let paramIndex = 1;
     
-    // Add region filter with case-insensitive matching
-    if (region) {
-      whereConditions.push(`LOWER(s.region) = LOWER($${paramIndex})`);
-      queryParams.push(region);
-      paramIndex++;
-    }
-    
-    // Add district filter with hierarchical matching (district OR area)
-    if (district) {
-      whereConditions.push(`(LOWER(s.district) = LOWER($${paramIndex}) OR LOWER(s.area) = LOWER($${paramIndex}))`);
-      queryParams.push(district);
-      paramIndex++;
-    }
-    
-    // Add area filter with fallback to district-level services
-    if (area) {
-      whereConditions.push(`(LOWER(s.area) = LOWER($${paramIndex}) OR (s.area IS NULL AND LOWER(s.district) = LOWER($${paramIndex})))`);
-      queryParams.push(area);
-      paramIndex++;
-    }
-    
-    // Add category filter (single category)
+    // Add category filter if provided
     if (category && category !== 'all') {
-      whereConditions.push(`LOWER(s.category) = LOWER($${paramIndex})`);
+      whereConditions.push(`s.category = $${paramIndex}`);
       queryParams.push(category);
-      paramIndex++;
-    }
-    
-    // Add categories filter (multiple categories, comma-separated)
-    if (categories) {
-      const categoryList = categories.split(',').map(c => c.trim().toLowerCase());
-      whereConditions.push(`LOWER(s.category) = ANY($${paramIndex}::text[])`);
-      queryParams.push(categoryList);
       paramIndex++;
     }
     
@@ -65,37 +30,30 @@ router.get('/', async (req, res) => {
     }
     
     // Add limit parameter
-    queryParams.push(parseInt(limit));
+    queryParams.push(limit);
     
     const whereClause = whereConditions.join(' AND ');
     
-    // Query services table with provider information and ratings
+    // Query services table with provider information
     const result = await pool.query(`
       SELECT s.*, 
              sp.business_name, 
              sp.location as provider_location,
              sp.rating as provider_rating,
              sp.is_verified as provider_verified,
-             sp.is_premium as provider_premium,
-             sp.description as provider_description,
-             sp.phone as provider_phone,
-             sp.email as provider_email,
              u.first_name as provider_first_name,
              u.last_name as provider_last_name,
-             u.is_verified as user_verified,
-             COUNT(DISTINCT b.id) as review_count,
-             AVG(b.rating) as average_rating
+             u.email as provider_email,
+             u.is_verified as user_verified
       FROM services s
       LEFT JOIN service_providers sp ON s.provider_id = sp.user_id
       LEFT JOIN users u ON s.provider_id = u.id
-      LEFT JOIN bookings b ON s.id = b.service_id AND b.rating IS NOT NULL
       WHERE ${whereClause}
-      GROUP BY s.id, sp.user_id, u.id
-      ORDER BY sp.is_verified DESC, sp.is_premium DESC, s.created_at DESC
+      ORDER BY s.created_at DESC
       LIMIT $${paramIndex}
     `, queryParams);
     
-    console.log(`📦 Services query: region=${region || 'any'}, district=${district || 'any'}, area=${area || 'any'}, category=${category || categories || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
+    console.log(`📦 Services query: category=${category || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
     
     res.json({ 
       success: true, 
@@ -104,16 +62,7 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Get services error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      query: error.query
-    });
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to get services',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ success: false, message: 'Failed to get services' });
   }
 });
 

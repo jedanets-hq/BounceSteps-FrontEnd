@@ -19,40 +19,19 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
     
     if (tableCheck.rows[0].exists) {
       const result = await pool.query(`
-        SELECT 
-          p.*,
-          COUNT(DISTINCT ps.service_id) as services_count
-        FROM plans p
-        LEFT JOIN plan_services ps ON p.id = ps.plan_id
-        WHERE p.user_id = $1
-        GROUP BY p.id
-        ORDER BY p.created_at DESC
+        SELECT * FROM plans
+        WHERE user_id = $1
+        ORDER BY created_at DESC
       `, [userId]);
       
-      // Parse JSON fields if they exist
-      const plans = result.rows.map(plan => ({
-        ...plan,
-        services: plan.services ? (typeof plan.services === 'string' ? JSON.parse(plan.services) : plan.services) : [],
-        destinations: plan.destinations ? (typeof plan.destinations === 'string' ? JSON.parse(plan.destinations) : plan.destinations) : [],
-        plan_data: plan.plan_data ? (typeof plan.plan_data === 'string' ? JSON.parse(plan.plan_data) : plan.plan_data) : {}
-      }));
-      
-      res.json({ success: true, plans, count: plans.length });
+      res.json({ success: true, plans: result.rows });
     } else {
       // Table doesn't exist yet - return empty array
-      res.json({ success: true, plans: [], count: 0 });
+      res.json({ success: true, plans: [] });
     }
   } catch (error) {
     console.error('Get plans error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack
-    });
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to get plans',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ success: false, message: 'Failed to get plans' });
   }
 });
 
