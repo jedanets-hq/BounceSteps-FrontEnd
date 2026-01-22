@@ -41,16 +41,27 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
 router.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const userId = req.user.id;
-    const { serviceId } = req.body;
+    // Accept both serviceId and providerId for backwards compatibility
+    const { serviceId, providerId } = req.body;
+    const targetId = serviceId || providerId;
     
-    if (!serviceId) {
-      return res.status(400).json({ success: false, message: 'Service ID is required' });
+    if (!targetId) {
+      return res.status(400).json({ success: false, message: 'Service ID or Provider ID is required' });
     }
     
-    // Check if service exists
-    const serviceCheck = await pool.query('SELECT id FROM services WHERE id = $1', [serviceId]);
+    // Check if it's a service ID or provider ID
+    let finalServiceId = targetId;
+    
+    // If it looks like a provider ID, find their services
+    const serviceCheck = await pool.query('SELECT id FROM services WHERE id = $1', [targetId]);
     if (serviceCheck.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Service not found' });
+      // Try as provider ID - get their first service
+      const providerServiceCheck = await pool.query('SELECT id FROM services WHERE provider_id = $1 LIMIT 1', [targetId]);
+      if (providerServiceCheck.rows.length > 0) {
+        finalServiceId = providerServiceCheck.rows[0].id;
+      } else {
+        return res.status(404).json({ success: false, message: 'Service or Provider not found' });
+      }
     }
     
     // Add to favorites (or ignore if already exists)
@@ -59,7 +70,7 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
       VALUES ($1, $2)
       ON CONFLICT (user_id, service_id) DO NOTHING
       RETURNING *
-    `, [userId, serviceId]);
+    `, [userId, finalServiceId]);
     
     if (result.rows.length > 0) {
       res.json({ success: true, message: 'Added to favorites', favorite: result.rows[0] });
@@ -76,13 +87,25 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
 router.delete('/:serviceId', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const userId = req.user.id;
-    const serviceId = req.params.serviceId;
+    const targetId = req.params.serviceId;
     
-    const result = await pool.query(`
+    // Try to delete by service ID first
+    let result = await pool.query(`
       DELETE FROM favorites
       WHERE user_id = $1 AND service_id = $2
       RETURNING *
-    `, [userId, serviceId]);
+    `, [userId, targetId]);
+    
+    // If not found, try as provider ID - delete all services from that provider
+    if (result.rows.length === 0) {
+      result = await pool.query(`
+        DELETE FROM favorites
+        WHERE user_id = $1 AND service_id IN (
+          SELECT id FROM services WHERE provider_id = $2
+        )
+        RETURNING *
+      `, [userId, targetId]);
+    }
     
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Favorite not found' });
@@ -99,12 +122,23 @@ router.delete('/:serviceId', passport.authenticate('jwt', { session: false }), a
 router.get('/check/:serviceId', passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const userId = req.user.id;
-    const serviceId = req.params.serviceId;
+    const targetId = req.params.serviceId;
     
-    const result = await pool.query(`
+    // Check by service ID first
+    let result = await pool.query(`
       SELECT id FROM favorites
       WHERE user_id = $1 AND service_id = $2
-    `, [userId, serviceId]);
+    `, [userId, targetId]);
+    
+    // If not found, check by provider ID
+    if (result.rows.length === 0) {
+      result = await pool.query(`
+        SELECT id FROM favorites
+        WHERE user_id = $1 AND service_id IN (
+          SELECT id FROM services WHERE provider_id = $2
+        )
+      `, [userId, targetId]);
+    }
     
     res.json({ success: true, isFavorite: result.rows.length > 0 });
   } catch (error) {

@@ -49,7 +49,6 @@ function App() {
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/destination-discovery" element={<DestinationDiscovery />} />
                   <Route path="/service-booking" element={<ServiceBooking />} />
-                  <Route path="/services" element={<ServiceBooking />} />
                   <Route path="/journey-planner" element={<JourneyPlannerEnhanced />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/provider/:providerId" element={<ProviderProfile />} />

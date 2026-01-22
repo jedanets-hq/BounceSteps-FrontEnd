@@ -78,15 +78,15 @@ const HeroSection = () => {
             Discover authentic travel experiences from verified local providers
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/register">
+            <Link to="/journey-planner">
               <Button variant="default" size="lg">
-                <Icon name="UserPlus" size={20} />
+                <Icon name="Map" size={20} />
                 Start Your Journey
               </Button>
             </Link>
-            <Link to="/services">
+            <Link to="/destination-discovery">
               <Button variant="outline" size="lg">
-                <Icon name="Search" size={20} />
+                <Icon name="Compass" size={20} />
                 Explore Services
               </Button>
             </Link>
