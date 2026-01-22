@@ -141,16 +141,34 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
     
     console.log('📝 Creating booking/pre-order:', { userId, serviceId, bookingDate, participants });
     
-    if (!serviceId || !bookingDate) {
+    // Comprehensive validation
+    if (!serviceId) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Service ID and booking date are required' 
+        message: 'Service ID is required',
+        field: 'serviceId'
+      });
+    }
+    
+    if (!bookingDate) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Booking date is required',
+        field: 'bookingDate'
+      });
+    }
+    
+    if (participants < 1) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'At least 1 participant is required',
+        field: 'participants'
       });
     }
     
     await client.query('BEGIN');
     
-    // Get service details with provider info
+    // Verify service exists and is active
     const serviceResult = await client.query(`
       SELECT 
         s.*,
@@ -163,15 +181,29 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
       FROM services s
       LEFT JOIN service_providers sp ON s.provider_id = sp.user_id
       LEFT JOIN users u ON u.id = $2
-      WHERE s.id = $1
+      WHERE s.id = $1 AND s.is_active = true AND s.status = 'active'
     `, [serviceId, userId]);
     
     if (serviceResult.rows.length === 0) {
       await client.query('ROLLBACK');
-      return res.status(404).json({ success: false, message: 'Service not found' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Service not found or not available' 
+      });
     }
     
     const service = serviceResult.rows[0];
+    
+    // Verify provider exists
+    if (!service.provider_id) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Service provider not found' 
+      });
+    }
+    
+    // Calculate total amount
     const totalAmount = parseFloat(service.price) * parseInt(participants);
     
     // Create booking with all necessary data
@@ -217,7 +249,7 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
         participants: participants,
         booking_date: bookingDate
       }),
-      specialRequests,
+      specialRequests || '',
       service.title,
       service.description,
       service.images,
@@ -242,6 +274,11 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('❌ Create booking error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      query: error.query
+    });
     res.status(500).json({ 
       success: false, 
       message: 'Failed to create booking',
