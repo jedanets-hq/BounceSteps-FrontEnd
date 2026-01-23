@@ -32,8 +32,7 @@ router.get('/', async (req, res) => {
       paramIndex++;
     }
     
-    // STRICT LOCATION FILTERING - Only show services that match provider's registered location
-    // Services MUST have location data from provider's registration
+    // Location filtering - flexible to show services in requested area
     if (region) {
       whereConditions.push(`LOWER(s.region) = LOWER($${paramIndex})`);
       queryParams.push(region);
@@ -48,9 +47,9 @@ router.get('/', async (req, res) => {
     }
     
     if (area) {
-      // Area/ward matching - strict match only
-      whereConditions.push(`LOWER(s.area) = LOWER($${paramIndex})`);
-      queryParams.push(area);
+      // Area/ward matching - use LIKE for partial matches (e.g., "BUZURUGA" matches "BUZURUGA KASKAZINI")
+      whereConditions.push(`LOWER(s.area) LIKE LOWER($${paramIndex})`);
+      queryParams.push(`${area}%`); // Add % for partial matching
       paramIndex++;
     }
     
@@ -60,6 +59,7 @@ router.get('/', async (req, res) => {
     const whereClause = whereConditions.join(' AND ');
     
     // Query services table with provider information
+    // REMOVED STRICT CATEGORY FILTERING - Providers can offer ANY service type
     const result = await pool.query(`
       SELECT s.*, 
              sp.business_name, 
@@ -78,22 +78,12 @@ router.get('/', async (req, res) => {
       INNER JOIN service_providers sp ON s.provider_id = sp.user_id
       INNER JOIN users u ON s.provider_id = u.id
       WHERE ${whereClause}
-        AND (
-          sp.service_categories IS NULL 
-          OR sp.service_categories::text = '[]'
-          OR sp.service_categories::jsonb @> to_jsonb(s.category::text)
-        )
-        AND LOWER(TRIM(s.region)) = LOWER(TRIM(sp.region))
-        AND LOWER(TRIM(s.district)) = LOWER(TRIM(sp.district))
       ORDER BY s.created_at DESC
       LIMIT $${paramIndex}
     `, queryParams);
     
     console.log(`📦 Services query: region=${region || 'any'}, district=${district || 'any'}, area=${area || 'any'}, category=${category || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
-    console.log(`🔍 STRICT FILTERING APPLIED:`);
-    console.log(`   - Services MUST match provider's registered service_categories`);
-    console.log(`   - Services MUST match provider's registered location (region + district)`);
-    console.log(`   - This ensures providers only appear in their registered categories and locations`);
+    console.log(`✅ FLEXIBLE FILTERING - Providers can offer ANY service category`);
     
     res.json({ 
       success: true, 
