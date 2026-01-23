@@ -26,11 +26,13 @@ const getValidationMiddleware = (type) => {
           .trim()
           .isLength({ min: 2 })
           .withMessage('Last name must be at least 2 characters long'),
+        // Accept companyName for service providers (frontend sends this)
         body('companyName')
           .if(body('userType').equals('service_provider'))
+          .optional({ checkFalsy: true })
           .trim()
           .isLength({ min: 2 })
-          .withMessage('Company name is required for service providers')
+          .withMessage('Company name must be at least 2 characters long')
       ];
       break;
 

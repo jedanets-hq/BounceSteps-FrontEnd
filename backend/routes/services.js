@@ -32,26 +32,24 @@ router.get('/', async (req, res) => {
       paramIndex++;
     }
     
-    // SMART LOCATION FILTERING (Hierarchical with NULL handling)
-    // Services with NULL location fields are treated as available everywhere
+    // STRICT LOCATION FILTERING - Only show services that match provider's registered location
+    // Services MUST have location data from provider's registration
     if (region) {
-      whereConditions.push(`(LOWER(s.region) = LOWER($${paramIndex}) OR s.region IS NULL OR s.region = '')`);
+      whereConditions.push(`LOWER(s.region) = LOWER($${paramIndex})`);
       queryParams.push(region);
       paramIndex++;
     }
     
     if (district) {
       // District can match either district OR area field (frontend ward → backend area)
-      // Also include services with NULL/empty district (region-wide services)
-      whereConditions.push(`(LOWER(s.district) = LOWER($${paramIndex}) OR LOWER(s.area) = LOWER($${paramIndex}) OR s.district IS NULL OR s.district = '')`);
+      whereConditions.push(`(LOWER(s.district) = LOWER($${paramIndex}) OR LOWER(s.area) = LOWER($${paramIndex}))`);
       queryParams.push(district);
       paramIndex++;
     }
     
     if (area) {
-      // Area/ward matching with hierarchical fallback
-      // Include services with NULL/empty area (district-wide or region-wide services)
-      whereConditions.push(`(LOWER(s.area) = LOWER($${paramIndex}) OR s.area IS NULL OR s.area = '')`);
+      // Area/ward matching - strict match only
+      whereConditions.push(`LOWER(s.area) = LOWER($${paramIndex})`);
       queryParams.push(area);
       paramIndex++;
     }
@@ -68,19 +66,34 @@ router.get('/', async (req, res) => {
              sp.location as provider_location,
              sp.rating as provider_rating,
              sp.is_verified as provider_verified,
+             sp.region as provider_region,
+             sp.district as provider_district,
+             sp.area as provider_area,
+             sp.service_categories as provider_service_categories,
              u.first_name as provider_first_name,
              u.last_name as provider_last_name,
              u.email as provider_email,
              u.is_verified as user_verified
       FROM services s
-      LEFT JOIN service_providers sp ON s.provider_id = sp.user_id
-      LEFT JOIN users u ON s.provider_id = u.id
+      INNER JOIN service_providers sp ON s.provider_id = sp.user_id
+      INNER JOIN users u ON s.provider_id = u.id
       WHERE ${whereClause}
+        AND (
+          sp.service_categories IS NULL 
+          OR sp.service_categories::text = '[]'
+          OR sp.service_categories::jsonb @> to_jsonb(s.category::text)
+        )
+        AND LOWER(TRIM(s.region)) = LOWER(TRIM(sp.region))
+        AND LOWER(TRIM(s.district)) = LOWER(TRIM(sp.district))
       ORDER BY s.created_at DESC
       LIMIT $${paramIndex}
     `, queryParams);
     
     console.log(`📦 Services query: region=${region || 'any'}, district=${district || 'any'}, area=${area || 'any'}, category=${category || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
+    console.log(`🔍 STRICT FILTERING APPLIED:`);
+    console.log(`   - Services MUST match provider's registered service_categories`);
+    console.log(`   - Services MUST match provider's registered location (region + district)`);
+    console.log(`   - This ensures providers only appear in their registered categories and locations`);
     
     res.json({ 
       success: true, 
@@ -215,7 +228,7 @@ router.get('/provider/my-services', authenticateJWT, async (req, res) => {
   }
 });
 
-// Create new service
+// Create new service - INHERIT location from provider profile
 router.post('/', authenticateJWT, async (req, res) => {
   try {
     console.log('📝 Creating new service for user:', req.user.id);
@@ -228,11 +241,6 @@ router.post('/', authenticateJWT, async (req, res) => {
       price,
       duration,
       maxParticipants,
-      location,
-      region,
-      district,
-      area,
-      country,
       images,
       amenities,
       paymentMethods,
@@ -262,7 +270,23 @@ router.post('/', authenticateJWT, async (req, res) => {
       });
     }
     
-    // Insert service into database
+    // GET LOCATION FROM PROVIDER PROFILE - This is the key fix!
+    const providerResult = await pool.query(`
+      SELECT region, district, area, ward, country, location, service_location
+      FROM service_providers
+      WHERE user_id = $1
+    `, [req.user.id]);
+    
+    if (providerResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Provider profile not found. Please complete your profile first.'
+      });
+    }
+    
+    const provider = providerResult.rows[0];
+    
+    // Insert service into database with provider's location
     const result = await pool.query(`
       INSERT INTO services (
         provider_id,
@@ -293,11 +317,11 @@ router.post('/', authenticateJWT, async (req, res) => {
       price,
       duration || null,
       maxParticipants || null,
-      location || 'Tanzania',
-      region || '',
-      district || '',
-      area || '',
-      country || 'Tanzania',
+      provider.service_location || provider.location || 'Tanzania',
+      provider.region || '',
+      provider.district || '',
+      provider.area || provider.ward || '',
+      provider.country || 'Tanzania',
       JSON.stringify(images || []),
       JSON.stringify(amenities || []),
       JSON.stringify(paymentMethods || {}),
@@ -306,7 +330,8 @@ router.post('/', authenticateJWT, async (req, res) => {
       true
     ]);
     
-    console.log('✅ Service created successfully:', result.rows[0].id);
+    console.log('✅ Service created successfully with provider location:', result.rows[0].id);
+    console.log(`   Region: ${provider.region}, District: ${provider.district}, Area: ${provider.area}`);
     
     res.json({
       success: true,
@@ -367,7 +392,7 @@ router.patch('/:id/status', authenticateJWT, async (req, res) => {
   }
 });
 
-// Update service
+// Update service - location cannot be changed (inherited from provider)
 router.put('/:id', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
@@ -380,11 +405,6 @@ router.put('/:id', authenticateJWT, async (req, res) => {
       price,
       duration,
       maxParticipants,
-      location,
-      region,
-      district,
-      area,
-      country,
       images,
       amenities,
       paymentMethods,
@@ -404,7 +424,7 @@ router.put('/:id', authenticateJWT, async (req, res) => {
       });
     }
     
-    // Update service
+    // Update service - NOTE: location fields are NOT updated (they come from provider profile)
     const result = await pool.query(`
       UPDATE services SET
         title = $1,
@@ -413,17 +433,12 @@ router.put('/:id', authenticateJWT, async (req, res) => {
         price = $4,
         duration = $5,
         max_participants = $6,
-        location = $7,
-        region = $8,
-        district = $9,
-        area = $10,
-        country = $11,
-        images = $12,
-        amenities = $13,
-        payment_methods = $14,
-        contact_info = $15,
+        images = $7,
+        amenities = $8,
+        payment_methods = $9,
+        contact_info = $10,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $16 AND provider_id = $17
+      WHERE id = $11 AND provider_id = $12
       RETURNING *
     `, [
       title,
@@ -432,11 +447,6 @@ router.put('/:id', authenticateJWT, async (req, res) => {
       price,
       duration || null,
       maxParticipants || null,
-      location || 'Tanzania',
-      region || '',
-      district || '',
-      area || '',
-      country || 'Tanzania',
       JSON.stringify(images || []),
       JSON.stringify(amenities || []),
       JSON.stringify(paymentMethods || {}),
@@ -445,7 +455,7 @@ router.put('/:id', authenticateJWT, async (req, res) => {
       req.user.id
     ]);
     
-    console.log('✅ Service updated successfully');
+    console.log('✅ Service updated successfully (location inherited from provider profile)');
     
     res.json({
       success: true,

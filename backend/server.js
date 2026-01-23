@@ -71,6 +71,16 @@ try {
   throw error;
 }
 
+// Reviews routes
+let reviewsRoutes;
+try {
+  reviewsRoutes = require('./routes/reviews');
+  console.log('✅ Reviews routes module loaded');
+} catch (error) {
+  console.error('❌ Failed to load reviews routes:', error.message);
+  throw error;
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -228,6 +238,9 @@ console.log('✅ Plans routes mounted at /api/plans');
 app.use('/api/multi-trip', multiTripRoutes);
 console.log('✅ Multi-trip routes mounted at /api/multi-trip');
 
+app.use('/api/reviews', reviewsRoutes);
+console.log('✅ Reviews routes mounted at /api/reviews');
+
 // Verify cart routes loaded
 console.log('\n📋 Cart API Endpoints:');
 console.log('   - GET    /api/cart          (Get user cart)');
@@ -314,6 +327,10 @@ const startServer = async () => {
 
     // Run startup migrations (adds 'draft' status to bookings constraint)
     await runStartupMigrations();
+    
+    // Run complete system fix (creates cart, favorites, reviews, multi-trip tables)
+    const { fixCompleteSystem } = require('./migrations/fix-complete-system');
+    await fixCompleteSystem();
 
     // Start Express server
     app.listen(PORT, () => {
