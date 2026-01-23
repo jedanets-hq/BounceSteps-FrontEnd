@@ -75,14 +75,25 @@ router.get('/', async (req, res) => {
              u.email as provider_email,
              u.is_verified as user_verified
       FROM services s
-      LEFT JOIN service_providers sp ON s.provider_id = sp.user_id
-      LEFT JOIN users u ON s.provider_id = u.id
+      INNER JOIN service_providers sp ON s.provider_id = sp.user_id
+      INNER JOIN users u ON s.provider_id = u.id
       WHERE ${whereClause}
+        AND (
+          sp.service_categories IS NULL 
+          OR sp.service_categories::text = '[]'
+          OR sp.service_categories::jsonb @> to_jsonb(s.category::text)
+        )
+        AND LOWER(TRIM(s.region)) = LOWER(TRIM(sp.region))
+        AND LOWER(TRIM(s.district)) = LOWER(TRIM(sp.district))
       ORDER BY s.created_at DESC
       LIMIT $${paramIndex}
     `, queryParams);
     
     console.log(`📦 Services query: region=${region || 'any'}, district=${district || 'any'}, area=${area || 'any'}, category=${category || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
+    console.log(`🔍 STRICT FILTERING APPLIED:`);
+    console.log(`   - Services MUST match provider's registered service_categories`);
+    console.log(`   - Services MUST match provider's registered location (region + district)`);
+    console.log(`   - This ensures providers only appear in their registered categories and locations`);
     
     res.json({ 
       success: true, 
