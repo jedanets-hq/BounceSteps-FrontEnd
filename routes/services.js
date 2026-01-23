@@ -9,6 +9,9 @@ router.get('/', async (req, res) => {
     const limit = req.query.limit || 100;
     const category = req.query.category; // Get category filter
     const search = req.query.search; // Get search query
+    const region = req.query.region; // Get region filter
+    const district = req.query.district; // Get district filter
+    const area = req.query.area; // Get area/ward filter
     
     // Build WHERE clause dynamically
     let whereConditions = ["s.status = 'active'", "s.is_active = true"];
@@ -29,6 +32,28 @@ router.get('/', async (req, res) => {
       paramIndex++;
     }
     
+    // STRICT LOCATION FILTERING - Only show services that match provider's registered location
+    // Services MUST have location data from provider's registration
+    if (region) {
+      whereConditions.push(`LOWER(s.region) = LOWER($${paramIndex})`);
+      queryParams.push(region);
+      paramIndex++;
+    }
+    
+    if (district) {
+      // District can match either district OR area field (frontend ward → backend area)
+      whereConditions.push(`(LOWER(s.district) = LOWER($${paramIndex}) OR LOWER(s.area) = LOWER($${paramIndex}))`);
+      queryParams.push(district);
+      paramIndex++;
+    }
+    
+    if (area) {
+      // Area/ward matching - strict match only
+      whereConditions.push(`LOWER(s.area) = LOWER($${paramIndex})`);
+      queryParams.push(area);
+      paramIndex++;
+    }
+    
     // Add limit parameter
     queryParams.push(limit);
     
@@ -41,6 +66,10 @@ router.get('/', async (req, res) => {
              sp.location as provider_location,
              sp.rating as provider_rating,
              sp.is_verified as provider_verified,
+             sp.region as provider_region,
+             sp.district as provider_district,
+             sp.area as provider_area,
+             sp.service_categories as provider_service_categories,
              u.first_name as provider_first_name,
              u.last_name as provider_last_name,
              u.email as provider_email,
@@ -53,7 +82,7 @@ router.get('/', async (req, res) => {
       LIMIT $${paramIndex}
     `, queryParams);
     
-    console.log(`📦 Services query: category=${category || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
+    console.log(`📦 Services query: region=${region || 'any'}, district=${district || 'any'}, area=${area || 'any'}, category=${category || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
     
     res.json({ 
       success: true, 
@@ -188,7 +217,7 @@ router.get('/provider/my-services', authenticateJWT, async (req, res) => {
   }
 });
 
-// Create new service
+// Create new service - INHERIT location from provider profile
 router.post('/', authenticateJWT, async (req, res) => {
   try {
     console.log('📝 Creating new service for user:', req.user.id);
@@ -201,11 +230,6 @@ router.post('/', authenticateJWT, async (req, res) => {
       price,
       duration,
       maxParticipants,
-      location,
-      region,
-      district,
-      area,
-      country,
       images,
       amenities,
       paymentMethods,
@@ -235,7 +259,23 @@ router.post('/', authenticateJWT, async (req, res) => {
       });
     }
     
-    // Insert service into database
+    // GET LOCATION FROM PROVIDER PROFILE - This is the key fix!
+    const providerResult = await pool.query(`
+      SELECT region, district, area, ward, country, location, service_location
+      FROM service_providers
+      WHERE user_id = $1
+    `, [req.user.id]);
+    
+    if (providerResult.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Provider profile not found. Please complete your profile first.'
+      });
+    }
+    
+    const provider = providerResult.rows[0];
+    
+    // Insert service into database with provider's location
     const result = await pool.query(`
       INSERT INTO services (
         provider_id,
@@ -266,11 +306,11 @@ router.post('/', authenticateJWT, async (req, res) => {
       price,
       duration || null,
       maxParticipants || null,
-      location || 'Tanzania',
-      region || '',
-      district || '',
-      area || '',
-      country || 'Tanzania',
+      provider.service_location || provider.location || 'Tanzania',
+      provider.region || '',
+      provider.district || '',
+      provider.area || provider.ward || '',
+      provider.country || 'Tanzania',
       JSON.stringify(images || []),
       JSON.stringify(amenities || []),
       JSON.stringify(paymentMethods || {}),
@@ -279,7 +319,8 @@ router.post('/', authenticateJWT, async (req, res) => {
       true
     ]);
     
-    console.log('✅ Service created successfully:', result.rows[0].id);
+    console.log('✅ Service created successfully with provider location:', result.rows[0].id);
+    console.log(`   Region: ${provider.region}, District: ${provider.district}, Area: ${provider.area}`);
     
     res.json({
       success: true,
@@ -340,7 +381,7 @@ router.patch('/:id/status', authenticateJWT, async (req, res) => {
   }
 });
 
-// Update service
+// Update service - location cannot be changed (inherited from provider)
 router.put('/:id', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
@@ -353,11 +394,6 @@ router.put('/:id', authenticateJWT, async (req, res) => {
       price,
       duration,
       maxParticipants,
-      location,
-      region,
-      district,
-      area,
-      country,
       images,
       amenities,
       paymentMethods,
@@ -377,7 +413,7 @@ router.put('/:id', authenticateJWT, async (req, res) => {
       });
     }
     
-    // Update service
+    // Update service - NOTE: location fields are NOT updated (they come from provider profile)
     const result = await pool.query(`
       UPDATE services SET
         title = $1,
@@ -386,17 +422,12 @@ router.put('/:id', authenticateJWT, async (req, res) => {
         price = $4,
         duration = $5,
         max_participants = $6,
-        location = $7,
-        region = $8,
-        district = $9,
-        area = $10,
-        country = $11,
-        images = $12,
-        amenities = $13,
-        payment_methods = $14,
-        contact_info = $15,
+        images = $7,
+        amenities = $8,
+        payment_methods = $9,
+        contact_info = $10,
         updated_at = CURRENT_TIMESTAMP
-      WHERE id = $16 AND provider_id = $17
+      WHERE id = $11 AND provider_id = $12
       RETURNING *
     `, [
       title,
@@ -405,11 +436,6 @@ router.put('/:id', authenticateJWT, async (req, res) => {
       price,
       duration || null,
       maxParticipants || null,
-      location || 'Tanzania',
-      region || '',
-      district || '',
-      area || '',
-      country || 'Tanzania',
       JSON.stringify(images || []),
       JSON.stringify(amenities || []),
       JSON.stringify(paymentMethods || {}),
@@ -418,7 +444,7 @@ router.put('/:id', authenticateJWT, async (req, res) => {
       req.user.id
     ]);
     
-    console.log('✅ Service updated successfully');
+    console.log('✅ Service updated successfully (location inherited from provider profile)');
     
     res.json({
       success: true,
