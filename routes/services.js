@@ -47,9 +47,9 @@ router.get('/', async (req, res) => {
     }
     
     if (area) {
-      // Area/ward matching
-      whereConditions.push(`LOWER(s.area) = LOWER($${paramIndex})`);
-      queryParams.push(area);
+      // Area/ward matching - use LIKE for partial matches (e.g., "BUZURUGA" matches "BUZURUGA KASKAZINI")
+      whereConditions.push(`LOWER(s.area) LIKE LOWER($${paramIndex})`);
+      queryParams.push(`${area}%`); // Add % for partial matching
       paramIndex++;
     }
     
@@ -84,6 +84,8 @@ router.get('/', async (req, res) => {
     
     console.log(`📦 Services query: region=${region || 'any'}, district=${district || 'any'}, area=${area || 'any'}, category=${category || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
     console.log(`✅ FLEXIBLE FILTERING - Providers can offer ANY service category`);
+    console.log(`🔍 SQL WHERE: ${whereClause}`);
+    console.log(`🔍 SQL PARAMS: ${JSON.stringify(queryParams)}`);
     
     res.json({ 
       success: true, 
