@@ -77,8 +77,10 @@ router.get('/', async (req, res) => {
       INNER JOIN service_providers sp ON s.provider_id = sp.user_id
       INNER JOIN users u ON s.provider_id = u.id
       WHERE ${whereClause}
-      ORDER BY s.created_at DESC
-      LIMIT $${paramIndex}
+      ORDER BY 
+        CASE WHEN LOWER(s.area) = LOWER($${area ? paramIndex : 'NULL'}) THEN 0 ELSE 1 END,
+        s.created_at DESC
+      LIMIT $${paramIndex + (area ? 1 : 0)}
     `, queryParams);
     
     console.log(`📦 Services query: region=${region || 'any'}, district=${district || 'any'}, area=${area || 'any'}, category=${category || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
