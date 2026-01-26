@@ -583,10 +583,10 @@ const TravelerDashboard = () => {
   // Real trips data (will be fetched from database)
   const upcomingTrips = [];
 
-  // Filter active bookings (pending, confirmed, or in-progress) - ensure myBookings is array
-  const activeBookings = Array.isArray(myBookings) ? myBookings.filter(b => 
+  // Filter active bookings (pending, confirmed, or in-progress)
+  const activeBookings = myBookings.filter(b => 
     ['pending', 'confirmed'].includes(b.status)
-  ) : [];
+  );
 
 
   // Real past trips data (will be fetched from database)
@@ -707,7 +707,7 @@ const TravelerDashboard = () => {
                   <div className="col-span-3 flex justify-center py-12">
                     <Icon name="Loader2" size={32} className="animate-spin text-primary" />
                   </div>
-                ) : Array.isArray(myBookings) && myBookings.length > 0 ? (
+                ) : myBookings.length > 0 ? (
                   myBookings.map(booking => (
                     <div key={booking.id} className="bg-card border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-3">
@@ -768,8 +768,8 @@ const TravelerDashboard = () => {
         // Get saved journey plans from state (loaded from database)
         const savedJourneyPlans = tripPlans.length > 0 ? tripPlans : JSON.parse(localStorage.getItem('journey_plans') || '[]');
         
-        // Group bookings by trip/date to create trip cards - ensure myBookings is array
-        const groupedTrips = Array.isArray(myBookings) ? myBookings.reduce((acc, booking) => {
+        // Group bookings by trip/date to create trip cards
+        const groupedTrips = myBookings.reduce((acc, booking) => {
           const tripDate = new Date(booking.booking_date || booking.bookingDate).toLocaleDateString();
           if (!acc[tripDate]) {
             acc[tripDate] = {
@@ -781,7 +781,7 @@ const TravelerDashboard = () => {
           acc[tripDate].bookings.push(booking);
           acc[tripDate].totalAmount += (booking.total_price || booking.totalAmount || 0);
           return acc;
-        }, {}) : {};
+        }, {});
         
         const tripsList = Object.values(groupedTrips).sort((a, b) => new Date(b.date) - new Date(a.date));
         

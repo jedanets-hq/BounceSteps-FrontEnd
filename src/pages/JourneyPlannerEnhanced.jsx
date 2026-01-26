@@ -461,42 +461,91 @@ const JourneyPlannerEnhanced = () => {
   const fetchProviders = async () => {
     try {
       setLoadingProviders(true);
-      console.log('🔍 Fetching providers from backend...');
-      console.log('📍 Location:', selectedLocation);
+      console.log('🔍 SMART FILTERING: Starting provider search...');
+      console.log('📍 Raw Location from selector:', selectedLocation);
       console.log('🏷️ Selected Services:', journeyData.selectedServices);
       
-      // Build query parameters for backend filtering
-      const params = new URLSearchParams();
-      params.append('limit', '500');
+      // Helper function for case-insensitive comparison
+      const normalize = (str) => (str || '').toLowerCase().trim();
       
-      // Add location filters
-      if (selectedLocation.region) {
-        params.append('region', selectedLocation.region);
-      }
-      if (selectedLocation.district) {
-        params.append('district', selectedLocation.district);
-      }
-      if (selectedLocation.ward) {
-        params.append('area', selectedLocation.ward); // ward → area mapping
-      }
-      
-      // Fetch services from backend with location filtering
-      const servicesResponse = await fetch(`${API_URL}/services?${params.toString()}`);
+      // Fetch ALL services first
+      const servicesResponse = await fetch(`${API_URL}/services?limit=500`);
       const servicesData = await servicesResponse.json();
       
       if (!servicesData.success || !servicesData.services || servicesData.services.length === 0) {
-        console.log('⚠️ No services found for location');
+        console.log('⚠️ No services found in database');
         setProviders([]);
         setLoadingProviders(false);
         return;
       }
       
       let filteredServices = servicesData.services;
-      console.log('📦 Services from backend:', filteredServices.length);
+      console.log('📦 Total services before filtering:', filteredServices.length);
       
-      // Apply category filter if services are selected
+      // SMART HIERARCHICAL LOCATION FILTERING (Case-Insensitive)
+      // NOTE: Frontend uses {region, district, ward, street} but DB uses {region, district, area}
+      // So we need to map: ward → area in our search
+      if (selectedLocation.region || selectedLocation.district || selectedLocation.ward) {
+        const searchRegion = normalize(selectedLocation.region);
+        const searchDistrict = normalize(selectedLocation.district);
+        const searchArea = normalize(selectedLocation.ward); // ward maps to area in DB!
+        
+        console.log('🔍 Search criteria normalized:');
+        console.log(`   Region: "${searchRegion}"`);
+        console.log(`   District: "${searchDistrict}"`);
+        console.log(`   Area/Ward: "${searchArea}"`);
+        
+        filteredServices = filteredServices.filter(service => {
+          const serviceRegion = normalize(service.region);
+          const serviceDistrict = normalize(service.district);
+          const serviceArea = normalize(service.area);
+          
+          // Services without region cannot be matched
+          if (!serviceRegion) {
+            console.log(`   ⚠️ Service "${service.title}" has no region - excluded`);
+            return false;
+          }
+          
+          // Rule 1: Region MUST match (case-insensitive)
+          if (searchRegion && serviceRegion !== searchRegion) {
+            return false;
+          }
+          
+          // Rule 2: District matching (hierarchical)
+          // IMPORTANT: If user selected from LocationSelector, district might actually be an area!
+          // Try to match against both district and area fields
+          if (searchDistrict) {
+            const districtMatchesDistrict = serviceDistrict === searchDistrict;
+            const districtMatchesArea = serviceArea === searchDistrict; // District might be area!
+            const isRegionLevelService = !serviceDistrict && !serviceArea;
+            
+            if (!districtMatchesDistrict && !districtMatchesArea && !isRegionLevelService) {
+              return false;
+            }
+          }
+          
+          // Rule 3: Area/Ward matching (hierarchical)
+          // Map frontend's "ward" to database's "area"
+          if (searchArea) {
+            const areaMatch = serviceArea === searchArea;
+            const districtLevelService = !serviceArea && (serviceDistrict === searchDistrict || serviceDistrict === searchArea);
+            const regionLevelService = !serviceArea && !serviceDistrict;
+            
+            if (!areaMatch && !districtLevelService && !regionLevelService) {
+              return false;
+            }
+          }
+          
+          console.log(`   ✅ MATCHED: "${service.title}" (${serviceRegion} → ${serviceDistrict || 'N/A'} → ${serviceArea || 'N/A'})`);
+          return true;
+        });
+        
+        console.log(`📍 After location filter:`, filteredServices.length, 'services');
+        console.log(`   Searched: Region="${selectedLocation.region}", District="${selectedLocation.district || 'ANY'}", Ward="${selectedLocation.ward || 'ANY'}"`);
+      }
+      
+      // SMART SERVICE CATEGORY FILTERING (Case-Insensitive)
       if (journeyData.selectedServices && journeyData.selectedServices.length > 0) {
-        const normalize = (str) => (str || '').toLowerCase().trim();
         const selectedCategoriesNormalized = journeyData.selectedServices.map(normalize);
         
         filteredServices = filteredServices.filter(service => {
@@ -507,8 +556,22 @@ const JourneyPlannerEnhanced = () => {
         console.log(`🏷️ After category filter (${journeyData.selectedServices.join(', ')}):`, filteredServices.length);
       }
       
+      // If no services found, log helpful debug info
       if (filteredServices.length === 0) {
-        console.log('❌ No services match criteria');
+        console.log('❌ No services match criteria. Debug info:');
+        console.log('   - Total services in DB:', servicesData.services.length);
+        console.log('   - Filters applied: Region =', selectedLocation.region, ', District =', selectedLocation.district, ', Categories =', journeyData.selectedServices);
+        
+        // Show available services in the region
+        const servicesInRegion = servicesData.services.filter(s => 
+          normalize(s.region) === normalize(selectedLocation.region)
+        );
+        console.log(`   - Services in ${selectedLocation.region}:`, servicesInRegion.length);
+        if (servicesInRegion.length > 0) {
+          const availableCategories = [...new Set(servicesInRegion.map(s => s.category))];
+          console.log('   - Available categories in region:', availableCategories.join(', '));
+        }
+        
         setProviders([]);
         setLoadingProviders(false);
         return;
@@ -550,7 +613,7 @@ const JourneyPlannerEnhanced = () => {
       });
       
       const matchingProviders = Array.from(providerMap.values());
-      console.log('✅ Providers found:', matchingProviders.length);
+      console.log('✅ Providers matching criteria:', matchingProviders.length);
       console.log('✅ Provider details:', matchingProviders.map(p => ({
         name: p.business_name,
         location: `${p.district || ''}, ${p.region || ''}`,

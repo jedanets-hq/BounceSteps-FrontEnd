@@ -26,40 +26,22 @@ const TrendingServices = () => {
 
   const fetchServices = async () => {
     try {
-      // Fetch featured/trending services from the dedicated endpoint
-      const response = await fetch(`${API_URL}/services/featured/slides`);
+      // Fetch only promoted trending services
+      const response = await fetch(`${API_URL}/services?limit=6`);
       const data = await response.json();
       
-      if (data.success && Array.isArray(data.services) && data.services.length > 0) {
+      if (data.success && data.services.length > 0) {
         setServices(data.services);
       } else {
-        // Fallback to regular services if no featured services
+        // Fallback to regular services if no trending services are promoted
         const fallbackResponse = await fetch(`${API_URL}/services?limit=12`);
         const fallbackData = await fallbackResponse.json();
-        if (fallbackData.success && Array.isArray(fallbackData.data)) {
-          // Map service_providers data to services format
-          const mappedServices = fallbackData.data.map(provider => ({
-            id: provider.id,
-            title: provider.business_name,
-            description: provider.description,
-            category: provider.business_type,
-            location: provider.location,
-            price: 0,
-            images: [],
-            provider_id: provider.user_id,
-            business_name: provider.business_name,
-            is_featured: false,
-            status: 'active'
-          }));
-          setServices(mappedServices);
-        } else {
-          // No data available - set empty array
-          setServices([]);
+        if (fallbackData.success) {
+          setServices(fallbackData.services);
         }
       }
     } catch (err) {
       console.error('Error fetching trending services:', err);
-      setServices([]); // Set empty array on error
     } finally {
       setLoading(false);
     }

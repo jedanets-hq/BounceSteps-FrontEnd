@@ -1,349 +1,196 @@
-// iSafari Global Backend API
-// Cart routes deployment fix - 2025-12-31 - FORCE DEPLOY WITH CART ROUTES
-// Pre-order draft status fix - 2026-01-02
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const dotenv = require('dotenv');
+const passport = require('passport');
 const path = require('path');
-const session = require('express-session');
-const pgSession = require('connect-pg-simple')(session);
-const { Pool } = require('pg');
+require('dotenv').config();
 
-// Load environment variables from .env file
-dotenv.config({ path: path.join(__dirname, '.env') });
+const app = express();
 
-// Import PostgreSQL connection
-const { connectPostgreSQL } = require('./config/postgresql');
-
-// Import startup migrations
+// Import database initialization
 const { runStartupMigrations } = require('./migrations/run-on-startup');
-
-// Create PostgreSQL pool for session store
-const sessionPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
 
 // Import routes
 const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const serviceRoutes = require('./routes/services');
-const bookingRoutes = require('./routes/bookings');
-const paymentRoutes = require('./routes/payments');
-const notificationRoutes = require('./routes/notifications');
-const travelerStoriesRoutes = require('./routes/travelerStories');
-const providersRoutes = require('./routes/providers');
-const adminRoutes = require('./routes/admin-fixed');
-// Load cart, favorites, and plans routes with error handling
-let cartRoutes, favoritesRoutes, plansRoutes;
-try {
-  cartRoutes = require('./routes/cart');
-  console.log('✅ Cart routes module loaded');
-} catch (error) {
-  console.error('❌ Failed to load cart routes:', error.message);
-  throw error;
-}
 
-try {
-  favoritesRoutes = require('./routes/favorites');
-  console.log('✅ Favorites routes module loaded');
-} catch (error) {
-  console.error('❌ Failed to load favorites routes:', error.message);
-  throw error;
-}
-
-try {
-  plansRoutes = require('./routes/plans');
-  console.log('✅ Plans routes module loaded');
-} catch (error) {
-  console.error('❌ Failed to load plans routes:', error.message);
-  throw error;
-}
-
-// Multi-trip routes
-let multiTripRoutes;
-try {
-  multiTripRoutes = require('./routes/multiTrip');
-  console.log('✅ Multi-trip routes module loaded');
-} catch (error) {
-  console.error('❌ Failed to load multi-trip routes:', error.message);
-  throw error;
-}
-
-// Reviews routes
-let reviewsRoutes;
-try {
-  reviewsRoutes = require('./routes/reviews');
-  console.log('✅ Reviews routes module loaded');
-} catch (error) {
-  console.error('❌ Failed to load reviews routes:', error.message);
-  throw error;
-}
-
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Trust proxy - required for Render and other reverse proxies
-app.set('trust proxy', 1);
-
-// Security middleware
-app.use(helmet());
-
-// Rate limiting (commented out for development)
-// const limiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 100 // limit each IP to 100 requests per windowMs
-// });
-// app.use(limiter);
-
-// CORS configuration - Allow multiple origins including production
-const allowedOrigins = [
-  'http://localhost:4028',
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://localhost:8080',
-  'http://localhost:8081',
-  'http://localhost:8082',
-  'http://127.0.0.1:4028',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:8080',
-  'http://127.0.0.1:8081',
-  'http://127.0.0.1:8082',
-  'https://backend-bncb.onrender.com',
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
-app.use(cors({
+// CORS Configuration for Production
+const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-
-    // Check if origin is in allowed list
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else if (origin && (
-      origin.includes('.netlify.app') ||
-      origin.includes('.vercel.app') ||
-      origin.includes('onrender.com')
-    )) {
-      // Allow all Netlify, Vercel, and Render deployments
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      // Production domains
+      /\.netlify\.app$/,  // Allows all Netlify subdomains
+      /\.onrender\.com$/  // Allows all Render domains
+    ];
+    
+    // Check if origin is allowed
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return origin === allowedOrigin;
+      }
+      if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
-      // In development, allow all origins
-      if (process.env.NODE_ENV !== 'production') {
+      console.log('CORS blocked origin:', origin);
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      if (isDevelopment) {
+        console.log('⚠️  Development mode - allowing origin anyway');
         callback(null, true);
       } else {
+        console.log('❌ Production mode - blocking unauthorized origin');
         callback(new Error('Not allowed by CORS'));
       }
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
-}));
-
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Session configuration with PostgreSQL store for production
-const sessionConfig = {
-  secret: process.env.SESSION_SECRET || 'fallback-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-// Use PostgreSQL session store in production
-if (process.env.NODE_ENV === 'production') {
-  sessionConfig.store = new pgSession({
-    pool: sessionPool,
-    tableName: 'session',
-    createTableIfMissing: true
-  });
-}
+// Middleware
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use(session(sessionConfig));
-
-// Initialize passport
-const passport = require('./config/passport');
+// Initialize Passport
+require('./config/passport');
 app.use(passport.initialize());
-app.use(passport.session());
-
-// Request logging middleware
-app.use((req, res, next) => {
-  const timestamp = new Date().toISOString();
-  console.log(`📨 [${timestamp}] ${req.method} ${req.path}`);
-  
-  // Log cart-related requests with more detail
-  if (req.path.startsWith('/api/cart')) {
-    console.log(`   🛒 Cart request detected`);
-    console.log(`   Auth:`, req.headers.authorization ? 'Has Token' : 'No Token');
-  }
-  
-  next();
-});
-
-// Static files for uploads
-app.use('/uploads', express.static('uploads'));
-
-// Middleware to ensure all API responses are JSON
-app.use('/api', (req, res, next) => {
-  res.setHeader('Content-Type', 'application/json');
-
-  // Override res.send to ensure JSON
-  const originalSend = res.send;
-  res.send = function (data) {
-    if (typeof data === 'string') {
-      try {
-        JSON.parse(data);
-      } catch (e) {
-        data = JSON.stringify({ success: false, message: data });
-      }
-    }
-    res.setHeader('Content-Type', 'application/json');
-    originalSend.call(this, data);
-  };
-
-  next();
-});
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/traveler-stories', travelerStoriesRoutes);
-app.use('/api/providers', providersRoutes);
-app.use('/api/admin', adminRoutes);
-
-// Mount cart, favorites, and plans routes with verification
-console.log('🔧 Mounting cart, favorites, and plans routes...');
-app.use('/api/cart', cartRoutes);
-console.log('✅ Cart routes mounted at /api/cart');
-
-app.use('/api/favorites', favoritesRoutes);
-console.log('✅ Favorites routes mounted at /api/favorites');
-
-app.use('/api/plans', plansRoutes);
-console.log('✅ Plans routes mounted at /api/plans');
-
-app.use('/api/multi-trip', multiTripRoutes);
-console.log('✅ Multi-trip routes mounted at /api/multi-trip');
-
-app.use('/api/reviews', reviewsRoutes);
-console.log('✅ Reviews routes mounted at /api/reviews');
-
-// Verify cart routes loaded
-console.log('\n📋 Cart API Endpoints:');
-console.log('   - GET    /api/cart          (Get user cart)');
-console.log('   - GET    /api/cart/test     (Test endpoint)');
-console.log('   - POST   /api/cart/add      (Add to cart)');
-console.log('   - PUT    /api/cart/:id      (Update quantity)');
-console.log('   - DELETE /api/cart/:id      (Remove item)');
-console.log('   - DELETE /api/cart          (Clear cart)');
-console.log('');
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    message: 'iSafari Global API is running',
-    timestamp: new Date().toISOString(),
-    routes: {
-      cart: !!cartRoutes,
-      favorites: !!favoritesRoutes,
-      plans: !!plansRoutes
-    }
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    service: 'iSafari Global API',
+    timestamp: new Date().toISOString()
   });
 });
 
-// Migration endpoint to fix bookings status constraint (add 'draft' status)
-app.get('/api/run-migration', async (req, res) => {
-  try {
-    const { pool } = require('./config/postgresql');
-    
-    console.log('🔧 Running bookings status constraint migration...');
-    
-    // Drop existing constraint
-    await pool.query('ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check');
-    
-    // Add new constraint with draft included
-    await pool.query(`
-      ALTER TABLE bookings ADD CONSTRAINT bookings_status_check 
-      CHECK (status IN ('draft', 'pending', 'confirmed', 'cancelled', 'completed'))
-    `);
-    
-    console.log('✅ Migration completed successfully!');
-    
-    res.json({
-      success: true,
-      message: 'Migration completed! Draft status is now allowed.',
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('❌ Migration error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'iSafari Global API - Travel & Tourism Platform',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      health: '/health'
+    }
   });
 });
 
 // 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'API endpoint not found'
+app.use((req, res) => {
+  res.status(404).json({ 
+    success: false, 
+    message: 'Endpoint not found' 
   });
 });
 
-// Connect to PostgreSQL and start server
-const startServer = async () => {
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
+
+// Initialize database and start server
+const PORT = process.env.PORT || 5000;
+
+async function testDatabaseConnection() {
   try {
-    // Connect to PostgreSQL
-    await connectPostgreSQL();
+    const { pool } = require('./config/postgresql');
+    const result = await pool.query('SELECT NOW() as now, current_database() as database');
+    console.log('✅ Database connection test successful');
+    console.log('   Database:', result.rows[0].database);
+    console.log('   Timestamp:', result.rows[0].now);
+    return true;
+  } catch (error) {
+    console.error('❌ Database connection test failed:', error.message);
+    console.error('   Make sure DATABASE_URL or DB_* environment variables are set correctly');
+    return false;
+  }
+}
 
-    // Initialize iSafari tables
-    const { initializeISafariTables } = require('./migrations/init-isafari-tables');
-    await initializeISafariTables();
+async function testJWTSecret() {
+  if (!process.env.JWT_SECRET) {
+    console.error('❌ JWT_SECRET environment variable is not set!');
+    console.error('   Add JWT_SECRET to your environment variables');
+    return false;
+  }
+  console.log('✅ JWT_SECRET is configured');
+  return true;
+}
 
-    // Run startup migrations (adds 'draft' status to bookings constraint)
+async function startServer() {
+  try {
+    console.log('');
+    console.log('🌍 ========================================');
+    console.log('🚀 iSafari Global API Server Starting...');
+    console.log('========================================');
+    console.log(`📍 Port: ${PORT}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('');
+    
+    // Test JWT Secret
+    const jwtOk = await testJWTSecret();
+    
+    // Test database connection
+    const dbOk = await testDatabaseConnection();
+    
+    if (!dbOk) {
+      console.warn('⚠️  WARNING: Database connection failed!');
+      console.warn('   Server will start but registration/login will not work');
+      console.warn('   Please check your DATABASE_URL environment variable');
+    }
+    
+    if (!jwtOk) {
+      console.warn('⚠️  WARNING: JWT_SECRET not configured!');
+      console.warn('   Authentication will not work properly');
+    }
+    
+    console.log('');
+    
+    // Run startup migrations
     await runStartupMigrations();
     
-    // Run complete system fix (creates cart, favorites, reviews, multi-trip tables)
-    const { fixCompleteSystem } = require('./migrations/fix-complete-system');
-    await fixCompleteSystem();
-
-    // Start Express server
+    // Start server
     app.listen(PORT, () => {
-      console.log(`🚀 iSafari Global API server running on port ${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:4028'}`);
-      console.log(`💾 Database: PostgreSQL`);
+      console.log('');
+      console.log('🌍 ========================================');
+      console.log('🚀 iSafari Global API Server Started');
+      console.log('========================================');
+      console.log(`📍 Port: ${PORT}`);
+      console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔒 CORS: Enabled for production domains`);
+      console.log(`🗄️  Database: ${dbOk ? '✅ Connected' : '❌ Not Connected'}`);
+      console.log(`🔑 JWT: ${jwtOk ? '✅ Configured' : '❌ Not Configured'}`);
+      console.log('========================================');
+      console.log('');
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
-};
+}
 
 startServer();
 

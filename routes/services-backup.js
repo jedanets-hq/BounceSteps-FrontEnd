@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
       paramIndex++;
     }
     
-    // Location filtering - STRICT matching (Region + District + Ward ALL REQUIRED)
+    // Location filtering - flexible to show services in requested area
     if (region) {
       whereConditions.push(`LOWER(s.region) = LOWER($${paramIndex})`);
       queryParams.push(region);
@@ -40,16 +40,16 @@ router.get('/', async (req, res) => {
     }
     
     if (district) {
-      // STRICT district matching - exact match required
-      whereConditions.push(`LOWER(s.district) = LOWER($${paramIndex})`);
+      // District can match either district OR area field (frontend ward → backend area)
+      whereConditions.push(`(LOWER(s.district) = LOWER($${paramIndex}) OR LOWER(s.area) = LOWER($${paramIndex}))`);
       queryParams.push(district);
       paramIndex++;
     }
     
     if (area) {
-      // STRICT area/ward matching - exact match required (IYUNGA ward shows ONLY IYUNGA services, NOT IKUTI)
-      whereConditions.push(`LOWER(s.area) = LOWER($${paramIndex})`);
-      queryParams.push(area);
+      // Area/ward matching - use LIKE for partial matches (e.g., "BUZURUGA" matches "BUZURUGA KASKAZINI")
+      whereConditions.push(`LOWER(s.area) LIKE LOWER($${paramIndex})`);
+      queryParams.push(`${area}%`); // Add % for partial matching
       paramIndex++;
     }
     
@@ -59,6 +59,7 @@ router.get('/', async (req, res) => {
     const whereClause = whereConditions.join(' AND ');
     
     // Query services table with provider information
+    // REMOVED STRICT CATEGORY FILTERING - Providers can offer ANY service type
     const result = await pool.query(`
       SELECT s.*, 
              sp.business_name, 
@@ -82,7 +83,7 @@ router.get('/', async (req, res) => {
     `, queryParams);
     
     console.log(`📦 Services query: region=${region || 'any'}, district=${district || 'any'}, area=${area || 'any'}, category=${category || 'all'}, search=${search || 'none'}, found=${result.rows.length}`);
-    console.log(`✅ STRICT LOCATION FILTERING - Exact match at all levels (Region + District + Ward)`);
+    console.log(`✅ FLEXIBLE FILTERING - Providers can offer ANY service category`);
     console.log(`🔍 SQL WHERE: ${whereClause}`);
     console.log(`🔍 SQL PARAMS: ${JSON.stringify(queryParams)}`);
     
