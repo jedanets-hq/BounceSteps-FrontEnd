@@ -21,10 +21,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
     // Try multiple possible image sources - check all possible fields
     const imageData = booking.service_images || booking.images || booking.service?.images || booking.image;
     
-    console.log('🖼️ Getting image for booking:', booking.id, 'imageData:', imageData);
-    
     if (!imageData) {
-      console.log('⚠️ No image data found for booking:', booking.id);
       return null; // Will show placeholder
     }
 
@@ -46,12 +43,11 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
       images = imageData;
     } else if (typeof imageData === 'object' && imageData !== null) {
       // If it's an object, try to extract URLs
-      images = Object.values(imageData).filter(v => typeof v === 'string' && (v.startsWith('http') || v.startsWith('/')));
+      images = Object.values(imageData).filter(v => typeof v === 'string' && (v.startsWith('http') || v.startsWith('/') || v.startsWith('data:')));
     }
     
     // Filter out empty strings and return first valid image
     const validImages = images.filter(img => img && typeof img === 'string' && img.trim().length > 0);
-    console.log('✅ Valid images found:', validImages.length, validImages[0]?.substring(0, 50));
     return validImages.length > 0 ? validImages[0] : null;
   };
 
@@ -351,10 +347,13 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
     );
   }
 
-  const pendingBookings = bookings.filter(b => b.status === 'pending');
-  const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
-  const rejectedBookings = bookings.filter(b => b.status === 'cancelled');
-  const completedBookings = bookings.filter(b => b.status === 'completed');
+  // Ensure bookings is always an array before filtering
+  const safeBookings = Array.isArray(bookings) ? bookings : [];
+  
+  const pendingBookings = safeBookings.filter(b => b.status === 'pending');
+  const confirmedBookings = safeBookings.filter(b => b.status === 'confirmed');
+  const rejectedBookings = safeBookings.filter(b => b.status === 'cancelled');
+  const completedBookings = safeBookings.filter(b => b.status === 'completed');
 
   const statusConfigs = {
     pending: {

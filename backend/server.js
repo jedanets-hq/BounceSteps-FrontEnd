@@ -11,6 +11,15 @@ const { runStartupMigrations } = require('./migrations/run-on-startup');
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const servicesRoutes = require('./routes/services');
+const providersRoutes = require('./routes/providers');
+const bookingsRoutes = require('./routes/bookings');
+const cartRoutes = require('./routes/cart');
+const favoritesRoutes = require('./routes/favorites');
+const plansRoutes = require('./routes/plans');
+const usersRoutes = require('./routes/users');
+const travelerStoriesRoutes = require('./routes/travelerStories');
+const multiTripRoutes = require('./routes/multiTrip');
 
 // CORS Configuration for Production
 const corsOptions = {
@@ -72,6 +81,15 @@ app.use(passport.initialize());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/services', servicesRoutes);
+app.use('/api/providers', providersRoutes);
+app.use('/api/bookings', bookingsRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/favorites', favoritesRoutes);
+app.use('/api/plans', plansRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/traveler-stories', travelerStoriesRoutes);
+app.use('/api/multi-trip', multiTripRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

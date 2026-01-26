@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:property": "jest --testPathPattern=google-signin-role-selection"

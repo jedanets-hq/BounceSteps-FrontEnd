@@ -12,18 +12,13 @@ async function runStartupMigrations() {
     console.log('🔧 Running startup migrations...');
     
     // Migration 1: Add 'draft' status to bookings constraint
-    console.log('   📋 Checking bookings status constraint...');
+    console.log('📋 Checking bookings status constraint...');
     
     // Check if constraint exists and what values it allows
     const constraintCheck = await client.query(`
-      SELECT pg_get_constraintdef(oid) as definitionMtu akijalibu kus continue with google au signup with google You can’t sign in because this app sent an invalid request. You can try again later, or contact the developer about this issue. Learn more about this error
-
-If you are a developer of this app, see error details.
-
-Error 400: redirect_uri_mismatch Access blocked: This app’s request is invalid
-
-Kiroconti
+      SELECT pg_get_constraintdef(oid) as definition
       FROM pg_constraint 
+      WHERE conrelid = 'bookings'::regclass 
       AND conname = 'bookings_status_check'
     `);
     
@@ -31,7 +26,7 @@ Kiroconti
       !constraintCheck.rows[0]?.definition?.includes('draft');
     
     if (needsUpdate) {
-      console.log('   🔄 Updating bookings status constraint to include draft...');
+      console.log('🔄 Updating bookings status constraint to include draft...');
       
       // Drop existing constraint if exists
       await client.query(`
@@ -44,13 +39,13 @@ Kiroconti
         CHECK (status IN ('draft', 'pending', 'confirmed', 'cancelled', 'completed'))
       `);
       
-      console.log('   ✅ Bookings status constraint updated!');
+      console.log('✅ Bookings status constraint updated!');
     } else {
-      console.log('   ✅ Bookings status constraint already includes draft');
+      console.log('✅ Bookings status constraint already includes draft');
     }
     
     // Migration 2: Add auth_provider column for Google Sign-In tracking
-    console.log('   📋 Checking auth_provider column...');
+    console.log('📋 Checking auth_provider column...');
     
     const authProviderCheck = await client.query(`
       SELECT column_name FROM information_schema.columns 
@@ -58,7 +53,7 @@ Kiroconti
     `);
     
     if (authProviderCheck.rows.length === 0) {
-      console.log('   🔄 Adding auth_provider column...');
+      console.log('🔄 Adding auth_provider column...');
       
       // Add auth_provider column with CHECK constraint
       await client.query(`
@@ -86,9 +81,9 @@ Kiroconti
         CREATE INDEX IF NOT EXISTS idx_users_auth_provider ON users(auth_provider)
       `);
       
-      console.log('   ✅ auth_provider column added!');
+      console.log('✅ auth_provider column added!');
     } else {
-      console.log('   ✅ auth_provider column already exists');
+      console.log('✅ auth_provider column already exists');
     }
     
     console.log('✅ Startup migrations completed!');
