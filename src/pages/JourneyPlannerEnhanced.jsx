@@ -468,8 +468,32 @@ const JourneyPlannerEnhanced = () => {
       // Helper function for case-insensitive comparison
       const normalize = (str) => (str || '').toLowerCase().trim();
       
-      // Fetch ALL services first
-      const servicesResponse = await fetch(`${API_URL}/services?limit=500`);
+      // Build API query parameters for server-side filtering
+      const queryParams = new URLSearchParams();
+      queryParams.append('limit', '500');
+      
+      // Add location filters if available
+      if (selectedLocation.region) {
+        queryParams.append('region', selectedLocation.region);
+      }
+      if (selectedLocation.district) {
+        queryParams.append('district', selectedLocation.district);
+      }
+      if (selectedLocation.ward) {
+        // Frontend uses "ward" but backend expects "area"
+        queryParams.append('area', selectedLocation.ward);
+      }
+      
+      // Add category filter if services are selected
+      // Note: Backend only supports single category, so we'll fetch all and filter client-side for multiple
+      if (journeyData.selectedServices && journeyData.selectedServices.length === 1) {
+        queryParams.append('category', journeyData.selectedServices[0]);
+      }
+      
+      console.log('🌐 API Query:', `${API_URL}/services?${queryParams.toString()}`);
+      
+      // Fetch services with server-side filtering
+      const servicesResponse = await fetch(`${API_URL}/services?${queryParams.toString()}`);
       const servicesData = await servicesResponse.json();
       
       if (!servicesData.success || !servicesData.services || servicesData.services.length === 0) {
@@ -480,72 +504,11 @@ const JourneyPlannerEnhanced = () => {
       }
       
       let filteredServices = servicesData.services;
-      console.log('📦 Total services before filtering:', filteredServices.length);
+      console.log('📦 Total services from API:', filteredServices.length);
       
-      // SMART HIERARCHICAL LOCATION FILTERING (Case-Insensitive)
-      // NOTE: Frontend uses {region, district, ward, street} but DB uses {region, district, area}
-      // So we need to map: ward → area in our search
-      if (selectedLocation.region || selectedLocation.district || selectedLocation.ward) {
-        const searchRegion = normalize(selectedLocation.region);
-        const searchDistrict = normalize(selectedLocation.district);
-        const searchArea = normalize(selectedLocation.ward); // ward maps to area in DB!
-        
-        console.log('🔍 Search criteria normalized:');
-        console.log(`   Region: "${searchRegion}"`);
-        console.log(`   District: "${searchDistrict}"`);
-        console.log(`   Area/Ward: "${searchArea}"`);
-        
-        filteredServices = filteredServices.filter(service => {
-          const serviceRegion = normalize(service.region);
-          const serviceDistrict = normalize(service.district);
-          const serviceArea = normalize(service.area);
-          
-          // Services without region cannot be matched
-          if (!serviceRegion) {
-            console.log(`   ⚠️ Service "${service.title}" has no region - excluded`);
-            return false;
-          }
-          
-          // Rule 1: Region MUST match (case-insensitive)
-          if (searchRegion && serviceRegion !== searchRegion) {
-            return false;
-          }
-          
-          // Rule 2: District matching (hierarchical)
-          // IMPORTANT: If user selected from LocationSelector, district might actually be an area!
-          // Try to match against both district and area fields
-          if (searchDistrict) {
-            const districtMatchesDistrict = serviceDistrict === searchDistrict;
-            const districtMatchesArea = serviceArea === searchDistrict; // District might be area!
-            const isRegionLevelService = !serviceDistrict && !serviceArea;
-            
-            if (!districtMatchesDistrict && !districtMatchesArea && !isRegionLevelService) {
-              return false;
-            }
-          }
-          
-          // Rule 3: Area/Ward matching (hierarchical)
-          // Map frontend's "ward" to database's "area"
-          if (searchArea) {
-            const areaMatch = serviceArea === searchArea;
-            const districtLevelService = !serviceArea && (serviceDistrict === searchDistrict || serviceDistrict === searchArea);
-            const regionLevelService = !serviceArea && !serviceDistrict;
-            
-            if (!areaMatch && !districtLevelService && !regionLevelService) {
-              return false;
-            }
-          }
-          
-          console.log(`   ✅ MATCHED: "${service.title}" (${serviceRegion} → ${serviceDistrict || 'N/A'} → ${serviceArea || 'N/A'})`);
-          return true;
-        });
-        
-        console.log(`📍 After location filter:`, filteredServices.length, 'services');
-        console.log(`   Searched: Region="${selectedLocation.region}", District="${selectedLocation.district || 'ANY'}", Ward="${selectedLocation.ward || 'ANY'}"`);
-      }
-      
-      // SMART SERVICE CATEGORY FILTERING (Case-Insensitive)
-      if (journeyData.selectedServices && journeyData.selectedServices.length > 0) {
+      // Additional client-side category filtering if multiple categories selected
+      // (Backend can only filter by one category at a time)
+      if (journeyData.selectedServices && journeyData.selectedServices.length > 1) {
         const selectedCategoriesNormalized = journeyData.selectedServices.map(normalize);
         
         filteredServices = filteredServices.filter(service => {
@@ -553,23 +516,31 @@ const JourneyPlannerEnhanced = () => {
           return selectedCategoriesNormalized.includes(serviceCategory);
         });
         
-        console.log(`🏷️ After category filter (${journeyData.selectedServices.join(', ')}):`, filteredServices.length);
+        console.log(`🏷️ After client-side category filter (${journeyData.selectedServices.join(', ')}):`, filteredServices.length);
       }
       
       // If no services found, log helpful debug info
       if (filteredServices.length === 0) {
         console.log('❌ No services match criteria. Debug info:');
-        console.log('   - Total services in DB:', servicesData.services.length);
-        console.log('   - Filters applied: Region =', selectedLocation.region, ', District =', selectedLocation.district, ', Categories =', journeyData.selectedServices);
+        console.log('   - Filters applied: Region =', selectedLocation.region, ', District =', selectedLocation.district, ', Ward =', selectedLocation.ward, ', Categories =', journeyData.selectedServices);
         
-        // Show available services in the region
-        const servicesInRegion = servicesData.services.filter(s => 
-          normalize(s.region) === normalize(selectedLocation.region)
+        // Fetch available categories in this location to help user
+        const availableCategoriesResponse = await fetch(
+          `${API_URL}/services?limit=100&region=${selectedLocation.region}${selectedLocation.district ? `&district=${selectedLocation.district}` : ''}`
         );
-        console.log(`   - Services in ${selectedLocation.region}:`, servicesInRegion.length);
-        if (servicesInRegion.length > 0) {
-          const availableCategories = [...new Set(servicesInRegion.map(s => s.category))];
-          console.log('   - Available categories in region:', availableCategories.join(', '));
+        const availableCategoriesData = await availableCategoriesResponse.json();
+        
+        if (availableCategoriesData.success && availableCategoriesData.services?.length > 0) {
+          const availableCategories = [...new Set(availableCategoriesData.services.map(s => s.category))];
+          console.log('   - Available categories in this location:', availableCategories.join(', '));
+          
+          // Store available categories for UI display
+          setProviders([]);
+          setLoadingProviders(false);
+          
+          // Show helpful message to user
+          alert(`No providers found for ${journeyData.selectedServices.join(', ')} in ${selectedLocation.district || selectedLocation.region}.\n\nAvailable categories in this area:\n${availableCategories.join('\n')}\n\nTry selecting one of these categories instead.`);
+          return;
         }
         
         setProviders([]);
