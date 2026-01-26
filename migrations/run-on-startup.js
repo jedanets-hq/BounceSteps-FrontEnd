@@ -16,9 +16,14 @@ async function runStartupMigrations() {
     
     // Check if constraint exists and what values it allows
     const constraintCheck = await client.query(`
-      SELECT pg_get_constraintdef(oid) as definition
+      SELECT pg_get_constraintdef(oid) as definitionMtu akijalibu kus continue with google au signup with google You can’t sign in because this app sent an invalid request. You can try again later, or contact the developer about this issue. Learn more about this error
+
+If you are a developer of this app, see error details.
+
+Error 400: redirect_uri_mismatch Access blocked: This app’s request is invalid
+
+Kiroconti
       FROM pg_constraint 
-      WHERE conrelid = 'bookings'::regclass
       AND conname = 'bookings_status_check'
     `);
     
@@ -84,74 +89,6 @@ async function runStartupMigrations() {
       console.log('   ✅ auth_provider column added!');
     } else {
       console.log('   ✅ auth_provider column already exists');
-    }
-    
-    // Migration 3: Create services table if it doesn't exist
-    console.log('   📋 Checking services table...');
-    
-    const servicesTableCheck = await client.query(`
-      SELECT table_name FROM information_schema.tables 
-      WHERE table_schema = 'public' AND table_name = 'services'
-    `);
-    
-    if (servicesTableCheck.rows.length === 0) {
-      console.log('   🔄 Creating services table...');
-      
-      await client.query(`
-        CREATE TABLE services (
-          id SERIAL PRIMARY KEY,
-          provider_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-          title VARCHAR(255) NOT NULL,
-          description TEXT,
-          category VARCHAR(100),
-          location TEXT,
-          price DECIMAL(10,2),
-          currency VARCHAR(10) DEFAULT 'TZS',
-          images JSONB,
-          status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'pending')),
-          is_featured BOOLEAN DEFAULT false,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-      
-      // Create indexes
-      await client.query(`
-        CREATE INDEX IF NOT EXISTS idx_services_provider_id ON services(provider_id);
-        CREATE INDEX IF NOT EXISTS idx_services_category ON services(category);
-        CREATE INDEX IF NOT EXISTS idx_services_status ON services(status);
-        CREATE INDEX IF NOT EXISTS idx_services_is_featured ON services(is_featured);
-      `);
-      
-      console.log('   ✅ Services table created!');
-    } else {
-      console.log('   ✅ Services table already exists');
-    }
-    
-    // Migration 4: Add service_id column to bookings if it doesn't exist
-    console.log('   📋 Checking bookings.service_id column...');
-    
-    const serviceIdCheck = await client.query(`
-      SELECT column_name FROM information_schema.columns 
-      WHERE table_name = 'bookings' AND column_name = 'service_id'
-    `);
-    
-    if (serviceIdCheck.rows.length === 0) {
-      console.log('   🔄 Adding service_id column to bookings...');
-      
-      await client.query(`
-        ALTER TABLE bookings 
-        ADD COLUMN service_id INTEGER REFERENCES services(id) ON DELETE CASCADE
-      `);
-      
-      // Create index
-      await client.query(`
-        CREATE INDEX IF NOT EXISTS idx_bookings_service_id ON bookings(service_id)
-      `);
-      
-      console.log('   ✅ service_id column added to bookings!');
-    } else {
-      console.log('   ✅ bookings.service_id column already exists');
     }
     
     console.log('✅ Startup migrations completed!');

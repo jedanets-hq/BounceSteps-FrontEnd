@@ -12,27 +12,20 @@ const getValidationMiddleware = (type) => {
           .withMessage('Please provide a valid email address')
           .normalizeEmail(),
         body('password')
-          .optional()
           .isLength({ min: 6 })
           .withMessage('Password must be at least 6 characters long'),
         body('userType')
           .isIn(['traveler', 'service_provider'])
           .withMessage('User type must be either traveler or service_provider'),
-        body('firstName')
+        body('fullName')
+          .optional()
           .trim()
           .isLength({ min: 2 })
-          .withMessage('First name must be at least 2 characters long'),
-        body('lastName')
-          .trim()
-          .isLength({ min: 2 })
-          .withMessage('Last name must be at least 2 characters long'),
-        // Accept companyName for service providers (frontend sends this)
-        body('companyName')
+          .withMessage('Full name must be at least 2 characters long'),
+        body('businessName')
           .if(body('userType').equals('service_provider'))
-          .optional({ checkFalsy: true })
-          .trim()
-          .isLength({ min: 2 })
-          .withMessage('Company name must be at least 2 characters long')
+          .notEmpty()
+          .withMessage('Business name is required for service providers')
       ];
       break;
 
