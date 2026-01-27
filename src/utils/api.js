@@ -284,12 +284,12 @@ export const cartAPI = {
   },
 
   addToCart: async (serviceId, quantity = 1) => {
-    console.log(`📡 [API] POST /cart/add - serviceId: ${serviceId}, quantity: ${quantity}`);
-    const result = await apiRequest('/cart/add', {
+    console.log(`📡 [API] POST /cart - serviceId: ${serviceId}, quantity: ${quantity}`);
+    const result = await apiRequest('/cart', {
       method: 'POST',
       body: JSON.stringify({ serviceId, quantity }),
     });
-    console.log('📥 [API] POST /cart/add response:', result);
+    console.log('📥 [API] POST /cart response:', result);
     return result;
   },
 
