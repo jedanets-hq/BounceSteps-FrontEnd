@@ -8,6 +8,7 @@
   VITE_FRONTEND_URL = "https://isafari-tz.netlify.app"
   VITE_NODE_ENV = "production"
   NODE_ENV = "production"
+  NPM_CONFIG_PRODUCTION = "false"
 
 [[redirects]]
   from = "/*"
