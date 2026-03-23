@@ -61,9 +61,8 @@ export default defineConfig({
         manualChunks: {
           // Vendor chunks (rarely change)
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['framer-motion', 'lucide-react'],
-          'vendor-state': ['@reduxjs/toolkit', 'redux'],
-          'vendor-utils': ['axios', 'date-fns', 'clsx']
+          'vendor-ui': ['lucide-react'],
+          'vendor-utils': ['clsx']
         }
       }
     }
