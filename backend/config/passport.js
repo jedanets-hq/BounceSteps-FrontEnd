@@ -32,12 +32,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   try {
     const googleEmail = profile.emails[0].value.toLowerCase();
     
-    // Get flow type from state parameter (passed via OAuth state)
-    // The state is available in req.query.state during callback
-    const flowType = req.query?.state || 'login';
+    // Get flow type: prefer cookie-based value set in route handler (req.googleFlowType),
+    // then fallback to state parameter, then default to 'login'
+    const flowType = req.googleFlowType || req.query?.state || 'login';
     const isRegistrationFlow = flowType === 'register';
     
     console.log('🔍 Google OAuth - flowType:', flowType, 'isRegistrationFlow:', isRegistrationFlow, 'email:', googleEmail);
+    console.log('   req.googleFlowType:', req.googleFlowType, ', req.query.state:', req.query?.state);
     
     // Check if user already exists by Google ID
     let user = await User.findByGoogleId(profile.id);

@@ -473,9 +473,12 @@ const GoogleRoleSelection = () => {
           return;
         }
         
-        // Always redirect to home page after successful registration
-        const targetPath = '/';
-        console.log('🚀 Redirecting to:', targetPath);
+        // Redirect to appropriate dashboard based on user type
+        const targetPath = data.user.userType === 'service_provider' 
+          ? '/service-provider-dashboard' 
+          : '/traveler-dashboard';
+        console.log('🚀 Redirecting to dashboard:', targetPath);
+        console.log('👤 User type:', data.user.userType);
         
         // CRITICAL: Dispatch storage event to notify AuthContext immediately
         // This ensures the context updates before navigation
@@ -800,17 +803,23 @@ const GoogleRoleSelection = () => {
       userType: selectedRole === 'provider' ? 'service_provider' : 'traveler',
       phone,
       companyName: selectedRole === 'provider' ? companyName : null,
-      firstName: selectedRole === 'traveler' ? firstName.trim() : null,
-      lastName: selectedRole === 'traveler' ? lastName.trim() : null,
+      firstName: selectedRole === 'traveler' ? firstName.trim() : null,  // Will use Google name for providers
+      lastName: selectedRole === 'traveler' ? lastName.trim() : null,    // Will use Google name for providers
       serviceLocation: serviceLocationString,
       serviceCategories: selectedRole === 'provider' ? selectedCategories : [],
       locationData: selectedRole === 'provider' ? serviceLocation : null,
       description: selectedRole === 'provider' ? description : null
     });
 
+    console.log('✅ Registration data stored in sessionStorage');
+    console.log('   userType:', selectedRole === 'provider' ? 'service_provider' : 'traveler');
+    console.log('   phone:', phone);
+    console.log('   firstName:', selectedRole === 'traveler' ? firstName.trim() : 'will use Google name');
+    console.log('   lastName:', selectedRole === 'traveler' ? lastName.trim() : 'will use Google name');
+
     // Redirect to Google OAuth - use /auth/google/register for registration flow
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api';
-    window.location.href = `${apiUrl}/auth/google/register`;
+    console.log('🔄 Redirecting to Google OAuth:', `${API_URL}/auth/google/register`);
+    window.location.href = `${API_URL}/auth/google/register`;
   };
 
   // Handle OAuth callback flow - complete registration
@@ -928,9 +937,12 @@ const GoogleRoleSelection = () => {
           return;
         }
         
-        // Always redirect to home page after successful registration
-        const targetPath = '/';
-        console.log('🚀 Redirecting to:', targetPath);
+        // Redirect to appropriate dashboard based on user type
+        const targetPath = data.user.userType === 'service_provider' 
+          ? '/service-provider-dashboard' 
+          : '/traveler-dashboard';
+        console.log('🚀 Redirecting to dashboard:', targetPath);
+        console.log('👤 User type:', data.user.userType);
         
         // CRITICAL: Dispatch storage event to notify AuthContext immediately
         try {

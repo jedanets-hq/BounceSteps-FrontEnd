@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_URL } from '../../utils/api';
 import Header from '../../components/ui/Header';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
@@ -81,10 +82,8 @@ const Login = () => {
 
   // Handle "Continue with Google" - for existing users (direct OAuth)
   const handleGoogleLogin = () => {
-    // Redirect to backend Google OAuth endpoint
-    // Google OAuth endpoint is at /api/auth/google
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api';
-    window.location.href = `${apiUrl}/auth/google`;
+    // Redirect to backend Google OAuth endpoint for LOGIN flow
+    window.location.href = `${API_URL}/auth/google`;
   };
 
   return (

@@ -305,38 +305,64 @@ router.post('/login', getValidationMiddleware('login'), async (req, res) => {
   }
 });
 
+// Helper to parse a specific cookie from the cookie header string
+const parseCookieValue = (cookieHeader, name) => {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
 // Google OAuth - Start authentication for LOGIN (existing users only)
 router.get('/google', (req, res, next) => {
-  // Store flow type in state parameter (more reliable than session for cross-origin)
   console.log('🔐 Google OAuth LOGIN flow started');
+  // Set cookie to reliably track flow type across OAuth redirect chain
+  res.cookie('google_auth_flow', 'login', {
+    maxAge: 10 * 60 * 1000, // 10 minutes
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/'
+  });
   passport.authenticate('google', { 
     scope: ['profile', 'email'],
     prompt: 'select_account',
-    state: 'login' // Pass flow type via state parameter
+    state: 'login'
   })(req, res, next);
 });
 
 // Google OAuth - Start authentication for REGISTRATION (new users)
 router.get('/google/register', (req, res, next) => {
   console.log('📝 Google OAuth REGISTRATION flow started');
+  // Set cookie to reliably track flow type across OAuth redirect chain
+  res.cookie('google_auth_flow', 'register', {
+    maxAge: 10 * 60 * 1000, // 10 minutes
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/'
+  });
   passport.authenticate('google', { 
     scope: ['profile', 'email'],
     prompt: 'select_account',
-    state: 'register' // Pass flow type via state parameter
+    state: 'register'
   })(req, res, next);
 });
 
 // Google OAuth callback
 router.get('/google/callback', (req, res, next) => {
-  // Get flow type from state parameter
-  const flowType = req.query.state || 'login';
-  console.log('🔄 Google OAuth callback - flow type:', flowType);
+  // Get flow type from cookie (most reliable) then fallback to state parameter
+  const cookieFlowType = parseCookieValue(req.headers.cookie, 'google_auth_flow');
+  const stateFlowType = req.query.state;
+  const flowType = cookieFlowType || stateFlowType || 'login';
+  console.log('🔄 Google OAuth callback - flow type:', flowType, '(cookie:', cookieFlowType, ', state:', stateFlowType, ')');
   console.log('🌐 FRONTEND_URL:', process.env.FRONTEND_URL);
   
-  // Store flow type for passport strategy to use
+  // Store flow type on request for passport strategy to use
   req.googleFlowType = flowType;
   
-  passport.authenticate('google', { session: false, failureRedirect: '/login?error=google_auth_failed' })(req, res, next);
+  // Clear the flow tracking cookie
+  res.clearCookie('google_auth_flow', { path: '/' });
+  
+  const frontendUrl = process.env.FRONTEND_URL || 'https://isafari-tz.netlify.app';
+  passport.authenticate('google', { session: false, failureRedirect: `${frontendUrl}/login?error=google_auth_failed` })(req, res, next);
 }, async (req, res) => {
     try {
       // CRITICAL: Use production frontend URL
