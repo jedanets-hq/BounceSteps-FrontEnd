@@ -117,8 +117,10 @@ const clearRoleSelection = () => {
  * @returns {string} - Decoded string
  */
 const safeBase64Decode = (str) => {
-  // Replace URL-safe characters back to standard base64
-  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  // CRITICAL: Convert spaces back to '+' (URL query strings convert '+' to space)
+  let base64 = str.replace(/ /g, '+');
+  // Replace URL-safe base64 characters back to standard base64
+  base64 = base64.replace(/-/g, '+').replace(/_/g, '/');
   
   // Add padding if needed
   const padding = base64.length % 4;

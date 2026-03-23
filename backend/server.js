@@ -102,9 +102,23 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Session middleware (required for Passport OAuth state verification)
+const session = require('express-session');
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'isafari-oauth-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    maxAge: 10 * 60 * 1000, // 10 minutes - just for OAuth flow
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  }
+}));
+
 // Initialize Passport
 require('./config/passport');
 app.use(passport.initialize());
+app.use(passport.session());
 
 // Routes
 app.use('/api/auth', authRoutes);

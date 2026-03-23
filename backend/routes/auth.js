@@ -390,14 +390,16 @@ router.get('/google/callback', (req, res, next) => {
           avatarUrl: req.user.avatarUrl
         };
         
-        // Use Base64 encoding for safer URL transmission
-        const googleDataBase64 = Buffer.from(JSON.stringify(googleDataObj)).toString('base64');
+        // Use URL-safe Base64 encoding for safer URL transmission
+        // CRITICAL: Use base64url to avoid +/= corruption in URL query strings
+        const googleDataBase64 = Buffer.from(JSON.stringify(googleDataObj)).toString('base64url');
         
         console.log('🔄 New Google user in registration flow, redirecting to complete registration');
         console.log('📧 Email:', req.user.email);
+        console.log('🔗 GoogleData base64url length:', googleDataBase64.length);
         
-        // Redirect to role selection with Google data
-        return res.redirect(`${frontendUrl}/google-role-selection?googleData=${googleDataBase64}`);
+        // Redirect to role selection with Google data (encodeURIComponent for extra safety)
+        return res.redirect(`${frontendUrl}/google-role-selection?googleData=${encodeURIComponent(googleDataBase64)}`);
       }
       
       // Existing user - generate token and redirect
