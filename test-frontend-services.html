@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Frontend Services</title>
+</head>
+<body>
+    <h1>Testing Frontend Services API</h1>
+    <div id="results"></div>
+    
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        
+        async function testServices() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/services?limit=5`);
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `
+                    <h2>✅ API Response:</h2>
+                    <p>Success: ${data.success}</p>
+                    <p>Services Count: ${data.services ? data.services.length : 0}</p>
+                    <h3>Services:</h3>
+                    <pre>${JSON.stringify(data.services, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <h2>❌ Error:</h2>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+        
+        // Test on page load
+        testServices();
+    </script>
+</body>
+</html>

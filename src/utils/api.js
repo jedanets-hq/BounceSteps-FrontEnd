@@ -6,16 +6,16 @@
 // Backend URL is set in .env file: VITE_API_BASE_URL
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ALWAYS use production backend from .env (no local fallback)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://isafarimasterorg.onrender.com/api';
+// Use localhost for development, production for deployment
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const API_URL = API_BASE_URL;
 
 // Log API configuration for verification
 console.log('🌐 API Configuration:');
 console.log('   Backend URL:', API_BASE_URL);
 console.log('   Environment:', import.meta.env.MODE);
-console.log('   Database: Production PostgreSQL on Render');
-console.log('   ✅ All data saves to PRODUCTION database');
+console.log('   Database: Local PostgreSQL');
+console.log('   ✅ All data saves to LOCAL database');
 
 // Helper function to get auth token
 const getAuthToken = () => {
@@ -209,6 +209,11 @@ export const servicesAPI = {
     return apiRequest(`/services/${id}`);
   },
 
+  getTrending: async (filters = {}) => {
+    const queryParams = new URLSearchParams(filters).toString();
+    return apiRequest(`/services/trending${queryParams ? `?${queryParams}` : ''}`);
+  },
+
   getMyServices: async () => {
     return apiRequest('/services/provider/my-services');
   },
@@ -359,19 +364,45 @@ export const favoritesAPI = {
     return apiRequest('/favorites');
   },
 
-  checkFavorite: async (providerId) => {
-    return apiRequest(`/favorites/check/${providerId}`);
+  checkFavorite: async (type, id) => {
+    // Support both old (providerId only) and new (type, id) formats
+    if (typeof type === 'number' || (typeof type === 'string' && !id)) {
+      // Legacy format: checkFavorite(providerId)
+      return apiRequest(`/favorites/check/${type}`);
+    }
+    // New format: checkFavorite('provider', id) or checkFavorite('service', id)
+    return apiRequest(`/favorites/check/${type}/${id}`);
   },
 
-  addToFavorites: async (providerId) => {
+  addToFavorites: async (typeOrProviderId, id) => {
+    // Support both old and new formats
+    if (typeof typeOrProviderId === 'number' || (typeof typeOrProviderId === 'string' && !id)) {
+      // Legacy format: addToFavorites(providerId)
+      return apiRequest('/favorites/add', {
+        method: 'POST',
+        body: JSON.stringify({ providerId: typeOrProviderId }),
+      });
+    }
+    // New format: addToFavorites('provider', id) or addToFavorites('service', id)
+    const body = typeOrProviderId === 'provider' 
+      ? { providerId: id } 
+      : { serviceId: id };
     return apiRequest('/favorites/add', {
       method: 'POST',
-      body: JSON.stringify({ providerId }),
+      body: JSON.stringify(body),
     });
   },
 
-  removeFromFavorites: async (providerId) => {
-    return apiRequest(`/favorites/${providerId}`, {
+  removeFromFavorites: async (typeOrProviderId, id) => {
+    // Support both old and new formats
+    if (typeof typeOrProviderId === 'number' || (typeof typeOrProviderId === 'string' && !id)) {
+      // Legacy format: removeFromFavorites(providerId)
+      return apiRequest(`/favorites/${typeOrProviderId}`, {
+        method: 'DELETE',
+      });
+    }
+    // New format: removeFromFavorites('provider', id) or removeFromFavorites('service', id)
+    return apiRequest(`/favorites/${typeOrProviderId}/${id}`, {
       method: 'DELETE',
     });
   },
@@ -405,6 +436,31 @@ export const paymentsAPI = {
 
   getPricing: async () => {
     return apiRequest('/payments/pricing');
+  },
+};
+
+// Messages API functions
+export const messagesAPI = {
+  getConversations: async () => {
+    return apiRequest('/messages/conversations');
+  },
+
+  getMessages: async (otherUserId, serviceId = null) => {
+    const url = serviceId 
+      ? `/messages/conversation/${otherUserId}/${serviceId}`
+      : `/messages/conversation/${otherUserId}`;
+    return apiRequest(url);
+  },
+
+  sendMessage: async (otherUserId, messageText, serviceId = null) => {
+    return apiRequest('/messages/send', {
+      method: 'POST',
+      body: JSON.stringify({ otherUserId, messageText, serviceId }),
+    });
+  },
+
+  getUnreadCount: async () => {
+    return apiRequest('/messages/unread-count');
   },
 };
 
@@ -515,6 +571,7 @@ export default {
   plansAPI,
   favoritesAPI,
   paymentsAPI,
+  messagesAPI,
   notificationsAPI,
   adminAPI,
 };

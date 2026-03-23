@@ -66,7 +66,7 @@ const StartJourneySection = () => {
                       </div>
                     </Link>
 
-                    <Link to="/profile" className="group">
+                    <Link to="/traveler-dashboard" className="group">
                       <div className="p-6 border border-border rounded-xl hover:border-primary/50 hover:shadow-soft transition-all duration-300 group-hover:scale-105">
                         <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                           <Icon name="User" size={24} className="text-primary" />
@@ -78,7 +78,7 @@ const StartJourneySection = () => {
                   </>
                 ) : (
                   <>
-                    <Link to="/provider-partnership-portal" className="group">
+                    <Link to="/service-provider-dashboard" className="group">
                       <div className="p-6 border border-border rounded-xl hover:border-secondary/50 hover:shadow-soft transition-all duration-300 group-hover:scale-105">
                         <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-secondary/20 transition-colors">
                           <Icon name="Settings" size={24} className="text-secondary" />
@@ -99,7 +99,7 @@ const StartJourneySection = () => {
                       </div>
                     </Link>
 
-                    <Link to="/profile" className="group">
+                    <Link to="/service-provider-dashboard" className="group">
                       <div className="p-6 border border-border rounded-xl hover:border-secondary/50 hover:shadow-soft transition-all duration-300 group-hover:scale-105">
                         <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-secondary/20 transition-colors">
                           <Icon name="Briefcase" size={24} className="text-secondary" />

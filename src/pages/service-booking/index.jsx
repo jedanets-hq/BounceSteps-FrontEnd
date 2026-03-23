@@ -36,26 +36,36 @@ const ServiceBooking = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleAddToCart = (service) => {
-    const bookingItem = {
+  const handleAddToCart = async (service) => {
+    const result = await addToCart({
       id: service.id,
-      name: service.name,
+      serviceId: service.id,
+      title: service.name,
       price: service.price,
-      image: service.image,
-      description: service.description,
-      location: service.location,
-      rating: service.rating,
-      type: 'individual_service',
-      category: service.category
-    };
+      quantity: 1
+    });
     
-    addToCart(bookingItem);
-    alert(`${service.name} added to cart!`);
+    if (result.success) {
+      alert(`${service.name} added to cart!`);
+    } else {
+      alert(`❌ ${result.message}`);
+    }
   };
 
-  const handleBookNow = (service) => {
-    handleAddToCart(service);
-    setShowPayment(true);
+  const handleBookNow = async (service) => {
+    const result = await addToCart({
+      id: service.id,
+      serviceId: service.id,
+      title: service.name,
+      price: service.price,
+      quantity: 1
+    });
+    
+    if (result.success) {
+      navigate('/traveler-dashboard?tab=cart&openPayment=true');
+    } else {
+      alert(`❌ ${result.message}`);
+    }
   };
 
   // Convert mockServices object to flat array

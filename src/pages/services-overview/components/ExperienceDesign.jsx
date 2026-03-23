@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../../../components/ui/Button';
 import Icon from '../../../components/AppIcon';
-import VerifiedBadge from '../../../components/ui/VerifiedBadge';
+import ProviderBadge from '../../../components/ui/ProviderBadge';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
@@ -212,7 +212,7 @@ const ExperienceDesign = ({ title = "Tours & Activities", description = "Discove
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-foreground flex items-center gap-1">
                           {service.business_name || service.provider_name}
-                          {service.provider_verified && <VerifiedBadge size="sm" />}
+                          {service.provider_badge_type && <ProviderBadge badgeType={service.provider_badge_type} size="sm" showText={false} />}
                         </p>
                         <p className="text-xs text-muted-foreground">View all services from this provider</p>
                       </div>
@@ -232,22 +232,16 @@ const ExperienceDesign = ({ title = "Tours & Activities", description = "Discove
                         navigate('/login?redirect=/services-overview');
                         return;
                       }
-                      const bookingItem = {
+                      // Pass service object directly - CartContext will extract the ID
+                      const result = await addToCart({
                         id: service.id,
-                        name: service.title,
+                        serviceId: service.id,
+                        title: service.title,
                         price: parseFloat(service.price || 0),
-                        quantity: 1,
-                        image: service.images && service.images.length > 0 ? service.images[0] : null,
-                        description: service.description,
-                        type: 'service',
-                        category: service.category,
-                        location: service.location,
-                        provider_id: service.provider_id,
-                        business_name: service.business_name
-                      };
-                      const result = await addToCart(bookingItem);
+                        quantity: 1
+                      });
                       if (result.success) {
-                        navigate('/traveler-dashboard?tab=cart');
+                        alert(`✅ ${service.title} added to cart!`);
                       } else {
                         alert(`❌ ${result.message}`);
                       }
@@ -266,20 +260,14 @@ const ExperienceDesign = ({ title = "Tours & Activities", description = "Discove
                         navigate('/login?redirect=/services-overview');
                         return;
                       }
-                      const bookingItem = {
+                      // Pass service object directly - CartContext will extract the ID
+                      const result = await addToCart({
                         id: service.id,
-                        name: service.title,
+                        serviceId: service.id,
+                        title: service.title,
                         price: parseFloat(service.price || 0),
-                        quantity: 1,
-                        image: service.images && service.images.length > 0 ? service.images[0] : null,
-                        description: service.description,
-                        type: 'service',
-                        category: service.category,
-                        location: service.location,
-                        provider_id: service.provider_id,
-                        business_name: service.business_name
-                      };
-                      const result = await addToCart(bookingItem);
+                        quantity: 1
+                      });
                       if (result.success) {
                         navigate('/traveler-dashboard?tab=cart&openPayment=true');
                       } else {

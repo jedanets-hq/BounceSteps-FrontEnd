@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import ProviderBadge from '../../../components/ui/ProviderBadge';
 import VerifiedBadge from '../../../components/ui/VerifiedBadge';
+import RatingStars from '../../../components/RatingStars';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
 import { useFavorites } from '../../../contexts/FavoritesContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
-import { API_URL } from '../../../utils/api';
+import { servicesAPI } from '../../../utils/api';
+import MessagingModal from '../../../components/MessagingModal';
 
 const TrendingServices = () => {
   const navigate = useNavigate();
@@ -19,6 +22,8 @@ const TrendingServices = () => {
   const [booking, setBooking] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [favoriteLoading, setFavoriteLoading] = useState({});
+  const [showMessaging, setShowMessaging] = useState(false);
+  const [messagingProvider, setMessagingProvider] = useState(null);
 
   useEffect(() => {
     fetchServices();
@@ -26,22 +31,27 @@ const TrendingServices = () => {
 
   const fetchServices = async () => {
     try {
-      // Fetch only promoted trending services
-      const response = await fetch(`${API_URL}/services?limit=6`);
-      const data = await response.json();
+      console.log('📡 [TrendingServices] Fetching trending services...');
       
-      if (data.success && data.services.length > 0) {
+      // Fetch ONLY trending services (is_trending = true)
+      const data = await servicesAPI.getTrending({ limit: 12 });
+      
+      console.log('📦 [TrendingServices] Fetched data:', data);
+      console.log('📦 [TrendingServices] Services count:', data.services?.length || 0);
+      
+      if (data.success && data.services && data.services.length > 0) {
+        console.log('✅ [TrendingServices] Setting trending services:', data.services.length);
         setServices(data.services);
+        console.log('✅ [TrendingServices] Trending services loaded successfully');
       } else {
-        // Fallback to regular services if no trending services are promoted
-        const fallbackResponse = await fetch(`${API_URL}/services?limit=12`);
-        const fallbackData = await fallbackResponse.json();
-        if (fallbackData.success) {
-          setServices(fallbackData.services);
-        }
+        // NO FALLBACK - if no trending services, show empty
+        console.warn('⚠️ [TrendingServices] No trending services found');
+        setServices([]);
       }
     } catch (err) {
-      console.error('Error fetching trending services:', err);
+      console.error('❌ [TrendingServices] Error fetching services:', err);
+      console.error('❌ [TrendingServices] Error details:', err.message);
+      setServices([]);
     } finally {
       setLoading(false);
     }
@@ -61,9 +71,9 @@ const TrendingServices = () => {
       return;
     }
 
-    const providerId = service.provider_id;
-    if (!providerId) {
-      console.warn('Service has no provider_id:', service);
+    const serviceId = service.id;
+    if (!serviceId) {
+      console.warn('Service has no id:', service);
       return;
     }
 
@@ -71,17 +81,17 @@ const TrendingServices = () => {
     setFavoriteLoading(prev => ({ ...prev, [service.id]: true }));
 
     try {
-      if (isFavorite(providerId)) {
+      if (isFavorite('service', serviceId)) {
         // Remove from favorites
-        const success = await removeFromFavorites(providerId);
+        const success = await removeFromFavorites('service', serviceId);
         if (success) {
-          console.log('✅ Removed from favorites:', service.title);
+          console.log('✅ Removed service from favorites:', service.title);
         }
       } else {
         // Add to favorites
-        const success = await addToFavorites(providerId);
+        const success = await addToFavorites('service', serviceId);
         if (success) {
-          console.log('✅ Added to favorites:', service.title);
+          console.log('✅ Added service to favorites:', service.title);
         }
       }
     } catch (error) {
@@ -183,13 +193,13 @@ const TrendingServices = () => {
                   <div className="absolute top-4 right-4">
                     <button 
                       className={`w-8 h-8 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 ${
-                        isFavorite(service.provider_id) 
+                        isFavorite('service', service.id) 
                           ? 'bg-red-500 hover:bg-red-600' 
                           : 'bg-background/80 hover:bg-background'
                       }`}
                       onClick={(e) => handleFavoriteToggle(e, service)}
                       disabled={favoriteLoading[service.id]}
-                      title={isFavorite(service.provider_id) ? 'Remove from favorites' : 'Add to favorites'}
+                      title={isFavorite('service', service.id) ? 'Remove from favorites' : 'Add to favorites'}
                     >
                       {favoriteLoading[service.id] ? (
                         <Icon name="Loader2" size={16} className="animate-spin text-muted-foreground" />
@@ -197,7 +207,7 @@ const TrendingServices = () => {
                         <Icon 
                           name="Heart" 
                           size={16} 
-                          className={isFavorite(service.provider_id) ? 'text-white fill-white' : 'text-muted-foreground'} 
+                          className={isFavorite('service', service.id) ? 'text-white fill-white' : 'text-muted-foreground'} 
                         />
                       )}
                     </button>
@@ -206,17 +216,24 @@ const TrendingServices = () => {
                 
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-3">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors flex items-center gap-2">
                         {service.title}
                         {(service.provider_verified || service.is_verified || service.verified) && (
                           <VerifiedBadge size="sm" showText={false} />
                         )}
                       </h3>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
                         <Icon name="MapPin" size={14} />
                         {service.location}
                       </p>
+                      {(service.average_rating > 0 || service.rating > 0) && (
+                        <RatingStars 
+                          rating={service.average_rating || service.rating || 0} 
+                          size={14} 
+                          showValue={false}
+                        />
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-bold text-primary">Tshs {parseFloat(service.price || 0).toLocaleString()}</div>
@@ -312,10 +329,10 @@ const TrendingServices = () => {
                           <Icon name="User" size={16} className="text-primary" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-foreground flex items-center gap-1">
+                          <div className="text-sm font-medium text-foreground flex items-center gap-1">
                             {service.business_name || service.provider_name}
-                            {(service.provider_verified || service.is_verified || service.verified) && <VerifiedBadge size="xs" showText={false} />}
-                          </p>
+                            {service.provider_badge_type && <ProviderBadge badgeType={service.provider_badge_type} size="xs" showText={false} />}
+                          </div>
                           <p className="text-xs text-muted-foreground">View Provider Profile</p>
                         </div>
                         <Icon name="ChevronRight" size={16} className="text-muted-foreground" />
@@ -342,25 +359,25 @@ const TrendingServices = () => {
                           navigate('/login?redirect=/');
                         } else {
                           try {
-                            // Add to cart and navigate to cart & payments with payment modal open
-                            const bookingItem = {
+                            // Add to cart with proper service ID
+                            const result = await addToCart({
                               id: service.id,
+                              serviceId: service.id,
+                              title: service.title,
                               name: service.title,
                               price: parseFloat(service.price || 0),
-                              quantity: 1,
-                              image: service.images && service.images.length > 0 ? service.images[0] : null,
-                              description: service.description,
-                              type: 'service',
-                              category: service.category,
-                              location: service.location,
-                              provider_id: service.provider_id,
-                              business_name: service.business_name
-                            };
-                            await addToCart(bookingItem);
-                            navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                              quantity: 1
+                            });
+                            
+                            if (result.success) {
+                              // Navigate to cart with payment modal open
+                              navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                            } else {
+                              alert('❌ ' + (result.message || 'Failed to add to cart'));
+                            }
                           } catch (error) {
-                            console.error('Error adding to cart:', error);
-                            alert('❌ Error adding to cart: ' + error.message);
+                            console.error('Error booking service:', error);
+                            alert('❌ Error: ' + error.message);
                           }
                         }
                       }}
@@ -481,18 +498,24 @@ const TrendingServices = () => {
               </div>
 
               {/* Amenities */}
-              {selectedService.amenities && selectedService.amenities.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-foreground mb-2">Amenities & Features</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedService.amenities.map((amenity, index) => (
-                      <span key={index} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                        {amenity}
-                      </span>
-                    ))}
+              {(() => {
+                const amenities = Array.isArray(selectedService.amenities) 
+                  ? selectedService.amenities 
+                  : [];
+                
+                return amenities.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="font-semibold text-foreground mb-2">Amenities & Features</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {amenities.map((amenity, index) => (
+                        <span key={index} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                          {amenity}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Provider Info */}
               {(selectedService.business_name || selectedService.provider_name) && selectedService.provider_id && (
@@ -510,10 +533,10 @@ const TrendingServices = () => {
                       <Icon name="User" size={24} className="text-primary" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-foreground flex items-center gap-1">
+                      <div className="font-semibold text-foreground flex items-center gap-1">
                         {selectedService.business_name || selectedService.provider_name}
-                        {selectedService.provider_verified && <VerifiedBadge size="sm" showText={false} />}
-                      </p>
+                        {selectedService.provider_badge_type && <ProviderBadge badgeType={selectedService.provider_badge_type} size="sm" showText={false} />}
+                      </div>
                       <p className="text-sm text-muted-foreground">Tap to view all services from this provider</p>
                     </div>
                     <Icon name="ChevronRight" size={20} className="text-muted-foreground" />
@@ -524,79 +547,58 @@ const TrendingServices = () => {
               {/* Action Buttons */}
               <div className="flex gap-3">
                 <Button 
-                  variant="outline" 
                   className="flex-1"
-                  onClick={async () => {
+                  onClick={() => {
                     const savedUser = localStorage.getItem('isafari_user');
                     if (!savedUser) {
                       navigate('/login?redirect=/');
                       return;
                     }
-                    try {
-                      const bookingItem = {
-                        id: selectedService.id,
-                        name: selectedService.title,
-                        price: parseFloat(selectedService.price || 0),
-                        quantity: 1,
-                        image: selectedService.images && selectedService.images.length > 0 ? selectedService.images[0] : null,
-                        description: selectedService.description,
-                        type: 'service',
-                        category: selectedService.category,
-                        location: selectedService.location,
-                        provider_id: selectedService.provider_id,
-                        business_name: selectedService.business_name
-                      };
-                      await addToCart(bookingItem);
-                      setSelectedService(null);
-                      navigate('/traveler-dashboard?tab=cart');
-                    } catch (error) {
-                      console.error('Error adding to cart:', error);
-                      alert('❌ Error adding to cart: ' + error.message);
-                    }
-                  }}
-                >
-                  <Icon name="ShoppingBag" size={16} />
-                  Add to Cart
-                </Button>
-                <Button 
-                  className="flex-1"
-                  onClick={async () => {
-                    const savedUser = localStorage.getItem('isafari_user');
-                    if (!savedUser) {
-                      navigate('/login?redirect=/');
+                    
+                    console.log('🔍 [Chat Button - TrendingServices] Service data:', {
+                      provider_user_id: selectedService?.provider_user_id,
+                      provider_id: selectedService?.provider_id,
+                      business_name: selectedService?.business_name,
+                      service_id: selectedService?.id
+                    });
+                    
+                    if (!selectedService?.provider_user_id) {
+                      console.error('❌ [Chat Button] provider_user_id is missing!');
+                      alert('Error: Unable to start chat. Provider information is incomplete.');
                       return;
                     }
-                    try {
-                      const bookingItem = {
-                        id: selectedService.id,
-                        name: selectedService.title,
-                        price: parseFloat(selectedService.price || 0),
-                        quantity: 1,
-                        image: selectedService.images && selectedService.images.length > 0 ? selectedService.images[0] : null,
-                        description: selectedService.description,
-                        type: 'service',
-                        category: selectedService.category,
-                        location: selectedService.location,
-                        provider_id: selectedService.provider_id,
-                        business_name: selectedService.business_name
-                      };
-                      await addToCart(bookingItem);
-                      setSelectedService(null);
-                      navigate('/traveler-dashboard?tab=cart&openPayment=true');
-                    } catch (error) {
-                      console.error('Error adding to cart:', error);
-                      alert('❌ Error adding to cart: ' + error.message);
-                    }
+                    
+                    setMessagingProvider({
+                      id: selectedService.provider_user_id, // Always use provider_user_id
+                      name: selectedService.business_name || selectedService.provider_name,
+                      serviceId: selectedService.id,
+                      serviceName: selectedService.title
+                    });
+                    setShowMessaging(true);
+                    setSelectedService(null);
                   }}
                 >
-                  <Icon name="CreditCard" size={16} />
-                  Book Now
+                  <Icon name="MessageCircle" size={16} />
+                  Chat with Provider
                 </Button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Messaging Modal */}
+      <MessagingModal
+        isOpen={showMessaging}
+        onClose={() => {
+          setShowMessaging(false);
+          setMessagingProvider(null);
+        }}
+        providerId={messagingProvider?.id}
+        providerName={messagingProvider?.name}
+        serviceId={messagingProvider?.serviceId}
+        serviceName={messagingProvider?.serviceName}
+      />
     </section>
   );
 };

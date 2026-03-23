@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import Header from '../../components/ui/Header';
@@ -12,6 +12,7 @@ const CartPage = () => {
   const { user, isAuthenticated } = useAuth();
   const { cartItems, removeFromCart, updateQuantity, getCartTotal, getCartCount, clearCart } = useCart();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [showPayment, setShowPayment] = useState(false);
   const [booking, setBooking] = useState(null);
   const [preOrderingItem, setPreOrderingItem] = useState(null);
@@ -23,6 +24,13 @@ const CartPage = () => {
       return;
     }
   }, [isAuthenticated, navigate]);
+
+  // Auto-open payment modal if openPayment query param is present
+  useEffect(() => {
+    if (searchParams.get('openPayment') === 'true' && cartItems.length > 0) {
+      setShowPayment(true);
+    }
+  }, [searchParams, cartItems]);
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {

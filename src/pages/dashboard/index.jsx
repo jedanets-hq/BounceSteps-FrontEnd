@@ -25,12 +25,12 @@ const Dashboard = () => {
   // Redirect to appropriate dashboard based on user role
   if (user.userType === 'traveler') {
     return <TravelerDashboard />;
-  } else if (user.userType === 'provider') {
+  } else if (user.userType === 'service_provider' || user.userType === 'provider') {
     return <ServiceProviderDashboard />;
   }
 
   // Fallback - shouldn't happen but just in case
-  return <Navigate to="/profile" replace />;
+  return <Navigate to="/traveler-dashboard" replace />;
 };
 
 export default Dashboard;

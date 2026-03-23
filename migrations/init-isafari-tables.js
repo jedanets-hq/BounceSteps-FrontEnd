@@ -1,4 +1,4 @@
-/**
+ /**
  * Initialize database tables for iSafari application
  */
 

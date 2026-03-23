@@ -5,7 +5,7 @@
 /*    /index.html   200
 
 # API redirects (if needed)
-/api/*  https://isafarimasterorg.onrender.com/api/:splat  200
+/api/*  https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api/:splat  200
 
 # Security headers
 /*

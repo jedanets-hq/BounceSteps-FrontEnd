@@ -41,8 +41,8 @@ router.get('/', authenticateJWT, async (req, res) => {
   }
 });
 
-// Add item to cart
-router.post('/', authenticateJWT, async (req, res) => {
+// Add item to cart (support both POST / and POST /add)
+router.post(['/', '/add'], authenticateJWT, async (req, res) => {
   try {
     const userId = req.user.id;
     const { serviceId, quantity = 1 } = req.body;

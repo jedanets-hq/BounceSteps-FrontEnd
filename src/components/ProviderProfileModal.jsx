@@ -17,14 +17,22 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
   const fetchProviderDetails = async () => {
     try {
       setLoading(true);
+      console.log('🔍 Fetching provider details for ID:', provider.id);
+      
       const response = await fetch(`${API_URL}/providers/${provider.id}`);
       const data = await response.json();
       
+      console.log('📥 Provider details response:', data);
+      
       if (data.success) {
         setProviderDetails(data.provider);
+      } else {
+        console.error('❌ Failed to load provider:', data.message);
+        alert('Failed to load provider details: ' + data.message);
       }
     } catch (error) {
-      console.error('Error fetching provider details:', error);
+      console.error('❌ Error fetching provider details:', error);
+      alert('Failed to load provider details. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -167,13 +175,33 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
                         onClick={() => toggleServiceSelection(service)}
                       >
                         {/* Service Image */}
-                        {service.images && service.images.length > 0 && (
-                          <img
-                            src={service.images[0]}
-                            alt={service.title}
-                            className="w-full h-32 object-cover rounded-lg mb-3"
-                          />
-                        )}
+                        {(() => {
+                          let images = [];
+                          if (service.images) {
+                            if (typeof service.images === 'string') {
+                              try {
+                                const parsed = JSON.parse(service.images);
+                                images = Array.isArray(parsed) ? parsed : [parsed];
+                              } catch (e) {
+                                images = [service.images];
+                              }
+                            } else if (Array.isArray(service.images)) {
+                              images = service.images;
+                            }
+                          }
+                          const validImages = images.filter(img => img && img.trim && img.trim().length > 0);
+                          
+                          return validImages.length > 0 ? (
+                            <img
+                              src={validImages[0]}
+                              alt={service.title}
+                              className="w-full h-32 object-cover rounded-lg mb-3"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          ) : null;
+                        })()}
                         
                         <div className="flex items-start justify-between mb-2">
                           <h4 className="font-semibold text-foreground">{service.title}</h4>

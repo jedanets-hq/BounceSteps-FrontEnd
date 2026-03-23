@@ -4,12 +4,13 @@ import Header from '../../components/ui/Header';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import Image from '../../components/AppImage';
-import VerifiedBadge from '../../components/ui/VerifiedBadge';
+import ProviderBadge from '../../components/ui/ProviderBadge';
 import CartSidebar from '../../components/CartSidebar';
 import { PaymentModal, BookingConfirmation } from '../../components/PaymentSystem';
 import ServiceDetailsModal from '../../components/ServiceDetailsModal';
 import { useCart } from '../../contexts/CartContext';
-import { API_URL, bookingsAPI } from '../../utils/api';
+import { bookingsAPI, API_BASE_URL } from '../../utils/api';
+import MessagingModal from '../../components/MessagingModal';
 
 const ProviderProfile = () => {
   const { providerId } = useParams();
@@ -27,12 +28,31 @@ const ProviderProfile = () => {
   const [loadingFollow, setLoadingFollow] = useState(false);
   const [showServiceDetailsModal, setShowServiceDetailsModal] = useState(false);
   const [selectedServiceForDetails, setSelectedServiceForDetails] = useState(null);
+  const [showMessaging, setShowMessaging] = useState(false);
+  const [messagingProvider, setMessagingProvider] = useState(null);
 
   useEffect(() => {
     fetchProviderData();
     checkFollowStatus();
     fetchFollowerCount();
   }, [providerId]);
+
+  // Listen for messaging events from ServiceDetailsModal
+  useEffect(() => {
+    const handleOpenMessaging = (event) => {
+      const { providerId, providerName, serviceId, serviceName } = event.detail;
+      setMessagingProvider({
+        id: providerId,
+        name: providerName,
+        serviceId: serviceId,
+        serviceName: serviceName
+      });
+      setShowMessaging(true);
+    };
+
+    window.addEventListener('openMessaging', handleOpenMessaging);
+    return () => window.removeEventListener('openMessaging', handleOpenMessaging);
+  }, []);
 
   const checkFollowStatus = () => {
     const followedProviders = JSON.parse(localStorage.getItem('followed_providers') || '[]');
@@ -41,7 +61,7 @@ const ProviderProfile = () => {
 
   const fetchFollowerCount = async () => {
     try {
-      const response = await fetch(`${API_URL}/providers/${providerId}/followers/count`);
+      const response = await fetch(`${API_BASE_URL}/providers/${providerId}/followers/count`);
       const data = await response.json();
       if (data.success) {
         setFollowerCount(data.count);
@@ -64,10 +84,11 @@ const ProviderProfile = () => {
       }
 
       const endpoint = isFollowing ? 'unfollow' : 'follow';
-      const response = await fetch(`${API_URL}/providers/${providerId}/${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL}/providers/${providerId}/${endpoint}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
@@ -78,7 +99,7 @@ const ProviderProfile = () => {
         setIsFollowing(!isFollowing);
         setFollowerCount(data.followers_count);
         
-        // Update localStorage
+        // Update localStorage for quick access
         const followedProviders = JSON.parse(localStorage.getItem('followed_providers') || '[]');
         if (isFollowing) {
           // Remove from followed
@@ -88,9 +109,14 @@ const ProviderProfile = () => {
           // Add to followed
           localStorage.setItem('followed_providers', JSON.stringify([...followedProviders, parseInt(providerId)]));
         }
+        
+        alert(data.message || (isFollowing ? '✅ Unfollowed successfully' : '✅ Following successfully'));
+      } else {
+        alert('❌ ' + (data.message || 'Failed to update follow status'));
       }
     } catch (error) {
       console.error('Error toggling follow:', error);
+      alert('❌ Error updating follow status. Please try again.');
     } finally {
       setLoadingFollow(false);
     }
@@ -109,72 +135,86 @@ const ProviderProfile = () => {
         return;
       }
 
-      // Fetch provider details
-      try {
-        const providerResponse = await fetch(`${API_URL}/providers/${providerId}`);
-        const providerData = await providerResponse.json();
-        
-        console.log('📦 Provider data:', providerData);
-        
-        if (providerData.success && providerData.provider) {
-          setProvider(providerData.provider);
-          
-          // If provider has services included, use them
-          if (providerData.provider.services && providerData.provider.services.length > 0) {
-            setServices(providerData.provider.services);
-          }
+      // Fetch provider details with cache-busting
+      const timestamp = new Date().getTime();
+      const url = `${API_BASE_URL}/providers/${providerId}?_t=${timestamp}`;
+      console.log('📡 Fetching from:', url);
+      
+      const providerResponse = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
-      } catch (providerError) {
-        console.error('Error fetching provider:', providerError);
-      }
-
-      // Fetch all services by this provider
-      try {
-        const servicesResponse = await fetch(`${API_URL}/services?provider_id=${providerId}&limit=50`);
-        const servicesData = await servicesResponse.json();
+      });
+      
+      console.log('📊 Response status:', providerResponse.status);
+      
+      const providerData = await providerResponse.json();
+      
+      console.log('📦 Provider data:', providerData);
+      
+      if (providerData.success && providerData.provider) {
+        setProvider(providerData.provider);
         
-        console.log('📦 Services data:', servicesData);
-        
-        if (servicesData.success && servicesData.services && servicesData.services.length > 0) {
-          setServices(servicesData.services);
-          
-          // If we got services, create a basic provider object from service data
-          const firstService = servicesData.services[0];
-          setProvider(prev => prev || {
-            id: providerId,
-            business_name: firstService.business_name || 'Service Provider',
-            location: firstService.location,
-            is_verified: firstService.provider_verified
-          });
+        // If provider has services included, use them
+        if (providerData.provider.services && providerData.provider.services.length > 0) {
+          setServices(providerData.provider.services);
+          console.log('✅ Loaded services from provider data:', providerData.provider.services.length);
+        } else {
+          // Provider exists but has no services - set empty array
+          setServices([]);
+          console.log('✅ Provider found but has no services yet');
         }
-      } catch (servicesError) {
-        console.error('Error fetching services:', servicesError);
+      } else {
+        console.error('❌ Provider not found or error:', providerData);
+        setProvider(null);
+        setServices([]);
       }
     } catch (error) {
-      console.error('Error fetching provider data:', error);
+      console.error('❌ Error fetching provider data:', error);
+      setProvider(null);
+      setServices([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddToCart = async (service) => {
-    const bookingItem = {
+    const result = await addToCart({
       id: service.id,
-      name: service.title,
+      serviceId: service.id,
+      title: service.title,
       price: parseFloat(service.price || 0),
-      quantity: 1,
-      image: service.images && service.images.length > 0 ? service.images[0] : null,
-      description: service.description,
-      type: 'service',
-      category: service.category,
-      location: service.location,
-      provider_id: service.provider_id || providerId,
-      business_name: service.business_name || provider?.business_name
-    };
+      quantity: 1
+    });
     
-    const result = await addToCart(bookingItem);
     if (result.success) {
       alert(`✅ ${service.title} added to cart!`);
+      return true;
+    } else {
+      alert(`❌ ${result.message}`);
+      return false;
+    }
+  };
+
+  const handleBookNow = async (service) => {
+    const savedUser = localStorage.getItem('isafari_user');
+    if (!savedUser) {
+      navigate('/login?redirect=/provider/' + providerId);
+      return;
+    }
+    
+    const result = await addToCart({
+      id: service.id,
+      serviceId: service.id,
+      title: service.title,
+      price: parseFloat(service.price || 0),
+      quantity: 1
+    });
+    
+    if (result.success) {
+      navigate('/traveler-dashboard?tab=cart&openPayment=true');
     } else {
       alert(`❌ ${result.message}`);
     }
@@ -265,7 +305,7 @@ const ProviderProfile = () => {
               <div className="flex-1">
                 <h1 className="text-3xl font-bold text-foreground flex items-center gap-2 mb-2">
                   {provider?.business_name || provider?.name || 'Service Provider'}
-                  {(provider?.is_verified || provider?.verified) && <VerifiedBadge size="lg" showText={false} />}
+                  {provider?.badge_type && <ProviderBadge badgeType={provider.badge_type} size="lg" showText={false} />}
                 </h1>
                 
                 {provider?.location && (
@@ -273,6 +313,40 @@ const ProviderProfile = () => {
                     <Icon name="MapPin" size={18} />
                     {provider.location}
                   </p>
+                )}
+                
+                {/* Detailed Location Data */}
+                {provider?.location_data && Object.keys(provider.location_data).length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {provider.location_data.region && (
+                      <span className="inline-flex items-center px-2 py-1 bg-muted/30 text-muted-foreground rounded text-xs">
+                        <Icon name="MapPin" size={12} className="mr-1" />
+                        {provider.location_data.region}
+                      </span>
+                    )}
+                    {provider.location_data.district && (
+                      <span className="inline-flex items-center px-2 py-1 bg-muted/30 text-muted-foreground rounded text-xs">
+                        {provider.location_data.district}
+                      </span>
+                    )}
+                    {provider.location_data.ward && (
+                      <span className="inline-flex items-center px-2 py-1 bg-muted/30 text-muted-foreground rounded text-xs">
+                        {provider.location_data.ward}
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Service Categories */}
+                {provider?.service_categories && provider.service_categories.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {provider.service_categories.map((category, index) => (
+                      <span key={index} className="inline-flex items-center px-3 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium">
+                        <Icon name="Briefcase" size={14} className="mr-1" />
+                        {category}
+                      </span>
+                    ))}
+                  </div>
                 )}
                 
                 {provider?.description && (
@@ -321,7 +395,7 @@ const ProviderProfile = () => {
                   )}
                 </Button>
                 
-                {/* Add to Favorite Button */}
+                {/* Add to Favorite Button - USE API */}
                 <Button
                   variant="outline"
                   onClick={async () => {
@@ -333,106 +407,30 @@ const ProviderProfile = () => {
                     
                     const userData = JSON.parse(savedUser);
                     const token = userData.token;
-                    const favorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
-                    const isFavorite = favorites.some(p => p.id === parseInt(providerId));
                     
                     try {
-                      if (isFavorite) {
-                        // Remove from favorites
-                        const updated = favorites.filter(p => p.id !== parseInt(providerId));
-                        localStorage.setItem('favorite_providers', JSON.stringify(updated));
-                        
-                        await fetch(`${API_URL}/users/favorites/${providerId}`, {
-                          method: 'DELETE',
-                          headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        
-                        alert('Removed from favorites');
+                      // Use /add endpoint with correct providerId
+                      const response = await fetch(`${API_BASE_URL}/favorites/add`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ providerId: parseInt(providerId) })
+                      });
+                      
+                      const data = await response.json();
+                      
+                      if (data.success) {
+                        alert('✅ Added to favorites!');
                       } else {
-                        // Add to favorites
-                        const newFavorite = {
-                          id: parseInt(providerId),
-                          business_name: provider?.business_name || provider?.name,
-                          location: provider?.location,
-                          is_verified: provider?.is_verified || provider?.verified,
-                          followers_count: followerCount
-                        };
-                        localStorage.setItem('favorite_providers', JSON.stringify([...favorites, newFavorite]));
-                        
-                        await fetch(`${API_URL}/users/favorites`, {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                          },
-                          body: JSON.stringify({ provider_id: parseInt(providerId) })
-                        });
-                        
-                        alert('Added to favorites!');
+                        alert('❌ ' + (data.message || 'Failed to add to favorites'));
                       }
-                      window.location.reload();
                     } catch (error) {
                       console.error('Error managing favorites:', error);
-                      alert('Error. Please try again.');
+                      alert('❌ Error. Please try again.');
                     }
                   }}
-                >
-                  <Icon name={(() => {
-                    const favorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
-                    return favorites.some(p => p.id === parseInt(providerId)) ? 'UserCheck' : 'UserPlus';
-                  })()} size={18} className="mr-2" />
-                  {(() => {
-                    const favorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
-                    return favorites.some(p => p.id === parseInt(providerId)) ? 'Following' : 'Follow';
-                  })()}
-                </Button>
-                
-                {/* Follow Button */}
-                <Button
-                  variant={isFollowing ? 'default' : 'outline'}
-                  onClick={handleFollowToggle}
-                  disabled={loadingFollow}
-                  className={isFollowing ? 'bg-primary text-primary-foreground' : ''}
-                >
-                  {loadingFollow ? (
-                    <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
-                  ) : (
-                    <Icon name={isFollowing ? 'UserCheck' : 'UserPlus'} size={18} className="mr-2" />
-                  )}
-                  {isFollowing ? `Following (${followerCount})` : `Follow (${followerCount})`}
-                </Button>
-                
-                {/* Add to Favorite Button */}
-                <Button
-                  variant="outline"
-                  onClick={async () => {
-                    const savedUser = localStorage.getItem('isafari_user');
-                    if (!savedUser) {
-                      navigate('/login?redirect=/provider/' + providerId);
-                      return;
-                    }
-                    
-                    const favorites = JSON.parse(localStorage.getItem('favorite_providers') || '[]');
-                    const isAlreadyFavorite = favorites.some(p => p.id === parseInt(providerId));
-                    
-                    if (!isAlreadyFavorite) {
-                      const newFavorite = {
-                        id: parseInt(providerId),
-                        business_name: provider?.business_name || provider?.name,
-                        location: provider?.location,
-                        is_verified: provider?.is_verified || provider?.verified,
-                        service_categories: provider?.service_categories || [],
-                        rating: provider?.rating || 0,
-                        total_reviews: provider?.total_reviews || 0,
-                        services_count: services?.length || 0
-                      };
-                      localStorage.setItem('favorite_providers', JSON.stringify([...favorites, newFavorite]));
-                      alert('✅ Added to favorites! View in Dashboard > Favorites');
-                    } else {
-                      alert('Already in favorites!');
-                    }
-                  }}
-                  className="text-red-500 hover:bg-red-50"
                 >
                   <Icon name="Heart" size={18} className="mr-2" />
                   Add to Favorite
@@ -447,6 +445,15 @@ const ProviderProfile = () => {
                   >
                     <Icon name="MessageCircle" size={18} className="mr-2" />
                     WhatsApp
+                  </a>
+                )}
+                {provider?.phone && (
+                  <a 
+                    href={`tel:${provider.phone}`}
+                    className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    <Icon name="Phone" size={18} className="mr-2" />
+                    {provider.phone}
                   </a>
                 )}
                 {provider?.email && (
@@ -559,6 +566,21 @@ const ProviderProfile = () => {
                           size="sm"
                           className="w-full"
                           onClick={() => {
+                            console.log('🔍 [View Details Button Clicked] Service data:', {
+                              id: service?.id,
+                              title: service?.title,
+                              provider_user_id: service?.provider_user_id,
+                              provider_id: service?.provider_id,
+                              business_name: service?.business_name,
+                              all_keys: Object.keys(service || {}),
+                              full_service: service
+                            });
+                            console.log('🔍 [View Details] Provider data:', {
+                              user_id: provider?.user_id,
+                              id: provider?.id,
+                              business_name: provider?.business_name,
+                              all_keys: Object.keys(provider || {})
+                            });
                             setSelectedServiceForDetails(service);
                             setShowServiceDetailsModal(true);
                           }}
@@ -566,17 +588,9 @@ const ProviderProfile = () => {
                           <Icon name="Eye" size={16} />
                           View Details
                         </Button>
-                        <div className="flex gap-2">
+                        <div className="flex space-x-2">
                           <Button 
                             variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleAddToCart(service)}
-                          >
-                            <Icon name="ShoppingBag" size={14} />
-                            Add to Cart
-                          </Button>
-                          <Button 
                             size="sm"
                             className="flex-1"
                             onClick={async () => {
@@ -585,34 +599,18 @@ const ProviderProfile = () => {
                                 navigate('/login?redirect=/provider/' + providerId);
                                 return;
                               }
-                              
-                              try {
-                                // Add to cart first
-                                const bookingItem = {
-                                  id: service.id,
-                                  name: service.title,
-                                  title: service.title,
-                                  price: parseFloat(service.price || 0),
-                                  quantity: 1,
-                                  image: service.images && service.images.length > 0 ? service.images[0] : null,
-                                  description: service.description,
-                                  type: 'service',
-                                  category: service.category,
-                                  location: service.location,
-                                  provider_id: service.provider_id || providerId,
-                                  business_name: service.business_name || provider?.business_name
-                                };
-                                
-                                await addToCart(bookingItem);
-                                // Navigate to cart & payment
-                                navigate('/traveler-dashboard?tab=cart&openPayment=true');
-                              } catch (error) {
-                                console.error('Error adding to cart:', error);
-                                alert('❌ Error: ' + error.message);
-                              }
+                              await handleAddToCart(service);
                             }}
                           >
-                            <Icon name="CreditCard" size={14} />
+                            <Icon name="ShoppingCart" size={14} className="mr-1" />
+                            Add to Cart
+                          </Button>
+                          <Button 
+                            size="sm"
+                            className="flex-1 bg-primary hover:bg-primary/90"
+                            onClick={() => handleBookNow(service)}
+                          >
+                            <Icon name="CreditCard" size={14} className="mr-1" />
                             Book Now
                           </Button>
                         </div>
@@ -637,6 +635,19 @@ const ProviderProfile = () => {
           setBooking(bookingData);
           setShowPayment(false);
         }}
+      />
+      
+      {/* Messaging Modal */}
+      <MessagingModal
+        isOpen={showMessaging}
+        onClose={() => {
+          setShowMessaging(false);
+          setMessagingProvider(null);
+        }}
+        providerId={messagingProvider?.id}
+        providerName={messagingProvider?.name}
+        serviceId={messagingProvider?.serviceId}
+        serviceName={messagingProvider?.serviceName}
       />
       
       <BookingConfirmation
@@ -729,39 +740,42 @@ const ProviderProfile = () => {
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-3">
+              <div className="flex justify-center">
                 <Button 
-                  variant="outline" 
-                  className="flex-1"
+                  size="lg"
                   onClick={() => {
                     const savedUser = localStorage.getItem('isafari_user');
                     if (!savedUser) {
                       navigate('/login?redirect=/provider/' + providerId);
                       return;
                     }
-                    handleAddToCart(selectedService);
-                    setSelectedService(null);
-                    navigate('/traveler-dashboard?tab=cart');
-                  }}
-                >
-                  <Icon name="ShoppingBag" size={16} />
-                  Add to Cart
-                </Button>
-                <Button 
-                  className="flex-1"
-                  onClick={() => {
-                    const savedUser = localStorage.getItem('isafari_user');
-                    if (!savedUser) {
-                      navigate('/login?redirect=/provider/' + providerId);
+                    
+                    console.log('🔍 [Chat Button] Provider data:', {
+                      provider_user_id: provider?.user_id,
+                      provider_id: providerId,
+                      provider_business_name: provider?.business_name,
+                      selected_service_id: selectedService?.id,
+                      selected_service_title: selectedService?.title
+                    });
+                    
+                    if (!provider?.user_id) {
+                      console.error('❌ [Chat Button] provider.user_id is missing!');
+                      alert('Error: Unable to start chat. Provider information is incomplete.');
                       return;
                     }
-                    handleAddToCart(selectedService);
+                    
+                    setMessagingProvider({
+                      id: provider.user_id, // Always use user_id from provider object
+                      name: provider?.business_name || provider?.name,
+                      serviceId: selectedService.id,
+                      serviceName: selectedService.title
+                    });
+                    setShowMessaging(true);
                     setSelectedService(null);
-                    navigate('/traveler-dashboard?tab=cart&openPayment=true');
                   }}
                 >
-                  <Icon name="CreditCard" size={16} />
-                  Book Now
+                  <Icon name="MessageCircle" size={20} />
+                  Chat with Provider
                 </Button>
               </div>
             </div>
@@ -773,6 +787,7 @@ const ProviderProfile = () => {
         isOpen={showServiceDetailsModal}
         onClose={() => setShowServiceDetailsModal(false)}
         service={selectedServiceForDetails}
+        providerInfo={provider}
       />
     </div>
   );

@@ -20,6 +20,8 @@ const plansRoutes = require('./routes/plans');
 const usersRoutes = require('./routes/users');
 const travelerStoriesRoutes = require('./routes/travelerStories');
 const multiTripRoutes = require('./routes/multiTrip');
+const messagesRoutes = require('./routes/messages');
+const adminRoutes = require('./routes/admin');
 
 // CORS Configuration for Production
 const corsOptions = {
@@ -90,6 +92,8 @@ app.use('/api/plans', plansRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/traveler-stories', travelerStoriesRoutes);
 app.use('/api/multi-trip', multiTripRoutes);
+app.use('/api/messages', messagesRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -1,13 +1,61 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from './AppIcon';
 import Button from './ui/Button';
 import VerifiedBadge from './ui/VerifiedBadge';
+import RatingStars from './RatingStars';
+import ReviewsList from './ReviewsList';
+import ReviewForm from './ReviewForm';
 import { bookingsAPI } from '../utils/api';
 import { useCart } from '../contexts/CartContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 
-const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
-  if (!isOpen || !service) return null;
+const ServiceDetailsModal = ({ isOpen, onClose, service, providerInfo }) => {
   const { addToCart } = useCart();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+  const [isFav, setIsFav] = useState(false);
+  const [loadingFavorite, setLoadingFavorite] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('details'); // 'details' or 'reviews'
+
+  useEffect(() => {
+    if (service?.id) {
+      setIsFav(isFavorite('service', service.id));
+      setShowReviewForm(false);
+      setActiveTab('details');
+    }
+  }, [service, isFavorite]);
+
+  const handleToggleFavorite = async () => {
+    if (!service?.id) return;
+    
+    const savedUser = localStorage.getItem('isafari_user');
+    if (!savedUser) {
+      alert('Please login to add favorites');
+      window.location.href = '/login';
+      return;
+    }
+
+    setLoadingFavorite(true);
+    try {
+      if (isFav) {
+        const success = await removeFromFavorites('service', service.id);
+        if (success) {
+          setIsFav(false);
+        }
+      } else {
+        const success = await addToFavorites('service', service.id);
+        if (success) {
+          setIsFav(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    } finally {
+      setLoadingFavorite(false);
+    }
+  };
+
+  if (!isOpen || !service) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -18,30 +66,89 @@ const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
             {service.title || service.name}
             {service.provider_verified && <VerifiedBadge size="sm" />}
           </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
-          >
-            <Icon name="X" size={24} className="text-muted-foreground" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleToggleFavorite}
+              disabled={loadingFavorite}
+              className={`p-2 rounded-lg transition-colors ${
+                isFav 
+                  ? 'bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30' 
+                  : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+              }`}
+              title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Icon 
+                name="Heart" 
+                size={24} 
+                className={isFav ? 'fill-current' : ''} 
+              />
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
+            >
+              <Icon name="X" size={24} className="text-muted-foreground" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
+          {/* Tabs */}
+          <div className="flex items-center gap-4 border-b border-border">
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`pb-3 px-2 font-medium transition-colors relative ${
+                activeTab === 'details'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Details
+              {activeTab === 'details' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('reviews')}
+              className={`pb-3 px-2 font-medium transition-colors relative ${
+                activeTab === 'reviews'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Reviews
+              {activeTab === 'reviews' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
+            </button>
+          </div>
+
+          {/* Details Tab */}
+          {activeTab === 'details' && (
+            <>
           {/* Images */}
-          {service.images && service.images.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {service.images.map((image, index) => (
-                <div key={index} className="aspect-video rounded-lg overflow-hidden bg-muted">
-                  <img
-                    src={image}
-                    alt={`${service.title} - ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          {(() => {
+            const images = Array.isArray(service.images) 
+              ? service.images 
+              : (typeof service.images === 'string' && service.images.trim() !== '' 
+                  ? [service.images] 
+                  : []);
+            
+            return images.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {images.map((image, index) => (
+                  <div key={index} className="aspect-video rounded-lg overflow-hidden bg-muted">
+                    <img
+                      src={image}
+                      alt={`${service.title} - ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Provider Info */}
           <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
@@ -60,10 +167,19 @@ const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
                 </p>
               )}
             </div>
-            {service.rating > 0 && (
-              <div className="flex items-center gap-1 bg-yellow-50 dark:bg-yellow-900/20 px-3 py-1.5 rounded-lg">
-                <Icon name="Star" size={16} className="text-yellow-500 fill-yellow-500" />
-                <span className="font-medium text-foreground">{service.rating.toFixed(1)}</span>
+            {(service.rating > 0 || service.average_rating > 0) && (
+              <div className="flex flex-col items-end gap-1">
+                <RatingStars 
+                  rating={service.average_rating || service.rating || 0} 
+                  size={16} 
+                  showValue={true}
+                />
+                <button
+                  onClick={() => setActiveTab('reviews')}
+                  className="text-xs text-primary hover:underline"
+                >
+                  View reviews
+                </button>
               </div>
             )}
           </div>
@@ -95,22 +211,28 @@ const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
           )}
 
           {/* Amenities */}
-          {service.amenities && service.amenities.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Icon name="CheckCircle" size={20} />
-                Amenities & Features
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {service.amenities.map((amenity, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm text-foreground">
-                    <Icon name="Check" size={16} className="text-green-500" />
-                    {amenity}
-                  </div>
-                ))}
+          {(() => {
+            const amenities = Array.isArray(service.amenities) 
+              ? service.amenities 
+              : [];
+            
+            return amenities.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+                  <Icon name="CheckCircle" size={20} />
+                  Amenities & Features
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {amenities.map((amenity, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm text-foreground">
+                      <Icon name="Check" size={16} className="text-green-500" />
+                      {amenity}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Payment Methods */}
           {service.payment_methods && Object.keys(service.payment_methods).some(key => service.payment_methods[key]?.enabled) && (
@@ -197,6 +319,44 @@ const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
               </div>
             </div>
           )}
+            </>
+          )}
+
+          {/* Reviews Tab */}
+          {activeTab === 'reviews' && (
+            <div className="space-y-6">
+              {showReviewForm ? (
+                <div className="bg-muted/30 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
+                    Write Your Review
+                  </h3>
+                  <ReviewForm
+                    serviceId={service.id}
+                    onSubmit={(review) => {
+                      setShowReviewForm(false);
+                      // Refresh reviews list
+                      window.location.reload();
+                    }}
+                    onCancel={() => setShowReviewForm(false)}
+                  />
+                </div>
+              ) : (
+                <ReviewsList
+                  serviceId={service.id}
+                  showAddReview={true}
+                  onAddReview={() => {
+                    const savedUser = localStorage.getItem('isafari_user');
+                    if (!savedUser) {
+                      alert('Please login to write a review');
+                      window.location.href = '/login';
+                      return;
+                    }
+                    setShowReviewForm(true);
+                  }}
+                />
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer with Action Buttons */}
@@ -207,67 +367,45 @@ const ServiceDetailsModal = ({ isOpen, onClose, service }) => {
           </div>
           <div className="flex gap-2">
             <Button
-              variant="outline"
-              onClick={async () => {
+              onClick={() => {
                 const savedUser = localStorage.getItem('isafari_user');
                 if (!savedUser) {
                   window.location.href = '/login';
                   return;
                 }
                 
-                try {
-                  await addToCart(service);
-                  alert('✅ Added to cart!');
-                  onClose();
-                } catch (error) {
-                  console.error('Error adding to cart:', error);
-                  alert('❌ Error adding to cart: ' + error.message);
-                }
-              }}
-              size="lg"
-              className="flex items-center gap-2"
-            >
-              <Icon name="ShoppingBag" size={20} />
-              Add to Cart
-            </Button>
-            <Button
-              onClick={async () => {
-                const savedUser = localStorage.getItem('isafari_user');
-                if (!savedUser) {
-                  window.location.href = '/login';
+                console.log('🔍 [Chat Button - ServiceDetailsModal] Service data:', {
+                  provider_user_id: service?.provider_user_id,
+                  provider_id: service?.provider_id,
+                  providerId: service?.providerId,
+                  business_name: service?.business_name
+                });
+                
+                const providerUserId = service.provider_user_id || providerInfo?.user_id;
+                
+                if (!providerUserId) {
+                  console.error('❌ [Chat Button] No valid provider ID found!');
+                  alert('Error: Unable to start chat. Provider information is incomplete.');
                   return;
                 }
                 
-                try {
-                  // Add to cart first
-                  const bookingItem = {
-                    id: service.id,
-                    name: service.title || service.name,
-                    title: service.title || service.name,
-                    price: parseFloat(service.price || 0),
-                    quantity: 1,
-                    image: service.images && service.images.length > 0 ? service.images[0] : null,
-                    description: service.description,
-                    type: 'service',
-                    category: service.category,
-                    location: service.location,
-                    provider_id: service.provider_id,
-                    business_name: service.businessName || service.business_name
-                  };
-                  
-                  await addToCart(bookingItem);
-                  // Navigate to cart & payment
-                  window.location.href = '/traveler-dashboard?tab=cart&openPayment=true';
-                } catch (error) {
-                  console.error('Error adding to cart:', error);
-                  alert('❌ Error: ' + error.message);
-                }
+                // Open messaging modal with provider info
+                const messagingEvent = new CustomEvent('openMessaging', {
+                  detail: {
+                    providerId: providerUserId,
+                    providerName: service.businessName || service.provider?.name || service.business_name || 'Provider',
+                    serviceId: service.id,
+                    serviceName: service.title || service.name
+                  }
+                });
+                window.dispatchEvent(messagingEvent);
+                onClose();
               }}
               size="lg"
               className="flex items-center gap-2"
             >
-              <Icon name="CreditCard" size={20} />
-              Book Now
+              <Icon name="MessageCircle" size={20} />
+              Chat with Provider
             </Button>
           </div>
         </div>

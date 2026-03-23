@@ -6,6 +6,23 @@ const { User } = require('../models/pg');
 
 // Google OAuth Strategy - Only configure if credentials are available
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  // Check if using placeholder values
+  const isPlaceholder = process.env.GOOGLE_CLIENT_ID === 'your-google-client-id-from-console-cloud-google' ||
+                        process.env.GOOGLE_CLIENT_SECRET === 'your-google-client-secret-from-console-cloud-google';
+  
+  if (isPlaceholder) {
+    console.log('⚠️⚠️⚠️ GOOGLE OAUTH CONFIGURATION ERROR ⚠️⚠️⚠️');
+    console.log('❌ Google OAuth credentials are using PLACEHOLDER values!');
+    console.log('❌ "Continue with Google" and "Sign up with Google" will NOT work!');
+    console.log('');
+    console.log('📌 TO FIX: Update backend/.env with real Google OAuth credentials');
+    console.log('📖 See: TATUA-GOOGLE-OAUTH.md for detailed instructions');
+    console.log('🔗 Get credentials from: https://console.cloud.google.com/apis/credentials');
+    console.log('');
+  } else {
+    console.log('✅ Google OAuth configured successfully');
+  }
+  
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,

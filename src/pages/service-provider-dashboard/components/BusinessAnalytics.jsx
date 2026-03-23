@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { API_URL } from '../../../utils/api';
 
 const BusinessAnalytics = () => {
   const [timeRange, setTimeRange] = useState('30days');
@@ -31,7 +32,7 @@ const BusinessAnalytics = () => {
         const token = user.token;
 
         const response = await fetch(
-          `https://backend-bncb.onrender.com/api/bookings/provider-analytics?timeRange=${timeRange}`,
+          `${API_URL}/bookings/provider-analytics?timeRange=${timeRange}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -152,7 +153,7 @@ const BusinessAnalytics = () => {
                 </div>
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">${analyticsData.revenue.total}</p>
+                <p className="text-2xl font-bold text-foreground">TSh {analyticsData.revenue.total.toLocaleString()}</p>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
               </div>
             </div>
@@ -226,7 +227,7 @@ const BusinessAnalytics = () => {
                         style={{ width: `${Math.min((data.revenue / Math.max(...monthlyData.map(m => m.revenue))) * 100, 100)}%` }}
                       />
                     </div>
-                    <div className="w-20 text-sm font-medium text-foreground text-right">${data.revenue}</div>
+                    <div className="w-24 text-sm font-medium text-foreground text-right">TSh {data.revenue.toLocaleString()}</div>
                     <div className="w-16 text-sm text-muted-foreground text-right">{data.bookings} bookings</div>
                   </div>
                 ))}
@@ -261,7 +262,7 @@ const BusinessAnalytics = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium text-foreground">${service.revenue}</p>
+                        <p className="font-medium text-foreground">TSh {service.revenue.toLocaleString()}</p>
                       </div>
                     </div>
                   ))}

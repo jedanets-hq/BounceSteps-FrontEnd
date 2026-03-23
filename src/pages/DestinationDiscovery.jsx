@@ -5,7 +5,8 @@ import { useCart } from '../contexts/CartContext';
 import Header from '../components/ui/Header';
 import Button from '../components/ui/Button';
 import Icon from '../components/AppIcon';
-import VerifiedBadge from '../components/ui/VerifiedBadge';
+import ProviderBadge from '../components/ui/ProviderBadge';
+import MessagingModal from '../components/MessagingModal';
 import { API_URL } from '../utils/api';
 
 const DestinationDiscovery = () => {
@@ -20,15 +21,40 @@ const DestinationDiscovery = () => {
   const [viewingService, setViewingService] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedServiceDetails, setSelectedServiceDetails] = useState(null);
+  const [showMessaging, setShowMessaging] = useState(false);
+  const [messagingProvider, setMessagingProvider] = useState(null);
 
   // Add service to cart
-  const handleAddToCart = (service) => {
-    addToCart(service);
-    navigate('/traveler-dashboard?tab=cart');
+  const handleAddToCart = async (service) => {
+    const savedUser = localStorage.getItem('isafari_user');
+    if (!savedUser) {
+      navigate('/login?redirect=/destination-discovery');
+      return;
+    }
+    
+    const result = await addToCart({
+      id: service.id,
+      serviceId: service.id,
+      title: service.title,
+      price: parseFloat(service.price || 0),
+      quantity: 1
+    });
+    
+    if (result.success) {
+      alert(`✅ ${service.title} added to cart!`);
+    } else {
+      alert(`❌ ${result.message}`);
+    }
   };
 
-  // Direct payment with provider's payment methods
-  const handleDirectPayment = (service) => {
+  // Book Now - Direct payment with provider's payment methods
+  const handleBookNow = async (service) => {
+    const savedUser = localStorage.getItem('isafari_user');
+    if (!savedUser) {
+      navigate('/login?redirect=/destination-discovery');
+      return;
+    }
+    
     // Store payment info for direct payment
     localStorage.setItem('isafari_direct_payment', JSON.stringify({
       service_id: service.id,
@@ -40,19 +66,33 @@ const DestinationDiscovery = () => {
       contact_info: service.contact_info || {}
     }));
     
-    addToCart(service);
-    navigate('/traveler-dashboard?tab=cart&openPayment=true&directPay=true');
+    const result = await addToCart({
+      id: service.id,
+      serviceId: service.id,
+      title: service.title,
+      price: parseFloat(service.price || 0),
+      quantity: 1
+    });
+    
+    if (result.success) {
+      navigate('/traveler-dashboard?tab=cart&openPayment=true');
+    } else {
+      alert(`❌ ${result.message}`);
+    }
   };
 
-  // Redirect if not logged in
-  if (!user) {
-    navigate('/login');
-    return null;
-  }
+  // Redirect if not logged in - use useEffect to avoid hooks order issues
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
-    fetchServices();
-  }, [selectedCategory, searchQuery]);
+    if (user) {
+      fetchServices();
+    }
+  }, [selectedCategory, searchQuery, user]);
 
   const fetchServices = async () => {
     setLoading(true);
@@ -315,8 +355,8 @@ const DestinationDiscovery = () => {
                       <div className="text-2xl font-bold text-foreground">TZS {parseFloat(service.price || 0).toLocaleString()}</div>
                       <div className="text-xs text-muted-foreground flex items-center gap-1">
                         by {service.provider_name || service.business_name}
-                        {(service.provider_verified || service.is_verified) && (
-                          <VerifiedBadge size="xs" showText={false} />
+                        {service.provider_badge_type && (
+                          <ProviderBadge badgeType={service.provider_badge_type} size="xs" showText={false} />
                         )}
                       </div>
                     </div>
@@ -347,10 +387,10 @@ const DestinationDiscovery = () => {
                     <Button 
                       size="sm"
                       className="w-full bg-primary hover:bg-primary/90"
-                      onClick={() => handleDirectPayment(service)}
+                      onClick={() => handleBookNow(service)}
                     >
                       <Icon name="CreditCard" size={16} />
-                      Book Now & Pay
+                      Book Now
                     </Button>
                   </div>
                 </div>
@@ -541,33 +581,60 @@ const DestinationDiscovery = () => {
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-3">
+              <div className="flex justify-center">
                 <Button 
-                  variant="outline" 
-                  className="flex-1"
+                  size="lg"
                   onClick={() => {
-                    handleAddToCart(selectedServiceDetails);
+                    const savedUser = localStorage.getItem('isafari_user');
+                    if (!savedUser) {
+                      navigate('/login?redirect=/destination-discovery');
+                      return;
+                    }
+                    
+                    console.log('🔍 [Chat Button - DestinationDiscovery] Service data:', {
+                      provider_user_id: selectedServiceDetails?.provider_user_id,
+                      provider_id: selectedServiceDetails?.provider_id,
+                      business_name: selectedServiceDetails?.business_name,
+                      service_id: selectedServiceDetails?.id
+                    });
+                    
+                    if (!selectedServiceDetails?.provider_user_id) {
+                      console.error('❌ [Chat Button] provider_user_id is missing!');
+                      alert('Error: Unable to start chat. Provider information is incomplete.');
+                      return;
+                    }
+                    
+                    setMessagingProvider({
+                      id: selectedServiceDetails.provider_user_id, // Always use provider_user_id
+                      name: selectedServiceDetails.business_name || selectedServiceDetails.provider_name,
+                      serviceId: selectedServiceDetails.id,
+                      serviceName: selectedServiceDetails.title
+                    });
+                    setShowMessaging(true);
                     setSelectedServiceDetails(null);
                   }}
                 >
-                  <Icon name="ShoppingCart" size={16} />
-                  Add to Cart
-                </Button>
-                <Button 
-                  className="flex-1"
-                  onClick={() => {
-                    setSelectedServiceDetails(null);
-                    handleDirectPayment(selectedServiceDetails);
-                  }}
-                >
-                  <Icon name="CreditCard" size={16} />
-                  Book Now & Pay
+                  <Icon name="MessageCircle" size={20} />
+                  Chat with Provider
                 </Button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Messaging Modal */}
+      <MessagingModal
+        isOpen={showMessaging}
+        onClose={() => {
+          setShowMessaging(false);
+          setMessagingProvider(null);
+        }}
+        providerId={messagingProvider?.id}
+        providerName={messagingProvider?.name}
+        serviceId={messagingProvider?.serviceId}
+        serviceName={messagingProvider?.serviceName}
+      />
     </div>
   );
 };

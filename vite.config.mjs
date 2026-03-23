@@ -1,7 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { writeFileSync } from 'fs'
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 // Plugin to generate version manifest for cache busting
 function versionManifestPlugin() {
@@ -32,6 +36,12 @@ export default defineConfig({
     react(),
     versionManifestPlugin()
   ],
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),
+      'components': resolve(__dirname, './src/components')
+    }
+  },
   base: '/',
   build: {
     outDir: 'dist',

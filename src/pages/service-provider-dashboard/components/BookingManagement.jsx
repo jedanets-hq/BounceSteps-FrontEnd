@@ -45,14 +45,42 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusBadge = (status) => {
+    const badges = {
+      pending: {
+        bg: 'bg-gradient-to-r from-yellow-400 to-orange-400',
+        text: 'text-white',
+        icon: 'Clock',
+        label: 'Pending Review'
+      },
+      confirmed: {
+        bg: 'bg-gradient-to-r from-green-400 to-emerald-500',
+        text: 'text-white',
+        icon: 'CheckCircle',
+        label: 'Approved'
+      },
+      completed: {
+        bg: 'bg-gradient-to-r from-blue-400 to-indigo-500',
+        text: 'text-white',
+        icon: 'Award',
+        label: 'Completed'
+      },
+      cancelled: {
+        bg: 'bg-gradient-to-r from-red-400 to-pink-500',
+        text: 'text-white',
+        icon: 'XCircle',
+        label: 'Rejected'
+      }
+    };
+    
+    const badge = badges[status] || badges.pending;
+    
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${badge.bg} ${badge.text}`}>
+        <Icon name={badge.icon} size={14} />
+        <span>{badge.label}</span>
+      </span>
+    );
   };
 
   // Get service image from booking
@@ -94,53 +122,58 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setFilterStatus('all')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
             filterStatus === 'all'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              ? 'bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg shadow-primary/30 scale-105'
+              : 'bg-card border-2 border-border text-muted-foreground hover:border-primary/50 hover:scale-105'
           }`}
         >
+          <Icon name="List" size={16} />
           All ({statusCounts.all})
         </button>
         <button
           onClick={() => setFilterStatus('pending')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
             filterStatus === 'pending'
-              ? 'bg-yellow-500 text-white shadow-sm'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg shadow-yellow-400/30 scale-105'
+              : 'bg-card border-2 border-border text-muted-foreground hover:border-yellow-400/50 hover:scale-105'
           }`}
         >
-          📋 Pending Review ({statusCounts.pending})
+          <Icon name="Clock" size={16} />
+          Pending ({statusCounts.pending})
         </button>
         <button
           onClick={() => setFilterStatus('confirmed')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
             filterStatus === 'confirmed'
-              ? 'bg-green-500 text-white shadow-sm'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-lg shadow-green-400/30 scale-105'
+              : 'bg-card border-2 border-border text-muted-foreground hover:border-green-400/50 hover:scale-105'
           }`}
         >
-          ✅ Approved ({statusCounts.confirmed})
+          <Icon name="CheckCircle" size={16} />
+          Approved ({statusCounts.confirmed})
         </button>
         <button
           onClick={() => setFilterStatus('completed')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
             filterStatus === 'completed'
-              ? 'bg-blue-500 text-white shadow-sm'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              ? 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white shadow-lg shadow-blue-400/30 scale-105'
+              : 'bg-card border-2 border-border text-muted-foreground hover:border-blue-400/50 hover:scale-105'
           }`}
         >
-          🎉 Completed ({statusCounts.completed})
+          <Icon name="Award" size={16} />
+          Completed ({statusCounts.completed})
         </button>
         <button
           onClick={() => setFilterStatus('cancelled')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
             filterStatus === 'cancelled'
-              ? 'bg-red-500 text-white shadow-sm'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              ? 'bg-gradient-to-r from-red-400 to-pink-500 text-white shadow-lg shadow-red-400/30 scale-105'
+              : 'bg-card border-2 border-border text-muted-foreground hover:border-red-400/50 hover:scale-105'
           }`}
         >
-          ❌ Rejected ({statusCounts.cancelled})
+          <Icon name="XCircle" size={16} />
+          Rejected ({statusCounts.cancelled})
         </button>
       </div>
 
@@ -150,10 +183,10 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
           <div className="flex items-start gap-3">
             <Icon name="AlertCircle" size={20} className="text-yellow-600 mt-0.5" />
             <div>
-              <p className="font-medium text-yellow-800 dark:text-yellow-200">⚡ Action Required - Traveler Waiting!</p>
+              <p className="font-medium text-yellow-800 dark:text-yellow-200">Action Required - Traveler Waiting!</p>
               <p className="text-sm text-yellow-700 dark:text-yellow-300">
                 You have {statusCounts.pending} pre-order request(s) waiting for your decision. 
-                Click <strong>"✅ Approve"</strong> to accept or <strong>"❌ Reject"</strong> to decline. 
+                Click <strong>"Approve"</strong> to accept or <strong>"Reject"</strong> to decline. 
                 The traveler will be notified immediately.
               </p>
             </div>
@@ -167,7 +200,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
           <div className="flex items-start gap-3">
             <Icon name="CheckCircle" size={20} className="text-green-600 mt-0.5" />
             <div>
-              <p className="font-medium text-green-800 dark:text-green-200">✅ All Caught Up!</p>
+              <p className="font-medium text-green-800 dark:text-green-200">All Caught Up!</p>
               <p className="text-sm text-green-700 dark:text-green-300">
                 No pending pre-order requests. Check other tabs to see approved, rejected, or completed bookings.
               </p>
@@ -221,12 +254,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                       <h4 className="font-medium text-foreground">
                         {`${booking.traveler_first_name || ''} ${booking.traveler_last_name || ''}`.trim() || booking.traveler?.name || 'Unknown Traveler'}
                       </h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
-                        {booking.status === 'pending' ? '📋 Pending Review' :
-                         booking.status === 'confirmed' ? '✅ Approved' :
-                         booking.status === 'completed' ? '🎉 Completed' :
-                         '❌ Rejected'}
-                      </span>
+                      {getStatusBadge(booking.status)}
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground mb-3">{booking.service_title || 'Service'}</p>
@@ -276,7 +304,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                       ) : (
                         <Icon name="Check" size={14} />
                       )}
-                      ✅ Approve Pre-Order
+                      Approve Pre-Order
                     </Button>
                     <Button 
                       variant="outline" 
@@ -290,7 +318,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                       ) : (
                         <Icon name="X" size={14} />
                       )}
-                      ❌ Reject
+                      Reject
                     </Button>
                   </>
                 )}

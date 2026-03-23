@@ -4,17 +4,16 @@ import App from "./App";
 import "./styles/tailwind.css";
 import "./styles/index.css";
 
-// Import fetch wrapper to handle API URLs globally
-import "./utils/fetch-wrapper";
-
-// Clear old caches on app startup to ensure fresh version
-const clearOldCaches = async () => {
+// CRITICAL: Force clear ALL caches and reload to prevent old version from showing
+const forceClearAllCaches = async () => {
   try {
+    console.log('🧹 FORCE CLEARING ALL CACHES...');
+    
     // Clear all browser caches
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
-      console.log('🧹 Cleared browser caches');
+      console.log('✅ Cleared', cacheNames.length, 'browser caches');
     }
     
     // Unregister all service workers
@@ -22,16 +21,35 @@ const clearOldCaches = async () => {
       const registrations = await navigator.serviceWorker.getRegistrations();
       await Promise.all(registrations.map(reg => reg.unregister()));
       if (registrations.length > 0) {
-        console.log('🧹 Unregistered service workers');
+        console.log('✅ Unregistered', registrations.length, 'service workers');
       }
     }
+    
+    // Clear localStorage items that might cache old routes
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.includes('route') || key.includes('navigation') || key.includes('cache'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    if (keysToRemove.length > 0) {
+      console.log('✅ Cleared', keysToRemove.length, 'cached route items from localStorage');
+    }
+    
+    // DO NOT clear sessionStorage - it contains important user data like Google registration info
+    // sessionStorage is automatically cleared when browser/tab is closed
+    console.log('✅ Preserved sessionStorage for user data');
+    
+    console.log('✅ ALL CACHES CLEARED SUCCESSFULLY');
   } catch (e) {
-    console.warn('Cache clearing failed:', e);
+    console.warn('⚠️ Cache clearing failed:', e);
   }
 };
 
-// Run cache clearing on startup
-clearOldCaches();
+// Run cache clearing on EVERY startup to ensure fresh version
+forceClearAllCaches();
 
 const container = document.getElementById("root");
 const root = createRoot(container);

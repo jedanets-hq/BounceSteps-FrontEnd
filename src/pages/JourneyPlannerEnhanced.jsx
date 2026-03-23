@@ -15,7 +15,7 @@ import { API_URL } from '../utils/api';
 
 const JourneyPlannerEnhanced = () => {
   const { user } = useAuth();
-  const { addMultipleToCart } = useCart();
+  const { addToCart, addMultipleToCart, setCartItems } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -461,138 +461,80 @@ const JourneyPlannerEnhanced = () => {
   const fetchProviders = async () => {
     try {
       setLoadingProviders(true);
-      console.log('🔍 SMART FILTERING: Starting provider search...');
-      console.log('📍 Raw Location from selector:', selectedLocation);
+      console.log('🔍 Fetching providers...');
+      console.log('📍 Location:', selectedLocation);
       console.log('🏷️ Selected Services:', journeyData.selectedServices);
       
-      // Helper function for case-insensitive comparison
-      const normalize = (str) => (str || '').toLowerCase().trim();
+      // Fetch all providers from the API
+      const providersResponse = await fetch(`${API_URL}/providers`);
+      const providersData = await providersResponse.json();
       
-      // Build API query parameters for server-side filtering
-      const queryParams = new URLSearchParams();
-      queryParams.append('limit', '500');
+      if (!providersData.success || !providersData.providers || providersData.providers.length === 0) {
+        console.log('⚠️ No providers found in database');
+        setProviders([]);
+        setLoadingProviders(false);
+        return;
+      }
       
-      // Add location filters if available
+      let filteredProviders = providersData.providers;
+      console.log('📦 Total providers from API:', filteredProviders.length);
+      
+      // Filter by location if specified
       if (selectedLocation.region) {
-        queryParams.append('region', selectedLocation.region);
-      }
-      if (selectedLocation.district) {
-        queryParams.append('district', selectedLocation.district);
-      }
-      if (selectedLocation.ward) {
-        // Frontend uses "ward" but backend expects "area"
-        queryParams.append('area', selectedLocation.ward);
-      }
-      
-      // Add category filter if services are selected
-      // Note: Backend only supports single category, so we'll fetch all and filter client-side for multiple
-      if (journeyData.selectedServices && journeyData.selectedServices.length === 1) {
-        queryParams.append('category', journeyData.selectedServices[0]);
-      }
-      
-      console.log('🌐 API Query:', `${API_URL}/services?${queryParams.toString()}`);
-      
-      // Fetch services with server-side filtering
-      const servicesResponse = await fetch(`${API_URL}/services?${queryParams.toString()}`);
-      const servicesData = await servicesResponse.json();
-      
-      if (!servicesData.success || !servicesData.services || servicesData.services.length === 0) {
-        console.log('⚠️ No services found in database');
-        setProviders([]);
-        setLoadingProviders(false);
-        return;
-      }
-      
-      let filteredServices = servicesData.services;
-      console.log('📦 Total services from API:', filteredServices.length);
-      
-      // Additional client-side category filtering if multiple categories selected
-      // (Backend can only filter by one category at a time)
-      if (journeyData.selectedServices && journeyData.selectedServices.length > 1) {
-        const selectedCategoriesNormalized = journeyData.selectedServices.map(normalize);
-        
-        filteredServices = filteredServices.filter(service => {
-          const serviceCategory = normalize(service.category);
-          return selectedCategoriesNormalized.includes(serviceCategory);
+        filteredProviders = filteredProviders.filter(provider => {
+          const providerRegion = (provider.region || '').toLowerCase().trim();
+          const selectedRegion = (selectedLocation.region || '').toLowerCase().trim();
+          return providerRegion === selectedRegion;
         });
-        
-        console.log(`🏷️ After client-side category filter (${journeyData.selectedServices.join(', ')}):`, filteredServices.length);
+        console.log(`📍 After region filter (${selectedLocation.region}):`, filteredProviders.length);
       }
       
-      // If no services found, log helpful debug info
-      if (filteredServices.length === 0) {
-        console.log('❌ No services match criteria. Debug info:');
-        console.log('   - Filters applied: Region =', selectedLocation.region, ', District =', selectedLocation.district, ', Ward =', selectedLocation.ward, ', Categories =', journeyData.selectedServices);
-        
-        // Fetch available categories in this location to help user
-        const availableCategoriesResponse = await fetch(
-          `${API_URL}/services?limit=100&region=${selectedLocation.region}${selectedLocation.district ? `&district=${selectedLocation.district}` : ''}`
-        );
-        const availableCategoriesData = await availableCategoriesResponse.json();
-        
-        if (availableCategoriesData.success && availableCategoriesData.services?.length > 0) {
-          const availableCategories = [...new Set(availableCategoriesData.services.map(s => s.category))];
-          console.log('   - Available categories in this location:', availableCategories.join(', '));
-          
-          // Store available categories for UI display
-          setProviders([]);
-          setLoadingProviders(false);
-          
-          // Show helpful message to user
-          alert(`No providers found for ${journeyData.selectedServices.join(', ')} in ${selectedLocation.district || selectedLocation.region}.\n\nAvailable categories in this area:\n${availableCategories.join('\n')}\n\nTry selecting one of these categories instead.`);
-          return;
-        }
-        
-        setProviders([]);
-        setLoadingProviders(false);
-        return;
+      if (selectedLocation.district) {
+        filteredProviders = filteredProviders.filter(provider => {
+          const providerDistrict = (provider.district || '').toLowerCase().trim();
+          const selectedDistrict = (selectedLocation.district || '').toLowerCase().trim();
+          return providerDistrict === selectedDistrict;
+        });
+        console.log(`📍 After district filter (${selectedLocation.district}):`, filteredProviders.length);
       }
       
-      // Group by provider
-      const providerMap = new Map();
-      filteredServices.forEach(service => {
-        const providerId = service.provider_id;
-        if (!providerId) return;
-        
-        if (!providerMap.has(providerId)) {
-          providerMap.set(providerId, {
-            id: providerId,
-            business_name: service.business_name || 'Service Provider',
-            business_type: service.category || 'General',
-            location: service.location || `${service.district || ''}, ${service.region || ''}`.trim(),
-            region: service.region,
-            district: service.district,
-            ward: service.area,
-            is_verified: service.provider_verified || service.is_verified || false,
-            is_premium: service.provider_premium || false,
-            rating: service.average_rating || 0,
-            total_reviews: service.review_count || 0,
-            service_categories: [service.category],
-            services: [service],
-            services_count: 1,
-            description: service.provider_description || service.description,
-            price: service.price
-          });
-        } else {
-          const provider = providerMap.get(providerId);
-          if (!provider.service_categories.includes(service.category)) {
-            provider.service_categories.push(service.category);
-          }
-          provider.services.push(service);
-          provider.services_count++;
-        }
-      });
+      if (selectedLocation.ward) {
+        filteredProviders = filteredProviders.filter(provider => {
+          const providerWard = (provider.ward || provider.area || '').toLowerCase().trim();
+          const selectedWard = (selectedLocation.ward || '').toLowerCase().trim();
+          return providerWard === selectedWard;
+        });
+        console.log(`📍 After ward filter (${selectedLocation.ward}):`, filteredProviders.length);
+      }
       
-      const matchingProviders = Array.from(providerMap.values());
-      console.log('✅ Providers matching criteria:', matchingProviders.length);
-      console.log('✅ Provider details:', matchingProviders.map(p => ({
+      // Filter by service categories if specified
+      if (journeyData.selectedServices && journeyData.selectedServices.length > 0) {
+        filteredProviders = filteredProviders.filter(provider => {
+          const providerCategories = (provider.service_categories || []).map(cat => 
+            (cat || '').toLowerCase().trim()
+          );
+          const selectedCategories = journeyData.selectedServices.map(cat => 
+            (cat || '').toLowerCase().trim()
+          );
+          
+          // Check if provider has any of the selected categories
+          return selectedCategories.some(selectedCat => 
+            providerCategories.some(providerCat => 
+              providerCat.includes(selectedCat) || selectedCat.includes(providerCat)
+            )
+          );
+        });
+        console.log(`🏷️ After category filter (${journeyData.selectedServices.join(', ')}):`, filteredProviders.length);
+      }
+      
+      console.log('✅ Providers matching criteria:', filteredProviders.length);
+      console.log('✅ Provider details:', filteredProviders.map(p => ({
         name: p.business_name,
         location: `${p.district || ''}, ${p.region || ''}`,
-        categories: p.service_categories,
-        servicesCount: p.services_count
+        categories: p.service_categories
       })));
       
-      setProviders(matchingProviders);
+      setProviders(filteredProviders);
       
     } catch (error) {
       console.error('❌ Error fetching providers:', error);
@@ -1617,67 +1559,74 @@ const JourneyPlannerEnhanced = () => {
             }}>
               <Icon name="Clock" size={16} /> Pre-Order
             </Button>
-            <Button onClick={() => {
-              // Save trip AND add to cart
-              const journeyPlan = {
-                id: Date.now(),
-                status: 'saved',
-                country: 'Tanzania',
-                region: selectedLocation.region,
-                district: selectedLocation.district,
-                area: selectedLocation.ward || selectedLocation.district,
-                startDate: journeyData.checkInDate || journeyData.startDate,
-                endDate: journeyData.checkOutDate || journeyData.endDate,
-                travelers: journeyData.adults || journeyData.travelers || 1,
-                services: journeyData.selectedServiceDetails?.map(service => ({
-                  id: service.id,
-                  service_id: service.id,
-                  title: service.title,
-                  name: service.title,
-                  category: service.category,
-                  price: parseFloat(service.price || 0),
-                  provider_id: service.provider_id,
-                  provider_name: service.provider_name,
-                  location: service.provider_location || service.location,
-                  image: service.images?.[0],
-                  description: service.description
-                })) || [],
-                totalCost: totalBudget,
-                created_at: new Date().toISOString()
-              };
-              
-              // Save plan
-              const existingPlans = JSON.parse(localStorage.getItem('journey_plans') || '[]');
-              existingPlans.push(journeyPlan);
-              localStorage.setItem('journey_plans', JSON.stringify(existingPlans));
-              
-              // Add services to cart
-              const cartItems = journeyData.selectedServiceDetails?.map(service => ({
-                id: `service_${service.id}_${Date.now()}`,
-                service_id: service.id,
-                name: service.title,
-                category: service.category,
-                description: service.description,
-                price: parseFloat(service.price || 0),
-                quantity: days,
-                region: service.provider_location?.region || selectedLocation.region,
-                district: service.provider_location?.district || selectedLocation.district,
-                image: service.images?.[0] || service.image_url,
-                provider_id: service.provider_id,
-                provider_name: service.provider_name,
-                journey_details: {
-                  startDate: journeyData.checkInDate || journeyData.startDate,
-                  endDate: journeyData.checkOutDate || journeyData.endDate,
-                  travelers: journeyData.adults || journeyData.travelers || 1,
-                  destination: journeyData.destination
-                }
-              })) || [];
-
-              if (cartItems.length > 0) {
-                addMultipleToCart(cartItems);
-                navigate('/traveler-dashboard?tab=cart&openPayment=true');
-              } else {
+            <Button onClick={async () => {
+              // Check if services are selected
+              if (!journeyData.selectedServiceDetails || journeyData.selectedServiceDetails.length === 0) {
                 alert('Please select services from providers first!');
+                return;
+              }
+
+              console.log('🛒 [Journey Planner] Starting cart addition process...');
+              console.log('📦 [Journey Planner] Services to add:', journeyData.selectedServiceDetails);
+              
+              try {
+                let successCount = 0;
+                let failCount = 0;
+                const errors = [];
+                
+                // Add each service to cart via API
+                for (const service of journeyData.selectedServiceDetails) {
+                  try {
+                    const serviceId = service.id;
+                    const quantity = days || 1;
+                    
+                    console.log(`➕ [Journey Planner] Adding service ${serviceId} (${service.title}) to cart...`);
+                    
+                    // Call backend API to add to cart
+                    const result = await addToCart({
+                      id: serviceId,
+                      serviceId: serviceId,
+                      quantity: quantity,
+                      title: service.title,
+                      price: service.price
+                    });
+                    
+                    if (result && result.success) {
+                      successCount++;
+                      console.log(`✅ [Journey Planner] Added: ${service.title}`);
+                    } else {
+                      failCount++;
+                      const errorMsg = result?.message || 'Unknown error';
+                      errors.push(`${service.title}: ${errorMsg}`);
+                      console.error(`❌ [Journey Planner] Failed: ${service.title} - ${errorMsg}`);
+                    }
+                  } catch (error) {
+                    failCount++;
+                    errors.push(`${service.title}: ${error.message}`);
+                    console.error(`❌ [Journey Planner] Error adding ${service.title}:`, error);
+                  }
+                }
+                
+                console.log(`📊 [Journey Planner] Cart update complete: ${successCount} added, ${failCount} failed`);
+                
+                if (successCount > 0) {
+                  // Show success message
+                  if (failCount > 0) {
+                    alert(`✅ ${successCount} service(s) added to cart!\n\n⚠️ ${failCount} failed:\n${errors.join('\n')}`);
+                  } else {
+                    console.log('✅ [Journey Planner] All services added successfully!');
+                  }
+                  
+                  // Navigate to cart page
+                  console.log('🚀 [Journey Planner] Navigating to cart...');
+                  navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                } else {
+                  // All failed
+                  alert(`❌ Failed to add services to cart:\n\n${errors.join('\n')}\n\nPlease try again or contact support.`);
+                }
+              } catch (error) {
+                console.error('❌ [Journey Planner] Critical error:', error);
+                alert('Error adding services to cart. Please try again.');
               }
             }}>
               <Icon name="ShoppingCart" size={16} /> Continue to Cart & Payment

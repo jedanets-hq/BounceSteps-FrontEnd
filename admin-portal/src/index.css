@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* iSafari Brand Colors - Light Mode */
+    --color-background: #FEFEFE;
+    --color-foreground: #1A1A1A;
+    --color-border: #E5E7EB;
+    --color-input: #FFFFFF;
+    --color-ring: #2C5F41;
+    
+    --color-card: #FFFFFF;
+    --color-card-foreground: #1A1A1A;
+    --color-popover: #FFFFFF;
+    --color-popover-foreground: #1A1A1A;
+    
+    --color-muted: #F8F9FA;
+    --color-muted-foreground: #6B7280;
+    
+    /* iSafari Primary Green */
+    --color-primary: #2C5F41;
+    --color-primary-foreground: #FFFFFF;
+    
+    /* iSafari Secondary Blue */
+    --color-secondary: #4A90A4;
+    --color-secondary-foreground: #FFFFFF;
+    
+    /* iSafari Accent Amber */
+    --color-accent: #D4A574;
+    --color-accent-foreground: #1A1A1A;
+    
+    --color-success: #059669;
+    --color-success-foreground: #FFFFFF;
+    
+    --color-warning: #D97706;
+    --color-warning-foreground: #FFFFFF;
+    
+    --color-error: #DC2626;
+    --color-error-foreground: #FFFFFF;
+    
+    --color-destructive: #DC2626;
+    --color-destructive-foreground: #FFFFFF;
+  }
+
+  /* Dark Mode - iSafari Style with Perfect Contrast */
+  .dark, [data-theme="dark"] {
+    --color-background: #0f172a;
+    --color-foreground: #ffffff;
+    --color-border: #334155;
+    --color-input: #1e293b;
+    --color-ring: #60a5fa;
+    
+    --color-card: #1e293b;
+    --color-card-foreground: #ffffff;
+    --color-popover: #1e293b;
+    --color-popover-foreground: #ffffff;
+    
+    --color-muted: #334155;
+    --color-muted-foreground: #e2e8f0;
+    
+    --color-primary: #10b981;
+    --color-primary-foreground: #ffffff;
+    
+    --color-secondary: #3b82f6;
+    --color-secondary-foreground: #ffffff;
+    
+    --color-accent: #f59e0b;
+    --color-accent-foreground: #ffffff;
+    
+    --color-success: #10b981;
+    --color-success-foreground: #ffffff;
+    
+    --color-warning: #f59e0b;
+    --color-warning-foreground: #ffffff;
+    
+    --color-error: #ef4444;
+    --color-error-foreground: #ffffff;
+    
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #ffffff;
+  }
+  
+  /* Dark mode specific fixes */
+  .dark select,
+  .dark input,
+  .dark textarea {
+    background-color: #1e293b;
+    color: #ffffff;
+    border-color: #334155;
+  }
+  
+  .dark select option {
+    background-color: #1e293b;
+    color: #ffffff;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+}
+
+/* Custom scrollbar - iSafari Style */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-muted-foreground);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}

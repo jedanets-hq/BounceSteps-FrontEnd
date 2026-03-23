@@ -370,7 +370,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
       message: (booking) => `${booking.business_name || 'The service provider'} is currently reviewing your pre-order request. You'll receive a notification as soon as they respond. This usually takes 24-48 hours.`
     },
     confirmed: {
-      badge: '✅ Approved',
+      badge: 'Approved',
       badgeColor: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
       borderColor: 'border-green-300',
       messageBg: 'bg-green-50 dark:bg-green-900/10',
@@ -380,10 +380,10 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
       iconBg: 'bg-green-100 dark:bg-green-900/30',
       iconColor: 'text-green-700 dark:text-green-300',
       ringColor: 'ring-green-200',
-      message: (booking) => `🎉 Your pre-order has been approved! ${booking.business_name || 'The service provider'} has confirmed your booking. They will contact you shortly with payment details and further instructions to finalize your trip.`
+      message: (booking) => `Your pre-order has been approved! ${booking.business_name || 'The service provider'} has confirmed your booking. They will contact you shortly with payment details and further instructions to finalize your trip.`
     },
     cancelled: {
-      badge: '❌ Rejected',
+      badge: 'Rejected',
       badgeColor: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
       borderColor: 'border-red-300',
       messageBg: 'bg-red-50 dark:bg-red-900/10',
@@ -396,7 +396,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
       message: (booking) => `Your pre-order has been rejected. ${booking.business_name || 'The service provider'} is unable to fulfill your booking at the requested time. This may be due to availability issues. Please explore alternative services or contact the provider for different dates.`
     },
     completed: {
-      badge: '🎉 Completed',
+      badge: 'Completed',
       badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
       borderColor: 'border-blue-300',
       messageBg: 'bg-blue-50 dark:bg-blue-900/10',
@@ -451,7 +451,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-semibold text-green-800 dark:text-green-200 flex items-center">
                 <Icon name="CheckCircle" size={18} className="mr-2" />
-                ✅ Pre-Order Approved
+                Pre-Order Approved
               </h4>
               <span className="text-sm text-muted-foreground">
                 {confirmedBookings.length} {confirmedBookings.length === 1 ? 'order' : 'orders'}
@@ -471,7 +471,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-semibold text-red-800 dark:text-red-200 flex items-center">
                 <Icon name="XCircle" size={18} className="mr-2" />
-                ❌ Pre-Order Rejected
+                Pre-Order Rejected
               </h4>
               <span className="text-sm text-muted-foreground">
                 {rejectedBookings.length} {rejectedBookings.length === 1 ? 'order' : 'orders'}
@@ -491,7 +491,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-semibold text-blue-800 dark:text-blue-200 flex items-center">
                 <Icon name="CheckCircle2" size={18} className="mr-2" />
-                🎉 Trip Completed
+                Trip Completed
               </h4>
               <span className="text-sm text-muted-foreground">
                 {completedBookings.length} {completedBookings.length === 1 ? 'trip' : 'trips'}

@@ -191,22 +191,47 @@ router.get('/provider/my-services', authenticateJWT, async (req, res) => {
   try {
     console.log('📋 Fetching services for user:', req.user.id);
     
+    // FIXED: Get service_providers.id first, then query services
+    const providerResult = await pool.query(
+      'SELECT id FROM service_providers WHERE user_id = $1',
+      [req.user.id]
+    );
+    
+    if (providerResult.rows.length === 0) {
+      console.log('⚠️ No provider profile found for user:', req.user.id);
+      return res.json({
+        success: true,
+        services: []
+      });
+    }
+    
+    const providerId = providerResult.rows[0].id;
+    console.log('✅ Provider ID:', providerId);
+    
     const result = await pool.query(`
       SELECT s.*, 
-             COUNT(DISTINCT b.id) as total_bookings,
-             AVG(b.rating) as average_rating
+             COALESCE(COUNT(DISTINCT b.id), 0) as total_bookings
       FROM services s
-      LEFT JOIN bookings b ON s.id = b.service_id
+      LEFT JOIN bookings b ON b.service_id = s.id
       WHERE s.provider_id = $1
       GROUP BY s.id
       ORDER BY s.created_at DESC
-    `, [req.user.id]);
+    `, [providerId]);
     
     console.log(`✅ Found ${result.rows.length} services for user ${req.user.id}`);
     
+    // Parse JSON fields
+    const parsedServices = result.rows.map(service => ({
+      ...service,
+      images: service.images ? (typeof service.images === 'string' ? JSON.parse(service.images) : service.images) : [],
+      amenities: service.amenities ? (typeof service.amenities === 'string' ? JSON.parse(service.amenities) : service.amenities) : [],
+      payment_methods: service.payment_methods ? (typeof service.payment_methods === 'string' ? JSON.parse(service.payment_methods) : service.payment_methods) : {},
+      contact_info: service.contact_info ? (typeof service.contact_info === 'string' ? JSON.parse(service.contact_info) : service.contact_info) : {}
+    }));
+    
     res.json({
       success: true,
-      services: result.rows
+      services: parsedServices
     });
   } catch (error) {
     console.error('❌ Error fetching provider services:', error);

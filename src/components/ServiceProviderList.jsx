@@ -250,22 +250,28 @@ const ServiceProviderList = ({ region, district, selectedServices, onSelectProvi
               )}
               
               {/* Amenities */}
-              {viewingService.amenities && viewingService.amenities.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                    <Icon name="CheckCircle" size={20} className="text-primary" />
-                    Amenities & Features
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {viewingService.amenities.map((amenity, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-sm">
-                        <Icon name="Check" size={16} className="text-green-500" />
-                        <span>{amenity}</span>
-                      </div>
-                    ))}
+              {(() => {
+                const amenities = Array.isArray(viewingService.amenities) 
+                  ? viewingService.amenities 
+                  : [];
+                
+                return amenities.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Icon name="CheckCircle" size={20} className="text-primary" />
+                      Amenities & Features
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {amenities.map((amenity, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm">
+                          <Icon name="Check" size={16} className="text-green-500" />
+                          <span>{amenity}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
               
               {/* Additional Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Provider API - Direct</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .status.ok {
+            background: #28a745;
+            color: white;
+        }
+        .status.fail {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Provider API - Direct Connection</h1>
+        
+        <p><strong>Purpose:</strong> Test if backend is accessible from browser (bypassing React app cache)</p>
+        
+        <div>
+            <button onclick="testBackendHealth()">1. Test Backend Health</button>
+            <button onclick="testProviderAPI()">2. Test Provider API</button>
+            <button onclick="testAllProviders()">3. Test All Providers</button>
+            <button onclick="clearAndReload()">4. Clear Cache & Reload</button>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:5000';
+        const resultDiv = document.getElementById('result');
+
+        function showResult(message, type = 'info') {
+            resultDiv.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        async function testBackendHealth() {
+            showResult('⏳ Testing backend health...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(
+                        `✅ BACKEND IS RUNNING!\n\n` +
+                        `Status: ${response.status} ${response.statusText}\n` +
+                        `Service: ${data.service}\n` +
+                        `Timestamp: ${data.timestamp}\n\n` +
+                        `Backend URL: ${BACKEND_URL}`,
+                        'success'
+                    );
+                } else {
+                    showResult(
+                        `❌ Backend responded with error\n\n` +
+                        `Status: ${response.status}\n` +
+                        `Response: ${JSON.stringify(data, null, 2)}`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult(
+                    `❌ CANNOT CONNECT TO BACKEND!\n\n` +
+                    `Error: ${error.message}\n\n` +
+                    `Possible causes:\n` +
+                    `1. Backend is not running (run: cd backend && npm start)\n` +
+                    `2. Backend is running on different port\n` +
+                    `3. CORS issue (check backend CORS config)\n\n` +
+                    `Expected URL: ${BACKEND_URL}`,
+                    'error'
+                );
+            }
+        }
+
+        async function testProviderAPI() {
+            showResult('⏳ Testing provider API (ID: 1)...', 'info');
+            
+            try {
+                const url = `${BACKEND_URL}/api/providers/1`;
+                console.log('Fetching:', url);
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const provider = data.provider;
+                    showResult(
+                        `✅ PROVIDER API WORKS!\n\n` +
+                        `Status: ${response.status} ${response.statusText}\n` +
+                        `Provider ID: ${provider.id}\n` +
+                        `Business Name: ${provider.business_name}\n` +
+                        `Location: ${provider.location}\n` +
+                        `Services Count: ${provider.services?.length || 0}\n` +
+                        `Verified: ${provider.is_verified ? 'Yes' : 'No'}\n\n` +
+                        `Full Response:\n${JSON.stringify(data, null, 2)}`,
+                        'success'
+                    );
+                } else {
+                    showResult(
+                        `❌ Provider API returned error\n\n` +
+                        `Status: ${response.status}\n` +
+                        `Response: ${JSON.stringify(data, null, 2)}`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult(
+                    `❌ FAILED TO FETCH PROVIDER!\n\n` +
+                    `Error: ${error.message}\n\n` +
+                    `This is the SAME error you see in React app!\n` +
+                    `Possible causes:\n` +
+                    `1. Backend not running\n` +
+                    `2. CORS blocking the request\n` +
+                    `3. Network issue`,
+                    'error'
+                );
+            }
+        }
+
+        async function testAllProviders() {
+            showResult('⏳ Testing all providers API...', 'info');
+            
+            try {
+                const url = `${BACKEND_URL}/api/providers`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showResult(
+                        `✅ ALL PROVIDERS API WORKS!\n\n` +
+                        `Status: ${response.status} ${response.statusText}\n` +
+                        `Total Providers: ${data.providers?.length || 0}\n\n` +
+                        `Providers:\n${data.providers.map(p => 
+                            `  - ID: ${p.id}, Name: ${p.business_name}, Location: ${p.location}`
+                        ).join('\n')}`,
+                        'success'
+                    );
+                } else {
+                    showResult(
+                        `❌ All providers API returned error\n\n` +
+                        `Status: ${response.status}\n` +
+                        `Response: ${JSON.stringify(data, null, 2)}`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult(
+                    `❌ FAILED TO FETCH PROVIDERS!\n\n` +
+                    `Error: ${error.message}`,
+                    'error'
+                );
+            }
+        }
+
+        function clearAndReload() {
+            showResult('🔄 Clearing cache and reloading...', 'info');
+            
+            // Clear localStorage
+            localStorage.clear();
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            
+            // Show message
+            alert(
+                '✅ Cache cleared!\n\n' +
+                'Now:\n' +
+                '1. Close this tab\n' +
+                '2. Press Ctrl + Shift + Delete\n' +
+                '3. Clear "Cached images and files"\n' +
+                '4. Close browser completely\n' +
+                '5. Reopen and go to: http://localhost:4028/provider/1'
+            );
+        }
+
+        // Auto-run health check on load
+        window.addEventListener('load', () => {
+            setTimeout(testBackendHealth, 500);
+        });
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from './AppIcon';
 import Button from './ui/Button';
-import VerifiedBadge from './ui/VerifiedBadge';
+import ProviderBadge from './ui/ProviderBadge';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { bookingsAPI } from '../utils/api';
 
@@ -27,16 +27,25 @@ const ProviderCard = ({ provider, onViewProfile, onSelect, isSelected }) => {
             </div>
           )}
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-lg text-foreground">{provider.business_name}</h3>
-              {provider.is_verified && <VerifiedBadge size="sm" />}
+              {/* Display badges from database (can be multiple) */}
+              {provider.badges && provider.badges.length > 0 && (
+                <div className="flex items-center gap-1">
+                  {provider.badges.map((badge, index) => (
+                    <ProviderBadge key={index} badgeType={badge.badge_type} size="sm" showText={false} />
+                  ))}
+                </div>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">{provider.business_type}</p>
-            {provider.is_premium && (
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">
-                <Icon name="Star" size={12} className="mr-1" />
-                Premium
-              </span>
+            {/* Show badges with text below name */}
+            {provider.badges && provider.badges.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {provider.badges.map((badge, index) => (
+                  <ProviderBadge key={index} badgeType={badge.badge_type} size="xs" showText={true} />
+                ))}
+              </div>
             )}
           </div>
         </div>
@@ -113,7 +122,7 @@ const ProviderCard = ({ provider, onViewProfile, onSelect, isSelected }) => {
                   business_name: provider.business_name,
                   location: provider.location,
                   service_categories: provider.service_categories,
-                  is_verified: provider.is_verified,
+                  badge_type: provider.badge_type,
                   rating: provider.rating,
                   total_reviews: provider.total_reviews,
                   services_count: provider.services_count

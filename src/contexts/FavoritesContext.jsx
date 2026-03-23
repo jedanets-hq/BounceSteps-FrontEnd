@@ -82,7 +82,7 @@ export const FavoritesProvider = ({ children }) => {
     loadFavoritesFromDatabase(true);
   }, []); // Empty deps - runs once on mount only
 
-  const addToFavorites = useCallback(async (providerId) => {
+  const addToFavorites = useCallback(async (typeOrId, id) => {
     try {
       const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       
@@ -91,10 +91,13 @@ export const FavoritesProvider = ({ children }) => {
         return false;
       }
 
-      const response = await favoritesAPI.addToFavorites(providerId);
+      // Support both old format (providerId) and new format (type, id)
+      const response = await favoritesAPI.addToFavorites(typeOrId, id);
       
       if (response.success) {
-        console.log('✅ [Favorites] Added provider:', providerId);
+        const itemType = id ? typeOrId : 'provider';
+        const itemId = id || typeOrId;
+        console.log(`✅ [Favorites] Added ${itemType}:`, itemId);
         // Reload favorites after successful add
         await loadFavoritesFromDatabase(true);
         return true;
@@ -108,7 +111,7 @@ export const FavoritesProvider = ({ children }) => {
     }
   }, [loadFavoritesFromDatabase]);
 
-  const removeFromFavorites = useCallback(async (providerId) => {
+  const removeFromFavorites = useCallback(async (typeOrId, id) => {
     try {
       const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       
@@ -117,8 +120,8 @@ export const FavoritesProvider = ({ children }) => {
         return false;
       }
 
-      // ALWAYS remove from database
-      const response = await favoritesAPI.removeFromFavorites(providerId);
+      // ALWAYS remove from database - support both old and new formats
+      const response = await favoritesAPI.removeFromFavorites(typeOrId, id);
       if (response.success) {
         await loadFavoritesFromDatabase(true); // Force reload after remove
         return true;
@@ -130,16 +133,25 @@ export const FavoritesProvider = ({ children }) => {
     }
   }, [loadFavoritesFromDatabase]);
 
-  const checkFavorite = useCallback(async (providerId) => {
+  const checkFavorite = useCallback(async (typeOrId, id) => {
     try {
       const user = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       
       if (!user.token) {
-        // Check in local state
-        return favorites.some(fav => fav.id === providerId || fav.provider_id === providerId);
+        // Check in local state - support both formats
+        if (id) {
+          // New format: checkFavorite('service', id)
+          return favorites.some(fav => 
+            (typeOrId === 'service' && fav.service_id === id) ||
+            (typeOrId === 'provider' && fav.provider_id === id)
+          );
+        } else {
+          // Old format: checkFavorite(providerId)
+          return favorites.some(fav => fav.id === typeOrId || fav.provider_id === typeOrId);
+        }
       }
 
-      const response = await favoritesAPI.checkFavorite(providerId);
+      const response = await favoritesAPI.checkFavorite(typeOrId, id);
       return response.success && response.isFavorite;
     } catch (error) {
       console.error('Error checking favorite:', error);
@@ -169,8 +181,18 @@ export const FavoritesProvider = ({ children }) => {
     }
   }, []);
 
-  const isFavorite = useCallback((providerId) => {
-    return favorites.some(fav => fav.provider_id === providerId || fav.id === providerId);
+  const isFavorite = useCallback((typeOrId, id) => {
+    // Support both old format (providerId) and new format (type, id)
+    if (id) {
+      // New format: isFavorite('service', id) or isFavorite('provider', id)
+      return favorites.some(fav => 
+        (typeOrId === 'service' && fav.service_id === id) ||
+        (typeOrId === 'provider' && fav.provider_id === id)
+      );
+    } else {
+      // Old format: isFavorite(providerId)
+      return favorites.some(fav => fav.provider_id === typeOrId || fav.id === typeOrId);
+    }
   }, [favorites]);
 
   const getFavoriteCount = useCallback(() => {

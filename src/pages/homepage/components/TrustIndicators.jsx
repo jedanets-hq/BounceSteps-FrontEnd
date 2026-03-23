@@ -152,33 +152,34 @@ const TrustIndicators = () => {
           </div>
         )}
 
-        {/* Trust Statistics - Real Data from Database */}
-        <div className="mt-12 sm:mt-16 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 text-center">
-          <div className="bg-card p-4 sm:p-6 rounded-lg border border-border">
-            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">
-              {stats.totalBookings > 0 ? formatNumber(stats.totalBookings) : '0'}
+        {/* Partnership Logos - Only show if there are partners */}
+        {partnerships.length > 0 && (
+          <div className="mb-12 sm:mb-16">
+            <h3 className="text-xl sm:text-2xl font-semibold text-center text-foreground mb-6 sm:mb-8">
+              Trusted Partners
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+              {partnerships?.map((partner) => (
+                <div
+                  key={partner?.id}
+                  className="bg-card rounded-lg p-4 sm:p-6 border border-border hover:shadow-md transition-shadow duration-200 text-center"
+                >
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-lg overflow-hidden bg-muted">
+                    <Image
+                      src={partner?.logo}
+                      alt={partner?.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <h4 className="font-medium text-card-foreground text-xs sm:text-sm mb-1">
+                    {partner?.name}
+                  </h4>
+                  <p className="text-xs text-muted-foreground">{partner?.type}</p>
+                </div>
+              ))}
             </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Total Bookings</div>
           </div>
-          <div className="bg-card p-4 sm:p-6 rounded-lg border border-border">
-            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">
-              {stats.totalTravelers > 0 ? formatNumber(stats.totalTravelers) : '0'}
-            </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Registered Travelers</div>
-          </div>
-          <div className="bg-card p-4 sm:p-6 rounded-lg border border-border">
-            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">
-              {stats.averageRating > 0 ? stats.averageRating.toFixed(1) + '/5' : 'N/A'}
-            </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Average Rating</div>
-          </div>
-          <div className="bg-card p-4 sm:p-6 rounded-lg border border-border">
-            <div className="text-2xl sm:text-3xl font-bold text-primary mb-1 sm:mb-2">
-              {stats.totalDestinations > 0 ? stats.totalDestinations : '0'}
-            </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Destinations</div>
-          </div>
-        </div>
+        )}
       </div>
     </section>
   );

@@ -87,11 +87,8 @@ const Register = () => {
   // Redirect if user is already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      console.log('✅ User already logged in, redirecting to dashboard');
-      const dashboardPath = user.userType === 'service_provider' 
-        ? '/service-provider-dashboard' 
-        : '/traveler-dashboard';
-      navigate(dashboardPath, { replace: true });
+      console.log('✅ User already logged in, redirecting to home');
+      navigate('/', { replace: true });
     }
   }, [authLoading, user, navigate]);
 

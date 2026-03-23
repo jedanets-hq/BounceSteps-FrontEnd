@@ -94,6 +94,8 @@ if (process.env.JWT_SECRET) {
       if (user) {
         // Remove password from user object
         delete user.password;
+        // Add userType alias for consistency with frontend
+        user.userType = user.user_type;
         return done(null, user);
       }
       return done(null, false);

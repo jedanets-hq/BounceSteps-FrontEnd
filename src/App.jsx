@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { MessageProvider } from './contexts/MessageContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
 import { TripsProvider } from './contexts/TripsContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -14,13 +15,12 @@ import GoogleRoleSelection from './pages/auth/GoogleRoleSelection';
 import Dashboard from './pages/dashboard';
 import TravelerDashboard from './pages/traveler-dashboard';
 import ServiceProviderDashboard from './pages/service-provider-dashboard';
-import ProviderPartnershipPortal from './pages/provider-partnership-portal';
+// ProviderPartnershipPortal is DEPRECATED - removed to prevent old version from loading
 import AboutPage from './pages/about';
 import TestDashboard from './pages/TestDashboard';
 import DestinationDiscovery from './pages/DestinationDiscovery';
 import ServiceBooking from './pages/ServiceBooking';
 import JourneyPlannerEnhanced from './pages/JourneyPlannerEnhanced';
-import Profile from './pages/profile';
 import ProviderProfile from './pages/provider-profile';
 import './App.css';
 
@@ -31,10 +31,11 @@ function App() {
         <ThemeProvider>
           <AuthProvider>
             <CartProvider>
-              <FavoritesProvider>
-                <TripsProvider>
-                  <VersionChecker />
-                  <div className="App">
+              <MessageProvider>
+                <FavoritesProvider>
+                  <TripsProvider>
+                    <VersionChecker />
+                    <div className="App">
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/login" element={<LoginPage />} />
@@ -45,19 +46,18 @@ function App() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/traveler-dashboard" element={<TravelerDashboard />} />
                   <Route path="/service-provider-dashboard" element={<ServiceProviderDashboard />} />
-                  <Route path="/provider-partnership-portal" element={<ProviderPartnershipPortal />} />
+                  {/* OLD PROVIDER PORTAL - DEPRECATED - Redirect to new dashboard */}
+                  <Route path="/provider-partnership-portal" element={<Navigate to="/service-provider-dashboard" replace />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/destination-discovery" element={<DestinationDiscovery />} />
                   <Route path="/service-booking" element={<ServiceBooking />} />
                   <Route path="/journey-planner" element={<JourneyPlannerEnhanced />} />
-                  <Route path="/profile" element={<Profile />} />
                   <Route path="/provider/:providerId" element={<ProviderProfile />} />
-                  {/* Redirect /cart to traveler dashboard with cart tab */}
-                  <Route path="/cart" element={<Navigate to="/traveler-dashboard" state={{ tab: 'cart' }} replace />} />
                   </Routes>
                   </div>
-                </TripsProvider>
-              </FavoritesProvider>
+                  </TripsProvider>
+                </FavoritesProvider>
+              </MessageProvider>
             </CartProvider>
           </AuthProvider>
         </ThemeProvider>

@@ -5,7 +5,7 @@ import Button from '../../../components/ui/Button';
 import LocationSelector from '../../../components/LocationSelector';
 import { API_URL } from '../../../utils/api';
 
-const ServiceManagement = () => {
+const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditComplete }) => {
   const { user } = useAuth();
   const fileInputRef = useRef(null);
   const [showAddService, setShowAddService] = useState(false);
@@ -63,6 +63,21 @@ const ServiceManagement = () => {
       fetchProviderProfile();
     }
   }, [user]);
+
+  // Auto-trigger edit mode when propEditingServiceId is provided
+  useEffect(() => {
+    if (propEditingServiceId && myServices.length > 0) {
+      const serviceToEdit = myServices.find(s => s.id === propEditingServiceId);
+      if (serviceToEdit) {
+        console.log('🎯 Auto-triggering edit mode for service:', serviceToEdit.title);
+        handleEditService(serviceToEdit);
+        // Clear the prop after triggering edit
+        if (onEditComplete) {
+          onEditComplete();
+        }
+      }
+    }
+  }, [propEditingServiceId, myServices]);
 
   const fetchProviderProfile = async () => {
     try {
@@ -129,14 +144,18 @@ const ServiceManagement = () => {
           // For service providers without complete profile, create a basic one
           // This allows them to add services - backend will auto-create provider profile
           const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
+          
+          // Try to get service categories from user data or use empty array
+          const userCategories = userData.serviceCategories || [];
+          
           setProviderProfile({
             id: null,
             business_name: (userData.firstName || '') + ' ' + (userData.lastName || ''),
-            service_categories: ['General'],
+            service_categories: userCategories.length > 0 ? userCategories : ['Tours & Activities'],
             location: 'Tanzania',
             location_data: {}
           });
-          console.log('📝 Created basic provider profile for service creation');
+          console.log('📝 Created basic provider profile for service creation with categories:', userCategories);
         }
       }
     } catch (error) {
@@ -243,15 +262,14 @@ const ServiceManagement = () => {
       // Use location from provider profile or default
       const locationString = providerProfile?.location || providerProfile?.service_location || 'Tanzania';
       
-      // Use category from form or provider profile (first category if multiple) or default
-      const category = serviceForm.category || providerProfile?.service_categories?.[0] || 'Tours & Activities';
+      // Use category from provider profile (first category if multiple) or default
+      // NOTE: For NEW services, category comes from provider registration
+      // For EDITING services, use the existing service category
+      const category = editingServiceId 
+        ? serviceForm.category || providerProfile?.service_categories?.[0] || 'Tours & Activities'
+        : providerProfile?.service_categories?.[0] || 'Tours & Activities';
       
-      // Validate category
-      if (!category || category === '') {
-        alert('Please select a service category');
-        setIsSubmitting(false);
-        return;
-      }
+      console.log('✅ Using category:', category, editingServiceId ? '(from existing service)' : '(from provider profile)');
       
       // Validate contact info - at least one contact method required
       const hasContact = serviceForm.contactInfo.email.enabled || serviceForm.contactInfo.whatsapp.enabled;
@@ -341,7 +359,7 @@ const ServiceManagement = () => {
       }
 
       // Determine if we're editing or creating
-      const url = editingServiceId ? `/api/services/${editingServiceId}` : '/api/services';
+      const url = editingServiceId ? `${API_URL}/services/${editingServiceId}` : `${API_URL}/services`;
       const method = editingServiceId ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -442,19 +460,53 @@ const ServiceManagement = () => {
     // Set editing mode
     setEditingServiceId(service.id);
     
+    // Parse payment_methods and contact_info if they're strings
+    let paymentMethods = service.payment_methods || {};
+    let contactInfo = service.contact_info || {};
+    
+    if (typeof paymentMethods === 'string') {
+      try {
+        paymentMethods = JSON.parse(paymentMethods);
+      } catch (e) {
+        console.error('Error parsing payment_methods:', e);
+        paymentMethods = {};
+      }
+    }
+    
+    if (typeof contactInfo === 'string') {
+      try {
+        contactInfo = JSON.parse(contactInfo);
+      } catch (e) {
+        console.error('Error parsing contact_info:', e);
+        contactInfo = {};
+      }
+    }
+    
     // Populate form with service data
     setServiceForm({
       name: service.title,
       description: service.description || '',
+      category: service.category || '', // IMPORTANT: Preserve category
       price: service.price || '',
       duration: service.duration || '',
       capacity: service.max_participants || '',
       includes: service.amenities ? service.amenities.join(', ') : '',
       excludes: '',
       requirements: '',
-      images: service.images && service.images.length > 0 
+      images: Array.isArray(service.images) && service.images.length > 0 
         ? service.images.map(img => ({preview: img, isUrl: true})) 
-        : []
+        : [],
+      // IMPORTANT: Preserve payment methods and contact info
+      paymentMethods: {
+        visa: paymentMethods.visa || { enabled: false, cardHolder: '', lastFourDigits: '' },
+        paypal: paymentMethods.paypal || { enabled: false, email: '' },
+        googlePay: paymentMethods.googlePay || { enabled: false, email: '' },
+        mobileMoney: paymentMethods.mobileMoney || { enabled: false, provider: '', phone: '' }
+      },
+      contactInfo: {
+        email: contactInfo.email || { enabled: false, address: '' },
+        whatsapp: contactInfo.whatsapp || { enabled: false, number: '' }
+      }
     });
     
     // Parse location to get street, ward, district, and region
@@ -555,20 +607,6 @@ const ServiceManagement = () => {
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   placeholder="Enter service name"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Category *</label>
-                <select
-                  value={serviceForm.category}
-                  onChange={(e) => setServiceForm({...serviceForm, category: e.target.value})}
-                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-                >
-                  <option value="">Select a category</option>
-                  {serviceCategories.map((cat) => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
               </div>
 
               <div>

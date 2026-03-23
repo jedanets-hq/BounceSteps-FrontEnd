@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { useMessages } from '../../contexts/MessageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Icon from '../AppIcon';
 import Button from './Button';
@@ -12,6 +13,7 @@ const Header = () => {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
   const { getCartCount, setIsCartOpen } = useCart();
+  const { unreadCount } = useMessages();
   const { theme, toggleTheme, isDark } = useTheme();
 
   // Navigation items for travelers
@@ -153,19 +155,53 @@ const Header = () => {
             
             {isAuthenticated && (
               <>
-                {/* Cart Button for logged in users */}
-                <button
-                  onClick={() => setIsCartOpen(true)}
-                  className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
-                  title="Shopping Cart"
-                >
-                  <Icon name="ShoppingCart" size={20} />
-                  {getCartCount() > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
-                      {getCartCount()}
-                    </span>
-                  )}
-                </button>
+                {/* Cart Button for logged in TRAVELERS ONLY */}
+                {user?.userType === 'traveler' && (
+                  <>
+                    <button
+                      onClick={() => navigate('/traveler-dashboard?tab=cart')}
+                      className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
+                      title="Shopping Cart"
+                    >
+                      <Icon name="ShoppingCart" size={20} />
+                      {getCartCount() > 0 && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                          {getCartCount()}
+                        </span>
+                      )}
+                    </button>
+                    
+                    {/* Messages Button for TRAVELERS */}
+                    <button
+                      onClick={() => navigate('/traveler-dashboard?tab=messages')}
+                      className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
+                      title="Messages"
+                    >
+                      <Icon name="MessageCircle" size={20} />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  </>
+                )}
+                
+                {/* Messages Button for SERVICE PROVIDERS */}
+                {user?.userType === 'service_provider' && (
+                  <button
+                    onClick={() => navigate('/service-provider-dashboard?tab=messages')}
+                    className="relative p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
+                    title="Messages"
+                  >
+                    <Icon name="MessageCircle" size={20} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                )}
                 
                 {/* User Menu */}
                 <div className="relative group">
@@ -189,7 +225,7 @@ const Header = () => {
                         </p>
                       </div>
                       <Link
-                        to="/profile"
+                        to={user?.userType === 'traveler' ? '/traveler-dashboard?tab=preferences' : '/service-provider-dashboard?tab=profile'}
                         className="flex items-center space-x-3 px-4 py-2 text-sm text-popover-foreground hover:bg-muted transition-colors"
                       >
                         <Icon name="User" size={16} />
@@ -214,7 +250,7 @@ const Header = () => {
                 </div>
                 
                 {user?.userType === 'service_provider' && (
-                  <Link to="/provider-partnership-portal">
+                  <Link to="/service-provider-dashboard">
                     <Button size="sm" onClick={(e) => e.stopPropagation()}>
                       <Icon name="Plus" size={16} />
                       Add Service

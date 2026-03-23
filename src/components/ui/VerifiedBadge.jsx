@@ -6,13 +6,13 @@ import React from 'react';
  * Design: Scalloped star (starburst) background like Instagram verified badge
  */
 const VerifiedBadge = ({ size = 'md', showText = false, className = '' }) => {
-  // Size configurations
+  // Size configurations - Increased for better visibility
   const sizes = {
-    xs: { badge: 16, text: 'text-xs' },
-    sm: { badge: 20, text: 'text-sm' },
-    md: { badge: 24, text: 'text-sm' },
-    lg: { badge: 32, text: 'text-base' },
-    xl: { badge: 40, text: 'text-lg' }
+    xs: { badge: 24, text: 'text-xs' },
+    sm: { badge: 32, text: 'text-sm' },
+    md: { badge: 40, text: 'text-sm' },
+    lg: { badge: 48, text: 'text-base' },
+    xl: { badge: 56, text: 'text-lg' }
   };
 
   const currentSize = sizes[size] || sizes.md;
@@ -64,11 +64,11 @@ const VerifiedBadge = ({ size = 'md', showText = false, className = '' }) => {
  */
 export const VerifiedBadgeCircle = ({ size = 'md', showText = false, className = '' }) => {
   const sizes = {
-    xs: { container: 16, text: 'text-xs' },
-    sm: { container: 20, text: 'text-sm' },
-    md: { container: 24, text: 'text-sm' },
-    lg: { container: 32, text: 'text-base' },
-    xl: { container: 40, text: 'text-lg' }
+    xs: { container: 24, text: 'text-xs' },
+    sm: { container: 32, text: 'text-sm' },
+    md: { container: 40, text: 'text-sm' },
+    lg: { container: 48, text: 'text-base' },
+    xl: { container: 56, text: 'text-lg' }
   };
 
   const currentSize = sizes[size] || sizes.md;
@@ -111,11 +111,11 @@ export const VerifiedBadgeCircle = ({ size = 'md', showText = false, className =
  */
 export const VerifiedBadgePremium = ({ size = 'md', showText = false, className = '' }) => {
   const sizes = {
-    xs: { badge: 18, text: 'text-xs' },
-    sm: { badge: 22, text: 'text-sm' },
-    md: { badge: 28, text: 'text-sm' },
-    lg: { badge: 36, text: 'text-base' },
-    xl: { badge: 44, text: 'text-lg' }
+    xs: { badge: 26, text: 'text-xs' },
+    sm: { badge: 34, text: 'text-sm' },
+    md: { badge: 42, text: 'text-sm' },
+    lg: { badge: 50, text: 'text-base' },
+    xl: { badge: 58, text: 'text-lg' }
   };
 
   const currentSize = sizes[size] || sizes.md;

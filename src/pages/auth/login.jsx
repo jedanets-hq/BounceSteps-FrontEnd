@@ -37,9 +37,13 @@ const Login = () => {
   useEffect(() => {
     const googleError = searchParams.get('error');
     const notRegisteredEmail = searchParams.get('email');
+    const errorMessage = searchParams.get('message');
     
     if (googleError === 'not_registered') {
-      setError(`This email "${notRegisteredEmail || ''}" is not registered. Please sign up first using the registration page.`);
+      // Show popup alert for not registered users
+      const message = errorMessage || `This Google account (${notRegisteredEmail || 'your email'}) is not registered. Please sign up first using the registration page.`;
+      alert(message);
+      setError(message);
     } else if (googleError === 'google_auth_failed') {
       setError('Google authentication failed. Please try again.');
     } else if (googleError === 'auth_failed') {
@@ -79,7 +83,7 @@ const Login = () => {
   const handleGoogleLogin = () => {
     // Redirect to backend Google OAuth endpoint
     // Google OAuth endpoint is at /api/auth/google
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://isafarimasterorg.onrender.com/api';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api';
     window.location.href = `${apiUrl}/auth/google`;
   };
 

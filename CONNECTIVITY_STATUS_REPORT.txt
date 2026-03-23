@@ -1,0 +1,52 @@
+
+BOUNCESTEPS CONNECTIVITY TEST REPORT
+Generated: 2026-03-23T17:23:09.740Z
+=====================================
+
+BACKEND (Cloud Run)
+-------------------
+URL: https://bouncesteps-backend-git-392429231515.europe-west1.run.app
+Status: ✅ ONLINE
+
+API ENDPOINTS
+-------------
+/api: WARNING (404)
+/api/services: OK (200)
+/api/providers: OK (200)
+/api/stories: WARNING (404)
+
+CORS CONFIGURATION
+------------------
+access-control-allow-origin: NOT SET
+access-control-allow-methods: NOT SET
+access-control-allow-headers: NOT SET
+
+FRONTEND CONFIGURATION
+----------------------
+Location: bouncesteps-frontend/
+Backend URL: https://bouncesteps-backend-git-392429231515.europe-west1.run.app
+Status: ✅ CONFIGURED
+
+ADMIN PORTAL CONFIGURATION
+--------------------------
+Location: bouncesteps-admin/
+Backend URL: https://bouncesteps-backend-git-392429231515.europe-west1.run.app
+Status: ✅ CONFIGURED
+
+SUMMARY
+-------
+✅ Backend is accessible
+⚠️ API endpoints responding
+✅ CORS headers present
+✅ Frontend configured
+✅ Admin configured
+
+RECOMMENDATIONS
+---------------
+
+⚠️  Some API endpoints have issues. Check logs.
+
+
+
+
+

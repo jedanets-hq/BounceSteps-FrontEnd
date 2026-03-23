@@ -69,7 +69,6 @@ const Homepage = () => {
               <ul className="space-y-2 text-sm text-background/80">
                 <li><a href="/destination-discovery" className="hover:text-background transition-colors">Destinations</a></li>
                 <li><a href="/journey-planner" className="hover:text-background transition-colors">Plan Journey</a></li>
-                <li><a href="/services-overview" className="hover:text-background transition-colors">Services</a></li>
                 <li><a href="/traveler-dashboard" className="hover:text-background transition-colors">Dashboard</a></li>
               </ul>
             </div>

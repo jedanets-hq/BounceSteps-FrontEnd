@@ -310,11 +310,12 @@ const GoogleRoleSelection = () => {
   const autoCompleteRegistration = async (gData, sData) => {
     console.log('🚀 Auto-completing registration with stored data...');
     console.log('📧 Google Data:', gData?.email);
-    console.log('📋 Stored Data:', sData?.userType);
+    console.log('📋 Stored Data:', JSON.stringify(sData, null, 2));
     
     // Validate inputs before proceeding
     if (!gData || !gData.googleId || !gData.email) {
       console.error('❌ Invalid Google data for auto-registration');
+      console.error('❌ gData:', JSON.stringify(gData, null, 2));
       setError('Invalid Google data. Please try again.');
       setIsLoading(false);
       setIsNewUserFlow(true);
@@ -324,20 +325,85 @@ const GoogleRoleSelection = () => {
     
     if (!sData || !sData.userType || !sData.phone) {
       console.error('❌ Invalid stored data for auto-registration');
+      console.error('❌ sData:', JSON.stringify(sData, null, 2));
       setError('Please fill in all required fields and try again.');
       setIsLoading(false);
       setIsNewUserFlow(true);
       setIsInitialized(true);
       return;
     }
+    
+    // Validate traveler-specific fields
+    if (sData.userType === 'traveler') {
+      console.log('🔍 Validating traveler fields...');
+      console.log('   firstName:', sData.firstName);
+      console.log('   lastName:', sData.lastName);
+      
+      if (!sData.firstName || !sData.firstName.trim()) {
+        console.error('❌ First name is required for traveler');
+        console.error('❌ firstName value:', sData.firstName);
+        setError('Please enter your first name and try again.');
+        setIsLoading(false);
+        setIsNewUserFlow(true);
+        setIsInitialized(true);
+        return;
+      }
+      if (!sData.lastName || !sData.lastName.trim()) {
+        console.error('❌ Last name is required for traveler');
+        console.error('❌ lastName value:', sData.lastName);
+        setError('Please enter your last name and try again.');
+        setIsLoading(false);
+        setIsNewUserFlow(true);
+        setIsInitialized(true);
+        return;
+      }
+      console.log('✅ Traveler validation passed');
+    }
+    
+    // Validate service provider-specific fields
+    if (sData.userType === 'service_provider') {
+      console.log('🔍 Validating service provider fields...');
+      console.log('   companyName:', sData.companyName);
+      console.log('   locationData:', JSON.stringify(sData.locationData, null, 2));
+      console.log('   serviceCategories:', sData.serviceCategories);
+      
+      if (!sData.companyName || !sData.companyName.trim()) {
+        console.error('❌ Company name is required for service provider');
+        console.error('❌ companyName value:', sData.companyName);
+        setError('Please enter your company name and try again.');
+        setIsLoading(false);
+        setIsNewUserFlow(true);
+        setIsInitialized(true);
+        return;
+      }
+      if (!sData.locationData || !sData.locationData.region || !sData.locationData.district) {
+        console.error('❌ Service location is required for service provider');
+        console.error('❌ locationData:', JSON.stringify(sData.locationData, null, 2));
+        setError('Please select your service location and try again.');
+        setIsLoading(false);
+        setIsNewUserFlow(true);
+        setIsInitialized(true);
+        return;
+      }
+      if (!sData.serviceCategories || sData.serviceCategories.length === 0) {
+        console.error('❌ Service categories are required for service provider');
+        console.error('❌ serviceCategories:', sData.serviceCategories);
+        setError('Please select at least one service category and try again.');
+        setIsLoading(false);
+        setIsNewUserFlow(true);
+        setIsInitialized(true);
+        return;
+      }
+      console.log('✅ Service provider validation passed');
+    }
 
     try {
       // Determine role
       const role = sData.userType === 'service_provider' ? 'provider' : 'traveler';
       
-      // Use user-entered names for travelers, Google names for providers
-      const finalFirstName = role === 'traveler' && sData.firstName ? sData.firstName : gData.firstName;
-      const finalLastName = role === 'traveler' && sData.lastName ? sData.lastName : gData.lastName;
+      // Use user-entered names for travelers (REQUIRED), Google names for providers
+      const finalFirstName = role === 'traveler' ? sData.firstName.trim() : gData.firstName;
+      const finalLastName = role === 'traveler' ? sData.lastName.trim() : gData.lastName;
 
       console.log('📤 Sending registration request to:', `${API_URL}/auth/google/complete-registration`);
       
@@ -407,8 +473,8 @@ const GoogleRoleSelection = () => {
           return;
         }
         
-        // Navigate to appropriate dashboard based on role
-        const targetPath = role === 'provider' ? '/service-provider-dashboard' : '/traveler-dashboard';
+        // Always redirect to home page after successful registration
+        const targetPath = '/';
         console.log('🚀 Redirecting to:', targetPath);
         
         // CRITICAL: Dispatch storage event to notify AuthContext immediately
@@ -509,11 +575,11 @@ const GoogleRoleSelection = () => {
       console.log('⚠️ Max timeout reached - forcing initialization');
       if (!isInitialized) {
         setIsNewUserFlow(true);
-        setError('Loading took too long. Please try again.');
+        setError('');
         setIsInitialized(true);
         setIsLoading(false);
       }
-    }, 10000); // 10 second max timeout
+    }, 5000); // 5 second max timeout - show form quickly
     
     // Small delay to ensure URL params are fully available
     const initializeComponent = async () => {
@@ -743,7 +809,7 @@ const GoogleRoleSelection = () => {
     });
 
     // Redirect to Google OAuth - use /auth/google/register for registration flow
-    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://isafarimasterorg.onrender.com/api';
+    const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api';
     window.location.href = `${apiUrl}/auth/google/register`;
   };
 
@@ -801,7 +867,7 @@ const GoogleRoleSelection = () => {
             .replace(/^, |, , /g, ', ').replace(/^, /, '').trim()
         : undefined;
 
-      // Use user-entered names for travelers, Google names for providers
+      // Use user-entered names for travelers (REQUIRED), Google names for providers
       const finalFirstName = selectedRole === 'traveler' ? firstName.trim() : googleData.firstName;
       const finalLastName = selectedRole === 'traveler' ? lastName.trim() : googleData.lastName;
 
@@ -862,8 +928,8 @@ const GoogleRoleSelection = () => {
           return;
         }
         
-        // Navigate to appropriate dashboard based on role
-        const targetPath = selectedRole === 'provider' ? '/service-provider-dashboard' : '/traveler-dashboard';
+        // Always redirect to home page after successful registration
+        const targetPath = '/';
         console.log('🚀 Redirecting to:', targetPath);
         
         // CRITICAL: Dispatch storage event to notify AuthContext immediately

@@ -1,27 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+ import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import ChatSystem from '../../components/ChatSystem';
-import NotificationSystem from '../../components/NotificationSystem';
 import ServiceManagement from './components/ServiceManagement';
 import BookingManagement from './components/BookingManagement';
 import BusinessAnalytics from './components/BusinessAnalytics';
 import BusinessProfile from './components/BusinessProfile';
 import ServicePromotion from './components/ServicePromotion';
-import AccountVerification from './components/AccountVerification';
-import TravelerStoriesView from './components/TravelerStoriesView';
+import ProviderHomeServices from './components/ProviderHomeServices';
+import ProviderMessagesTab 
+from './components/ProviderMessagesTab';
 import { API_URL } from '../../utils/api';
 
 const ServiceProviderDashboard = () => {
   const { theme, toggleTheme, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
-  const [showCustomerChat, setShowCustomerChat] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState(null); // NEW: Track service to edit
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [myServices, setMyServices] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
   const [myFollowers, setMyFollowers] = useState([]);
@@ -31,6 +28,7 @@ const ServiceProviderDashboard = () => {
   const [loadingBookings, setLoadingBookings] = useState(false);
   const { user, logout, isLoading} = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   console.log('Service Provider Dashboard - activeTab:', activeTab);
   console.log('Service Provider Dashboard - user:', user);
@@ -107,10 +105,14 @@ const ServiceProviderDashboard = () => {
 
   // Fetch real services and bookings
   useEffect(() => {
+    console.log('🔍 [Provider Dashboard] useEffect triggered, user:', user);
     if (user?.id) {
+      console.log('✅ [Provider Dashboard] User has ID, fetching data...');
       fetchMyServices();
       fetchMyBookings();
       fetchMyFollowers();
+    } else {
+      console.log('⚠️ [Provider Dashboard] No user ID found');
     }
   }, [user]);
 
@@ -142,12 +144,22 @@ const ServiceProviderDashboard = () => {
     }
   };
 
-  // Redirect to main home if activeTab is 'home'
+  // No longer redirect to main home - show provider's services instead
+  // useEffect(() => {
+  //   if (activeTab === 'home') {
+  //     navigate('/');
+  //   }
+  // }, [activeTab, navigate]);
+
+  // Read URL parameters for tab
   useEffect(() => {
-    if (activeTab === 'home') {
-      navigate('/');
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get('tab');
+    
+    if (tabParam) {
+      setActiveTab(tabParam);
     }
-  }, [activeTab, navigate]);
+  }, [location.search]);
 
   const fetchMyServices = async () => {
     try {
@@ -155,29 +167,44 @@ const ServiceProviderDashboard = () => {
       const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       const token = userData.token;
 
-      if (!token) return;
+      if (!token) {
+        console.error('❌ No token found for fetching services');
+        setMyServices([]);
+        return;
+      }
 
-      const response = await fetch(`${API_URL}/services/provider/my-services`, {
+      console.log('📋 Fetching services for provider...');
+      
+      // Add cache-busting timestamp
+      const timestamp = new Date().getTime();
+      const response = await fetch(`${API_URL}/services/provider/my-services?_t=${timestamp}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
 
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        console.error('Invalid response content type');
+        console.error('❌ Invalid response content type');
+        setMyServices([]);
         return;
       }
 
       const text = await response.text();
       if (!text) {
-        console.error('Empty response from server');
+        console.error('❌ Empty response from server');
+        setMyServices([]);
         return;
       }
 
       const data = JSON.parse(text);
+      console.log('📦 Services response:', data);
       
       if (data.success && data.services) {
+        console.log(`✅ Loaded ${data.services.length} services`);
         setMyServices(data.services);
         
         // Calculate real stats
@@ -186,15 +213,19 @@ const ServiceProviderDashboard = () => {
         const totalBookings = data.services.reduce((sum, s) => sum + (s.total_bookings || 0), 0);
         const avgRating = data.services.reduce((sum, s) => sum + parseFloat(s.average_rating || 0), 0) / (totalServices || 1);
         
-        setStats({
+        setStats(prev => ({
+          ...prev,
           totalServices: activeServices,
           activeBookings: totalBookings,
-          monthlyEarnings: 0, // Will be calculated from bookings
           customerRating: avgRating.toFixed(1)
-        });
+        }));
+      } else {
+        console.warn('⚠️ No services found or error:', data.message);
+        setMyServices([]);
       }
     } catch (error) {
-      console.error('Error fetching services:', error);
+      console.error('❌ Error fetching services:', error);
+      setMyServices([]);
     } finally {
       setLoadingServices(false);
     }
@@ -206,9 +237,13 @@ const ServiceProviderDashboard = () => {
       const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       const token = userData.token;
 
-      if (!token) return;
+      if (!token) {
+        console.error('❌ No token found for fetching bookings');
+        return;
+      }
 
-      const response = await fetch(`${API_URL}/bookings/provider/my-bookings`, {
+      console.log('📋 Fetching bookings for provider...');
+      const response = await fetch(`${API_URL}/bookings/provider`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -216,23 +251,29 @@ const ServiceProviderDashboard = () => {
 
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        console.error('Invalid response content type for bookings');
+        console.error('❌ Invalid response content type for bookings');
         return;
       }
 
       const text = await response.text();
       if (!text) {
-        console.error('Empty response from bookings server');
+        console.error('❌ Empty response from bookings server');
         return;
       }
 
       const data = JSON.parse(text);
+      console.log('📦 Bookings response:', data);
       
       if (data.success && data.bookings) {
+        console.log(`✅ Loaded ${data.bookings.length} bookings`);
         setMyBookings(data.bookings);
+      } else {
+        console.warn('⚠️ No bookings found or error:', data.message);
+        setMyBookings([]);
       }
     } catch (error) {
-      console.error('Error fetching bookings:', error);
+      console.error('❌ Error fetching bookings:', error);
+      setMyBookings([]);
     } finally {
       setLoadingBookings(false);
     }
@@ -240,16 +281,21 @@ const ServiceProviderDashboard = () => {
 
   const updateBookingStatus = async (bookingId, newStatus) => {
     try {
+      console.log('📝 Updating booking status:', { bookingId, newStatus });
+      
       const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
       const token = userData.token;
 
       if (!token) {
-        alert('Authentication required');
+        console.error('❌ No token found');
+        alert('Authentication required. Please login again.');
         return false;
       }
 
+      console.log('🔄 Sending request to:', `${API_URL}/bookings/${bookingId}/status`);
+      
       const response = await fetch(`${API_URL}/bookings/${bookingId}/status`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -257,19 +303,30 @@ const ServiceProviderDashboard = () => {
         body: JSON.stringify({ status: newStatus })
       });
 
+      console.log('📥 Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Response error:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
       const data = await response.json();
+      console.log('📦 Response data:', data);
       
       if (data.success) {
-        alert(`Pre-order ${newStatus} successfully!`);
-        fetchMyBookings(); // Refresh bookings list
+        const statusText = newStatus === 'confirmed' ? 'approved' : newStatus === 'cancelled' ? 'rejected' : newStatus;
+        alert(`✅ Pre-order ${statusText} successfully!`);
+        await fetchMyBookings(); // Refresh bookings list
         return true;
       } else {
-        alert('Error: ' + data.message);
+        console.error('❌ API returned error:', data.message);
+        alert('Error: ' + (data.message || 'Unknown error'));
         return false;
       }
     } catch (error) {
-      console.error('Error updating booking status:', error);
-      alert('Error updating booking status. Please try again.');
+      console.error('❌ Error updating booking status:', error);
+      alert(`Error updating booking status: ${error.message}\n\nPlease try again or contact support.`);
       return false;
     }
   };
@@ -347,66 +404,47 @@ const ServiceProviderDashboard = () => {
     return null;
   }
 
-  // CLEAN TABS - Single level navigation, no duplicates
+  // CLEAN TABS - Single level navigation, no duplicates - REMOVED Traveler Stories and Get Verified
   const tabs = [
     { id: 'home', name: 'Home', icon: 'Home' },
     { id: 'overview', name: 'Overview', icon: 'LayoutDashboard' },
     { id: 'services', name: 'My Services', icon: 'Package' },
     { id: 'bookings', name: 'Bookings', icon: 'Calendar' },
     { id: 'followers', name: 'Followers', icon: 'Users' },
+    { id: 'messages', name: 'Messages', icon: 'MessageCircle' },
     { id: 'profile', name: 'My Profile', icon: 'User' },
-    { id: 'stories', name: 'Traveler Stories', icon: 'BookOpen' },
     { id: 'promotion', name: 'Promote Services', icon: 'TrendingUp' },
-    { id: 'verification', name: 'Get Verified', icon: 'Shield' },
-    { id: 'analytics', name: 'Analytics', icon: 'BarChart' }
-  ];
-
-  const notifications = [
-    {
-      id: 1,
-      type: 'booking',
-      title: 'New Booking Request',
-      message: 'John Doe wants to book your Safari Package',
-      time: '2 hours ago',
-      urgent: true
-    },
-    {
-      id: 2,
-      type: 'review',
-      title: 'New Review',
-      message: 'Sarah left a 5-star review for your service',
-      time: '4 hours ago',
-      urgent: false
-    },
-    {
-      id: 3,
-      type: 'payment',
-      title: 'Payment Received',
-      message: 'Payment of $250 received for Kilimanjaro Trek',
-      time: '1 day ago',
-      urgent: false
-    }
+    { id: 'analytics', name: 'Analytics', icon: 'BarChart' },
+    { id: 'about', name: 'About iSafari', icon: 'Info' }
   ];
 
   const renderTabContent = () => {
-    // If activeTab is 'home', don't render anything as we're redirecting
-    if (activeTab === 'home') {
-      return (
-        <div className="flex items-center justify-center py-12">
-          <Icon name="Loader2" size={48} className="animate-spin text-primary" />
-        </div>
-      );
-    }
-
     switch (activeTab) {
+      case 'home':
+        return <ProviderHomeServices onTabChange={setActiveTab} onEditService={(serviceId) => {
+          setEditingServiceId(serviceId);
+          setActiveTab('services');
+        }} />;
       case 'overview':
         return (
           <div className="space-y-8">
             {/* Welcome Section */}
             <div className="bg-gradient-to-r from-primary to-secondary rounded-xl p-6 text-white">
               <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-display text-2xl font-medium mb-2">Welcome, {user?.firstName || 'Service Provider'}!</h2>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h2 className="font-display text-2xl font-medium">Welcome, {user?.firstName || 'Service Provider'}!</h2>
+                    {/* Display provider badge if available */}
+                    {user?.badgeType && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/20 text-white border border-white/30">
+                        {user.badgeType === 'verified' && '✓ Verified'}
+                        {user.badgeType === 'premium' && '⭐ Premium'}
+                        {user.badgeType === 'top_rated' && '🏆 Top Rated'}
+                        {user.badgeType === 'eco_friendly' && '🌿 Eco Friendly'}
+                        {user.badgeType === 'local_expert' && '📍 Local Expert'}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-white/90">Manage your services and grow your business with iSafari Global</p>
                 </div>
               </div>
@@ -525,7 +563,7 @@ const ServiceProviderDashboard = () => {
         );
 
       case 'services':
-        return <ServiceManagement />;
+        return <ServiceManagement editingServiceId={editingServiceId} onEditComplete={() => setEditingServiceId(null)} />;
 
       case 'bookings':
         return <BookingManagement bookings={myBookings} onUpdateBookingStatus={updateBookingStatus} onDeleteBooking={deleteBooking} loading={loadingBookings} />;
@@ -583,17 +621,14 @@ const ServiceProviderDashboard = () => {
           </div>
         );
 
-      case 'stories':
-        return <TravelerStoriesView />;
-
       case 'analytics':
         return <BusinessAnalytics />;
 
       case 'promotion':
         return <ServicePromotion />;
 
-      case 'verification':
-        return <AccountVerification />;
+      case 'messages':
+        return <ProviderMessagesTab />;
 
       case 'profile':
         return (
@@ -607,6 +642,153 @@ const ServiceProviderDashboard = () => {
           </div>
         );
 
+      case 'about':
+        return (
+          <div className="space-y-8">
+            {/* Hero Section */}
+            <div className="bg-gradient-to-br from-primary/5 via-background to-secondary/5 rounded-xl p-8 text-center">
+              <h1 className="text-3xl md:text-4xl font-display font-medium text-foreground mb-4">
+                About iSafari Global
+              </h1>
+              <h2 className="text-xl md:text-2xl font-display text-primary mb-3">
+                Powered by JEDA NETWORKS
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                Developed and owned by JEDA NETWORKS, transforming the travel industry through 
+                innovative technology and authentic cultural experiences.
+              </p>
+            </div>
+
+            {/* JEDA NETWORKS Info */}
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                  <Icon name="Building" size={20} className="text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground text-lg">About JEDA NETWORKS</h3>
+              </div>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                JEDA NETWORKS is a technology company specializing in innovative solutions 
+                for the travel and tourism industry. Our mission is to connect travelers 
+                with authentic experiences while empowering local service providers.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div className="flex items-start space-x-3">
+                  <Icon name="Target" size={20} className="text-primary mt-1" />
+                  <div>
+                    <h4 className="font-semibold text-foreground text-sm">Innovation</h4>
+                    <p className="text-muted-foreground text-xs">
+                      Cutting-edge technology for travel
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <Icon name="Users" size={20} className="text-primary mt-1" />
+                  <div>
+                    <h4 className="font-semibold text-foreground text-sm">Community</h4>
+                    <p className="text-muted-foreground text-xs">
+                      Connecting travelers & locals
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <Icon name="Globe" size={20} className="text-primary mt-1" />
+                  <div>
+                    <h4 className="font-semibold text-foreground text-sm">Global Impact</h4>
+                    <p className="text-muted-foreground text-xs">
+                      Sustainable tourism worldwide
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Partners */}
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center mr-3">
+                  <Icon name="Users" size={20} className="text-secondary" />
+                </div>
+                <h3 className="font-semibold text-foreground text-lg">Our Partners</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { name: 'JOCTAN MFUNGO', role: 'Chief Executive Officer (CEO)' },
+                  { name: 'ELIZABETH ERNEST', role: 'Chief Technology Officer (CTO)' },
+                  { name: 'DANFORD MWANKENJA', role: 'Chief Operating Officer (COO)' },
+                  { name: 'ASTERIA MOMBO', role: 'Chief Financial Officer (CFO)' }
+                ].map((partner, index) => (
+                  <div key={index} className="bg-muted/30 rounded-lg p-4 text-center">
+                    <div className="w-16 h-16 bg-primary/10 rounded-full mx-auto mb-3 flex items-center justify-center">
+                      <Icon name="User" size={24} className="text-primary" />
+                    </div>
+                    <h4 className="font-semibold text-foreground text-sm mb-1">{partner.name}</h4>
+                    <p className="text-muted-foreground text-xs">{partner.role}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Technology */}
+            <div className="bg-card border border-border rounded-lg p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center mr-3">
+                  <Icon name="Code" size={20} className="text-accent" />
+                </div>
+                <h3 className="font-semibold text-foreground text-lg">Technology & Innovation</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Icon name="Code" size={20} className="text-primary" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm mb-2">Modern Development</h4>
+                  <p className="text-muted-foreground text-xs">
+                    Built with React and modern web technologies
+                  </p>
+                </div>
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Icon name="Shield" size={20} className="text-secondary" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm mb-2">Security First</h4>
+                  <p className="text-muted-foreground text-xs">
+                    Industry-standard security practices
+                  </p>
+                </div>
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Icon name="Zap" size={20} className="text-accent" />
+                  </div>
+                  <h4 className="font-semibold text-foreground text-sm mb-2">Performance</h4>
+                  <p className="text-muted-foreground text-xs">
+                    Optimized for speed and efficiency
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact */}
+            <div className="bg-gradient-to-br from-primary/5 via-background to-secondary/5 rounded-xl p-8 text-center">
+              <h3 className="text-2xl font-display font-medium text-foreground mb-3">
+                Get in Touch with JEDA NETWORKS
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                We leverage cutting-edge technology and innovation to deliver world-class travel solutions.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button>
+                  <Icon name="Mail" size={16} />
+                  Contact Us
+                </Button>
+                <Button variant="outline">
+                  <Icon name="Building" size={16} />
+                  Partnership Opportunities
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
 
       default:
         return null;
@@ -650,11 +832,6 @@ const ServiceProviderDashboard = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    // Special handling for Home tab - navigate to main home page
-                    if (tab.id === 'home') {
-                      navigate('/');
-                      return;
-                    }
                     setActiveTab(tab.id);
                     setShowMobileMenu(false);
                   }}
@@ -701,11 +878,6 @@ const ServiceProviderDashboard = () => {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      // Special handling for Home tab - navigate to main home page
-                      if (tab.id === 'home') {
-                        navigate('/');
-                        return;
-                      }
                       setActiveTab(tab.id);
                       setShowMobileMenu(false);
                     }}
@@ -751,123 +923,105 @@ const ServiceProviderDashboard = () => {
 
       <div className="pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-          {/* Main Content with Sidebar */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-3">
-              {renderTabContent()}
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Recent Notifications */}
-              <div className="bg-card border border-border rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">Recent Notifications</h3>
-                  <Button variant="ghost" size="sm">
-                    <Icon name="MoreHorizontal" size={16} />
-                  </Button>
-                </div>
-                <div className="space-y-4">
-                  {notifications?.slice(0, 3).map((notification) => (
-                    <div key={notification?.id} className="flex items-start space-x-3">
-                      <div className={`p-2 rounded-lg ${notification?.urgent ? 'bg-error/10' : 'bg-primary/10'}`}>
-                        <Icon 
-                          name={notification?.type === 'booking' ? 'Calendar' : notification?.type === 'review' ? 'Star' : 'Bell'} 
-                          size={16} 
-                          className={notification?.urgent ? 'text-error' : 'text-primary'} 
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-foreground">{notification?.title}</h4>
-                        <p className="text-xs text-muted-foreground mt-1">{notification?.message}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{notification?.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Help & Resources */}
-              <div className="bg-card border border-border rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Help & Resources</h3>
-                <div className="space-y-3">
-                  <button className="w-full flex items-center space-x-3 p-3 text-left rounded-lg hover:bg-muted transition-colors">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Icon name="BookOpen" size={16} className="text-blue-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">Provider Guide</span>
-                  </button>
-                  <button className="w-full flex items-center space-x-3 p-3 text-left rounded-lg hover:bg-muted transition-colors">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <Icon name="Play" size={16} className="text-green-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">Video Tutorials</span>
-                  </button>
-                  <button className="w-full flex items-center space-x-3 p-3 text-left rounded-lg hover:bg-muted transition-colors">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Icon name="MessageCircle" size={16} className="text-purple-600" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">Contact Support</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+          {/* Main Content - Full Width */}
+          <div>
+            {renderTabContent()}
           </div>
         </div>
       </div>
 
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-6 right-6 flex flex-col space-y-3 z-40">
-        {/* Customer Messages Button */}
-        <Button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setSelectedCustomer({ id: 1, name: 'John Doe' });
-            setShowCustomerChat(true);
-          }}
-          className="w-14 h-14 rounded-full bg-green-600 hover:bg-green-700 shadow-lg relative"
-          title="Customer Messages"
-        >
-          <Icon name="MessageCircle" size={24} />
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-            5
-          </span>
-        </Button>
-        
-        {/* Notifications Button */}
-        <Button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setShowNotifications(true);
-          }}
-          className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg relative"
-          title="View Notifications"
-        >
-          <Icon name="Bell" size={24} />
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-            4
-          </span>
-        </Button>
-      </div>
-
-      {/* Chat and Notification Modals */}
-      <ChatSystem
-        isOpen={showCustomerChat}
-        onClose={() => setShowCustomerChat(false)}
-        chatType="customer"
-        recipientId={selectedCustomer?.id}
-        recipientName={selectedCustomer?.name}
-      />
-      
-      <NotificationSystem
-        isOpen={showNotifications}
-        onClose={() => setShowNotifications(false)}
-        userType="provider"
-      />
+      {/* Footer - Only on Home Tab */}
+      {activeTab === 'home' && (
+        <footer className="bg-foreground text-background py-12 border-t border-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="md:col-span-2">
+                <div className="flex items-center space-x-2 mb-4">
+                  <img 
+                    src="/iSafari Logo.png" 
+                    alt="iSafari Global" 
+                    className="h-10 w-auto"
+                    style={{ filter: 'brightness(0) invert(1)' }}
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-display font-medium text-lg leading-none">
+                      iSafari Global
+                    </span>
+                    <span className="font-body text-xs text-background/70 leading-none">
+                      Powered by JEDA NETWORKS
+                    </span>
+                  </div>
+                </div>
+                <p className="text-background/80 text-sm leading-relaxed max-w-md mb-4">
+                  Transforming travel through authentic cultural experiences, 
+                  intelligent planning, and personalized service that connects 
+                  you with the world's most extraordinary destinations.
+                </p>
+                
+                {/* JEDA NETWORKS Attribution */}
+                <div className="bg-background/10 rounded-lg p-4 mb-4">
+                  <h4 className="font-semibold text-background mb-2">Developed & Owned by JEDA NETWORKS</h4>
+                  <div className="text-xs text-background/80 space-y-1">
+                    <p><strong>Partners:</strong></p>
+                    <ul className="list-disc list-inside ml-2 space-y-0.5">
+                      <li>JOCTAN MFUNGO</li>
+                      <li>ELIZABETH ERNEST</li>
+                      <li>DANFORD MWANKENJA</li>
+                      <li>ASTERIA MOMBO</li>
+                    </ul>
+                    <p className="mt-2"><strong>Technology:</strong> Advanced Travel Solutions & Innovation</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-background mb-4">Quick Links</h4>
+                <ul className="space-y-2 text-sm text-background/80">
+                  <li><a href="/destination-discovery" className="hover:text-background transition-colors">Destinations</a></li>
+                  <li><a href="/journey-planner" className="hover:text-background transition-colors">Plan Journey</a></li>
+                  <li>
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab('about');
+                      }} 
+                      className="hover:text-background transition-colors text-left"
+                    >
+                      About iSafari
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-background mb-4">Support</h4>
+                <ul className="space-y-2 text-sm text-background/80">
+                  <li><a href="#" className="hover:text-background transition-colors">24/7 Concierge</a></li>
+                  <li><a href="#" className="hover:text-background transition-colors">Travel Insurance</a></li>
+                  <li><a href="#" className="hover:text-background transition-colors">Emergency Support</a></li>
+                  <li><a href="#" className="hover:text-background transition-colors">Contact Us</a></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="border-t border-background/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+              <div className="text-center md:text-left">
+                <p className="text-background/60 text-sm">
+                  {new Date()?.getFullYear()} iSafari Global. All rights reserved.
+                </p>
+                <p className="text-sm text-background/60">
+                  2024 Developed & Owned by JEDA NETWORKS. All rights reserved.
+                </p>
+              </div>
+              <div className="flex space-x-6 mt-4 md:mt-0">
+                <a href="#" className="text-background/60 hover:text-background text-sm transition-colors">Privacy Policy</a>
+                <a href="#" className="text-background/60 hover:text-background text-sm transition-colors">Terms of Service</a>
+                <a href="#" className="text-background/60 hover:text-background text-sm transition-colors">Cookie Policy</a>
+              </div>
+            </div>
+          </div>
+        </footer>
+      )}
     </div>
   );
 };

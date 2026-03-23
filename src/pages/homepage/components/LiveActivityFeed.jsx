@@ -197,33 +197,6 @@ const LiveActivityFeed = () => {
         </div>
         )}
 
-        {/* Activity Stats */}
-        <div className="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 pt-6 sm:pt-8 border-t border-border">
-          <div key="stat-weekly" className="text-center bg-card p-3 sm:p-4 rounded-lg border border-border">
-            <div className="text-xl sm:text-2xl font-bold text-primary mb-1">
-              {stats.weeklyBookings || 0}
-            </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Bookings This Week</div>
-          </div>
-          <div key="stat-travelers" className="text-center bg-card p-3 sm:p-4 rounded-lg border border-border">
-            <div className="text-xl sm:text-2xl font-bold text-primary mb-1">
-              {stats.activeTravelers || 0}
-            </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Active Travelers</div>
-          </div>
-          <div key="stat-destinations" className="text-center bg-card p-3 sm:p-4 rounded-lg border border-border">
-            <div className="text-xl sm:text-2xl font-bold text-primary mb-1">
-              {stats.destinations || 0}
-            </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Destinations</div>
-          </div>
-          <div key="stat-services" className="text-center bg-card p-3 sm:p-4 rounded-lg border border-border">
-            <div className="text-xl sm:text-2xl font-bold text-primary mb-1">
-              {stats.totalServices || 0}
-            </div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Active Services</div>
-          </div>
-        </div>
       </div>
       <style>{`
         @keyframes slideInRight {

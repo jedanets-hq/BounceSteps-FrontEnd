@@ -48,6 +48,18 @@ const ServicePromotion = () => {
 
   const promotionOptions = [
     {
+      id: 'identity_verification',
+      name: 'Identity Verification Badge',
+      description: 'Get verified badge to build trust with customers',
+      price: 9999,
+      duration_days: 30,
+      duration: '30 days',
+      benefits: ['Verified badge on profile', 'Increased customer trust', 'Priority in search', 'Stand out from competitors'],
+      icon: 'ShieldCheck',
+      color: 'bg-green-500',
+      isBadge: true
+    },
+    {
       id: 'featured',
       name: 'Featured Carousel',
       description: 'Display your service in the top featured carousel on homepage',
@@ -83,6 +95,18 @@ const ServicePromotion = () => {
   ];
 
   const handlePromoteClick = (promoType) => {
+    const promotion = promotionOptions.find(p => p.id === promoType);
+    
+    // For badge subscription, no need to select service
+    if (promotion?.isBadge) {
+      setPromotionType(promoType);
+      setSelectedService(null);
+      setShowServiceSelection(true);
+      setShowPaymentForm(true); // Go directly to payment
+      return;
+    }
+    
+    // For service promotions, need to select service
     if (myServices.length === 0) {
       alert('Please add a service first before promoting');
       return;
@@ -168,28 +192,50 @@ const ServicePromotion = () => {
       const cardBrand = getCardBrand(cardDetails.cardNumber);
       const cardLastFour = cardDetails.cardNumber.replace(/\s/g, '').slice(-4);
       
-      const response = await fetch(`${API_URL}/services/${selectedService}/promote`, {
+      // Different endpoint for badge subscription vs service promotion
+      const endpoint = promotion.isBadge 
+        ? `${API_URL}/users/subscribe-badge`
+        : `${API_URL}/services/${selectedService}/promote`;
+      
+      const payload = promotion.isBadge 
+        ? {
+            badge_type: 'verified',
+            duration_days: promotion.duration_days,
+            payment_method: 'card',
+            payment_reference: `BADGE-${Date.now()}`,
+            amount: promotion.price,
+            card_last_four: cardLastFour,
+            card_brand: cardBrand,
+            card_holder: cardDetails.cardHolder
+          }
+        : {
+            promotion_type: promotionType,
+            duration_days: promotion.duration_days,
+            payment_method: 'card',
+            payment_reference: `CARD-${Date.now()}`,
+            amount: promotion.price,
+            card_last_four: cardLastFour,
+            card_brand: cardBrand,
+            card_holder: cardDetails.cardHolder
+          };
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          promotion_type: promotionType,
-          duration_days: promotion.duration_days,
-          payment_method: 'card',
-          payment_reference: `CARD-${Date.now()}`,
-          amount: promotion.price,
-          card_last_four: cardLastFour,
-          card_brand: cardBrand,
-          card_holder: cardDetails.cardHolder
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
 
       if (data.success) {
-        alert(`✅ Payment Successful!\n\nYour promotion request has been submitted.\nAmount: TZS ${promotion.price.toLocaleString()}\nCard: ${cardBrand.toUpperCase()} ****${cardLastFour}\n\nYour request will be reviewed by admin. Once approved, your service will be promoted automatically.`);
+        const successMessage = promotion.isBadge
+          ? `✅ Payment Successful!\n\nYour Identity Verification Badge subscription has been activated.\nAmount: TZS ${promotion.price.toLocaleString()}\nCard: ${cardBrand.toUpperCase()} ****${cardLastFour}\n\nYour verified badge is now active on your profile!`
+          : `✅ Payment Successful!\n\nYour promotion request has been submitted.\nAmount: TZS ${promotion.price.toLocaleString()}\nCard: ${cardBrand.toUpperCase()} ****${cardLastFour}\n\nYour request will be reviewed by admin. Once approved, your service will be promoted automatically.`;
+        
+        alert(successMessage);
         setShowServiceSelection(false);
         setShowPaymentForm(false);
         setSelectedService(null);

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Stories Frontend</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    .story-card {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 4px;
+      background: #fff;
+    }
+    .story-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+    .story-status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .status-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .status-approved {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status-rejected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Test Traveler Stories - Admin Portal</h1>
+    
+    <div class="test-section">
+      <h2>1. Admin Login</h2>
+      <button onclick="testAdminLogin()">Test Admin Login</button>
+      <div id="login-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>2. Get All Stories</h2>
+      <button onclick="getAllStories()">Get All Stories</button>
+      <button onclick="getPendingStories()">Get Pending Stories</button>
+      <button onclick="getApprovedStories()">Get Approved Stories</button>
+      <div id="stories-result" class="result"></div>
+      <div id="stories-display"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>3. Test API Endpoints</h2>
+      <button onclick="testEndpoint('/api/traveler-stories/admin/all')">Test /api/traveler-stories/admin/all</button>
+      <button onclick="testEndpoint('/api/traveler-stories/admin/pending')">Test /api/traveler-stories/admin/pending</button>
+      <div id="endpoint-result" class="result"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:5000/api';
+    let adminToken = null;
+
+    // Check if token exists in localStorage
+    const storedUser = localStorage.getItem('admin_user');
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        adminToken = userData.token;
+        document.getElementById('login-result').innerHTML = '<span class="success">✅ Token found in localStorage</span>';
+      } catch (e) {
+        console.error('Error parsing stored user:', e);
+      }
+    }
+
+    async function testAdminLogin() {
+      const resultDiv = document.getElementById('login-result');
+      resultDiv.innerHTML = '⏳ Testing admin login...';
+
+      try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: 'admin@isafari.com',
+            password: 'admin123'
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.token) {
+          adminToken = data.token;
+          
+          // Store in localStorage like the admin portal does
+          localStorage.setItem('admin_user', JSON.stringify({
+            token: data.token,
+            user: data.user
+          }));
+
+          resultDiv.innerHTML = `<span class="success">✅ Login successful!</span>\n${JSON.stringify(data, null, 2)}`;
+        } else {
+          resultDiv.innerHTML = `<span class="error">❌ Login failed</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+      }
+    }
+
+    async function getAllStories() {
+      await getStories('all');
+    }
+
+    async function getPendingStories() {
+      await getStories('pending');
+    }
+
+    async function getApprovedStories() {
+      await getStories('approved');
+    }
+
+    async function getStories(filter) {
+      const resultDiv = document.getElementById('stories-result');
+      const displayDiv = document.getElementById('stories-display');
+      
+      if (!adminToken) {
+        resultDiv.innerHTML = '<span class="error">❌ Please login first</span>';
+        return;
+      }
+
+      resultDiv.innerHTML = `⏳ Loading ${filter} stories...`;
+      displayDiv.innerHTML = '';
+
+      try {
+        const url = filter === 'all' 
+          ? `${API_URL}/traveler-stories/admin/all`
+          : `${API_URL}/traveler-stories/admin/all?status=${filter}`;
+
+        console.log('Fetching from:', url);
+        console.log('Token:', adminToken.substring(0, 20) + '...');
+
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+          resultDiv.innerHTML = `<span class="success">✅ Found ${data.stories.length} stories</span>`;
+          
+          // Display stories
+          if (data.stories.length > 0) {
+            displayDiv.innerHTML = data.stories.map(story => `
+              <div class="story-card">
+                <div class="story-title">
+                  ${story.title}
+                  <span class="story-status status-${story.status}">${story.status}</span>
+                </div>
+                <div style="color: #666; font-size: 14px; margin: 5px 0;">
+                  📍 ${story.location || 'No location'} | 
+                  👤 ${story.first_name} ${story.last_name} |
+                  📅 ${new Date(story.created_at).toLocaleDateString()}
+                </div>
+                <div style="margin-top: 10px;">
+                  ${story.content.substring(0, 200)}${story.content.length > 200 ? '...' : ''}
+                </div>
+              </div>
+            `).join('');
+          } else {
+            displayDiv.innerHTML = '<p>No stories found</p>';
+          }
+        } else {
+          resultDiv.innerHTML = `<span class="error">❌ Failed to load stories</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+        console.error('Error:', error);
+      }
+    }
+
+    async function testEndpoint(endpoint) {
+      const resultDiv = document.getElementById('endpoint-result');
+      
+      if (!adminToken) {
+        resultDiv.innerHTML = '<span class="error">❌ Please login first</span>';
+        return;
+      }
+
+      resultDiv.innerHTML = `⏳ Testing ${endpoint}...`;
+
+      try {
+        const url = `http://localhost:5000${endpoint}`;
+        console.log('Testing endpoint:', url);
+
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        resultDiv.innerHTML = `<span class="success">✅ Status: ${response.status}</span>\n${JSON.stringify(data, null, 2)}`;
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+      }
+    }
+
+    // Auto-load stories if token exists
+    if (adminToken) {
+      getAllStories();
+    }
+  </script>
+</body>
+</html>

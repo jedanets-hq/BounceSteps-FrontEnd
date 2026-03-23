@@ -41,7 +41,7 @@ export const PaymentModal = ({ isOpen, onClose, cartItems, total, onPaymentSucce
       
       // Create bookings for each cart item
       const API_URL = import.meta.env.VITE_API_BASE_URL || 
-        (import.meta.env.MODE === 'development' ? 'http://localhost:5000/api' : 'https://isafarimasterorg.onrender.com/api');
+        (import.meta.env.MODE === 'development' ? 'http://localhost:5000/api' : 'https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api');
       
       console.log('💳 [PAYMENT] Processing payment for', cartItems.length, 'items');
       

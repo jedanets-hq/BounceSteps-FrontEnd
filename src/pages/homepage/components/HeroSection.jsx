@@ -3,17 +3,22 @@ import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { useCart } from '../../../contexts/CartContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
-import { API_URL } from '../../../utils/api';
+import { servicesAPI } from '../../../utils/api';
 
 const HeroSection = () => {
   const navigate = useNavigate();
   const { addToCart, cartItems, getCartTotal } = useCart();
+  const { user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [featuredServices, setFeaturedServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPayment, setShowPayment] = useState(false);
   const [booking, setBooking] = useState(null);
+  
+  // Check if user is service provider - use AuthContext instead of localStorage
+  const isServiceProvider = user?.userType === 'service_provider';
 
   useEffect(() => {
     fetchFeaturedServices();
@@ -21,21 +26,22 @@ const HeroSection = () => {
 
   const fetchFeaturedServices = async () => {
     try {
-      const response = await fetch(`${API_URL}/services/featured/slides`);
-      const data = await response.json();
+      console.log('📡 [HeroSection] Fetching featured services...');
       
-      if (data.success && data.slides.length > 0) {
-        setFeaturedServices(data.slides);
+      // Get ONLY featured slides (is_featured = true)
+      const data = await servicesAPI.getAll({ featured: true, limit: 6 });
+      
+      if (data.success && data.services && data.services.length > 0) {
+        console.log('✅ [HeroSection] Featured services loaded:', data.services.length);
+        setFeaturedServices(data.services);
       } else {
-        // Fallback to regular services if no featured services
-        const regularResponse = await fetch(`${API_URL}/services?limit=3`);
-        const regularData = await regularResponse.json();
-        if (regularData.success) {
-          setFeaturedServices(regularData.services);
-        }
+        // NO FALLBACK - if no featured services, show empty
+        console.log('⚠️ [HeroSection] No featured services found');
+        setFeaturedServices([]);
       }
     } catch (err) {
-      console.error('Error fetching featured services:', err);
+      console.error('❌ [HeroSection] Error fetching featured services:', err);
+      setFeaturedServices([]);
     } finally {
       setLoading(false);
     }
@@ -78,18 +84,43 @@ const HeroSection = () => {
             Discover authentic travel experiences from verified local providers
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/journey-planner">
-              <Button variant="default" size="lg">
-                <Icon name="Map" size={20} />
-                Start Your Journey
-              </Button>
-            </Link>
-            <Link to="/destination-discovery">
-              <Button variant="outline" size="lg">
-                <Icon name="Compass" size={20} />
-                Explore Services
-              </Button>
-            </Link>
+            {isServiceProvider ? (
+              <>
+                {/* Service Provider Buttons */}
+                <Button 
+                  variant="default" 
+                  size="lg"
+                  onClick={() => navigate('/service-provider-dashboard?tab=services')}
+                >
+                  <Icon name="Package" size={20} />
+                  My Services
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  onClick={() => navigate('/service-provider-dashboard?tab=bookings')}
+                >
+                  <Icon name="Calendar" size={20} />
+                  Bookings
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Traveler Buttons */}
+                <Link to="/journey-planner">
+                  <Button variant="default" size="lg">
+                    <Icon name="Map" size={20} />
+                    Start Your Journey
+                  </Button>
+                </Link>
+                <Link to="/destination-discovery">
+                  <Button variant="outline" size="lg">
+                    <Icon name="Compass" size={20} />
+                    Explore Services
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -131,7 +162,7 @@ const HeroSection = () => {
                 <Icon name="MapPin" size={16} className="mr-2" />
                 {currentService?.location}
               </span>
-              {currentService?.is_currently_featured && (
+              {currentService?.is_featured && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/20 text-primary border border-primary/30">
                   <Icon name="Star" size={16} className="mr-2" />
                   Featured
@@ -159,50 +190,78 @@ const HeroSection = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                variant="default" 
-                size="lg" 
-                className="w-full sm:w-auto"
-                onClick={() => {
-                  // Check if user is logged in before booking - check isafari_user not token
-                  const savedUser = localStorage.getItem('isafari_user');
-                  if (!savedUser) {
-                    navigate('/login?redirect=/');
-                  } else {
-                    // Add service to cart and navigate to cart & payments directly with payment modal open
-                    const bookingItem = {
-                      id: currentService.id,
-                      name: currentService.title,
-                      price: parseFloat(currentService.price || 0),
-                      quantity: 1,
-                      image: currentService.images && currentService.images.length > 0 ? currentService.images[0] : null,
-                      description: currentService.description,
-                      type: 'service',
-                      category: currentService.category,
-                      location: currentService.location,
-                      provider_id: currentService.provider_id,
-                      business_name: currentService.business_name
-                    };
-                    addToCart(bookingItem);
-                    navigate('/traveler-dashboard?tab=cart&openPayment=true');
-                  }
-                }}
-              >
-                <Icon name="Calendar" size={20} />
-                Book Now
-              </Button>
-              <Link to="/journey-planner">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
-                  <Icon name="Map" size={20} />
-                  Plan Your Journey
-                </Button>
-              </Link>
-              <Link to="/destination-discovery">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
-                  <Icon name="Compass" size={20} />
-                  Explore Destinations
-                </Button>
-              </Link>
+              {/* Show different buttons based on user type */}
+              {isServiceProvider ? (
+                <>
+                  {/* Service Provider Buttons - FIXED: Changed button text and navigation */}
+                  <Button 
+                    variant="default" 
+                    size="lg" 
+                    className="w-full sm:w-auto"
+                    onClick={() => navigate('/service-provider-dashboard?tab=services')}
+                  >
+                    <Icon name="Package" size={20} />
+                    My Services
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20"
+                    onClick={() => navigate('/service-provider-dashboard?tab=bookings')}
+                  >
+                    <Icon name="Calendar" size={20} />
+                    Bookings
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {/* Traveler Buttons */}
+                  <Button 
+                    variant="default" 
+                    size="lg" 
+                    className="w-full sm:w-auto"
+                    onClick={() => {
+                      // Check if user is logged in before booking - check isafari_user not token
+                      const savedUser = localStorage.getItem('isafari_user');
+                      if (!savedUser) {
+                        navigate('/login?redirect=/');
+                      } else {
+                        // Add service to cart and navigate to cart & payments directly with payment modal open
+                        const bookingItem = {
+                          id: currentService.id,
+                          name: currentService.title,
+                          price: parseFloat(currentService.price || 0),
+                          quantity: 1,
+                          image: currentService.images && currentService.images.length > 0 ? currentService.images[0] : null,
+                          description: currentService.description,
+                          type: 'service',
+                          category: currentService.category,
+                          location: currentService.location,
+                          provider_id: currentService.provider_id,
+                          business_name: currentService.business_name
+                        };
+                        addToCart(bookingItem);
+                        navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                      }
+                    }}
+                  >
+                    <Icon name="Calendar" size={20} />
+                    Book Now
+                  </Button>
+                  <Link to="/journey-planner">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
+                      <Icon name="Map" size={20} />
+                      Plan Your Journey
+                    </Button>
+                  </Link>
+                  <Link to="/destination-discovery">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
+                      <Icon name="Compass" size={20} />
+                      Explore Destinations
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../../../components/ui/Button';
 import Icon from '../../../components/AppIcon';
-import VerifiedBadge from '../../../components/ui/VerifiedBadge';
+import ProviderBadge from '../../../components/ui/ProviderBadge';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
@@ -145,7 +145,7 @@ const AccommodationCuration = () => {
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-foreground flex items-center gap-1">
                           {service.business_name || service.provider_name}
-                          {service.provider_verified && <VerifiedBadge size="sm" />}
+                          {service.provider_badge_type && <ProviderBadge badgeType={service.provider_badge_type} size="sm" showText={false} />}
                         </p>
                         <p className="text-xs text-muted-foreground">View all services from this provider</p>
                       </div>
@@ -159,27 +159,24 @@ const AccommodationCuration = () => {
                     variant="outline" 
                     size="sm"
                     className="flex-1"
-                    onClick={() => {
+                    onClick={async () => {
                       const savedUser = localStorage.getItem('isafari_user');
                       if (!savedUser) {
                         navigate('/login?redirect=/services-overview');
                         return;
                       }
-                      const bookingItem = {
+                      const result = await addToCart({
                         id: service.id,
-                        name: service.title,
+                        serviceId: service.id,
+                        title: service.title,
                         price: parseFloat(service.price || 0),
-                        quantity: 1,
-                        image: service.images && service.images.length > 0 ? service.images[0] : null,
-                        description: service.description,
-                        type: 'service',
-                        category: service.category,
-                        location: service.location,
-                        provider_id: service.provider_id,
-                        business_name: service.business_name
-                      };
-                      addToCart(bookingItem);
-                      navigate('/traveler-dashboard?tab=cart');
+                        quantity: 1
+                      });
+                      if (result.success) {
+                        alert(`✅ ${service.title} added to cart!`);
+                      } else {
+                        alert(`❌ ${result.message}`);
+                      }
                     }}
                   >
                     <Icon name="ShoppingBag" size={16} />
@@ -189,27 +186,24 @@ const AccommodationCuration = () => {
                     variant="default" 
                     size="sm"
                     className="flex-1"
-                    onClick={() => {
+                    onClick={async () => {
                       const savedUser = localStorage.getItem('isafari_user');
                       if (!savedUser) {
                         navigate('/login?redirect=/services-overview');
                         return;
                       }
-                      const bookingItem = {
+                      const result = await addToCart({
                         id: service.id,
-                        name: service.title,
+                        serviceId: service.id,
+                        title: service.title,
                         price: parseFloat(service.price || 0),
-                        quantity: 1,
-                        image: service.images && service.images.length > 0 ? service.images[0] : null,
-                        description: service.description,
-                        type: 'service',
-                        category: service.category,
-                        location: service.location,
-                        provider_id: service.provider_id,
-                        business_name: service.business_name
-                      };
-                      addToCart(bookingItem);
-                      navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                        quantity: 1
+                      });
+                      if (result.success) {
+                        navigate('/traveler-dashboard?tab=cart&openPayment=true');
+                      } else {
+                        alert(`❌ ${result.message}`);
+                      }
                     }}
                   >
                     <Icon name="CreditCard" size={16} />

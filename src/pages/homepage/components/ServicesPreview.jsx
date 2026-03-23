@@ -61,10 +61,10 @@ const ServicesPreview = () => {
             From flights to cultural immersion, we provide everything you need for 
             an extraordinary travel experience through our global network.
           </p>
-          <Link to="/services-overview">
+          <Link to="/destination-discovery">
             <Button variant="outline" size="lg">
               <Icon name="ArrowRight" size={20} />
-              View All Services
+              Discover Services
             </Button>
           </Link>
         </div>

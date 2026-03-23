@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Admin Portal Stories</title>
+</head>
+<body>
+    <h1>Testing Admin Portal Stories API</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Loading...';
+
+            try {
+                const API_URL = 'http://localhost:5000/api';
+                const url = `${API_URL}/traveler-stories/admin/all`;
+                
+                console.log('Fetching from:', url);
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                console.log('Response:', data);
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <h2>Success! Found ${data.stories.length} stories</h2>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h2>Failed</h2>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h2>Error</h2>
+                    <pre>${error.message}</pre>
+                `;
+                console.error('Error:', error);
+            }
+        }
+
+        // Auto test on load
+        window.onload = testAPI;
+    </script>
+</body>
+</html>

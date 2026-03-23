@@ -5,8 +5,7 @@ import ErrorBoundary from "components/ErrorBoundary";
 import ProtectedRoute from "components/ProtectedRoute";
 import NotFound from "pages/NotFound";
 import TravelerDashboard from './pages/traveler-dashboard';
-import ProviderPartnershipPortal from './pages/provider-partnership-portal';
-import ServicesOverview from './pages/services-overview';
+// ProviderPartnershipPortal is deprecated - using Dashboard instead
 import Homepage from './pages/homepage';
 import JourneyPlanner from './pages/JourneyPlannerEnhanced';
 import DestinationDiscovery from './pages/destination-discovery';
@@ -30,7 +29,6 @@ const Routes = () => {
       <RouterRoutes>
         {/* Public routes */}
         <Route path="/" element={<Homepage />} />
-        <Route path="/services-overview" element={<ServicesOverview />} />
         <Route path="/homepage" element={<Homepage />} />
         <Route path="/journey-planner" element={<JourneyPlanner />} />
         <Route path="/destination-discovery" element={<DestinationDiscovery />} />
@@ -71,9 +69,10 @@ const Routes = () => {
             <Dashboard />
           </ProtectedRoute>
         } />
+        {/* OLD PROVIDER PORTAL - DEPRECATED - Redirect to new dashboard */}
         <Route path="/provider-partnership-portal" element={
           <ProtectedRoute requireAuth={true} allowedRoles={['service_provider']}>
-            <ProviderPartnershipPortal />
+            <Dashboard />
           </ProtectedRoute>
         } />
         

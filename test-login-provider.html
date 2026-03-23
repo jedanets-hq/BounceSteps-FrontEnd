@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Provider Login</title>
+</head>
+<body>
+    <h1>Test Provider Login</h1>
+    <div id="result"></div>
+    
+    <script>
+        async function loginProvider() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Login as dantest1@gmail.com (service provider with bookings)
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'dantest1@gmail.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Save to localStorage
+                    localStorage.setItem('isafari_user', JSON.stringify({
+                        id: data.user.id,
+                        email: data.user.email,
+                        firstName: data.user.firstName,
+                        lastName: data.user.lastName,
+                        userType: data.user.userType,
+                        token: data.token
+                    }));
+                    
+                    resultDiv.innerHTML = '<p style="color: green;">✅ Login successful!</p>';
+                    resultDiv.innerHTML += '<p>User: ' + data.user.email + '</p>';
+                    resultDiv.innerHTML += '<p>Type: ' + data.user.userType + '</p>';
+                    resultDiv.innerHTML += '<p><a href="http://localhost:4028/service-provider-dashboard">Go to Dashboard</a></p>';
+                } else {
+                    resultDiv.innerHTML = '<p style="color: red;">❌ Login failed: ' + data.message + '</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<p style="color: red;">❌ Error: ' + error.message + '</p>';
+            }
+        }
+        
+        // Auto-login on page load
+        loginProvider();
+    </script>
+</body>
+</html>
