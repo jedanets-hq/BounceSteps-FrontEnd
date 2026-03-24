@@ -332,7 +332,7 @@ router.get('/google/callback', (req, res, next) => {
 }, async (req, res) => {
     try {
       // CRITICAL: Use production frontend URL
-      const frontendUrl = process.env.FRONTEND_URL || 'https://isafari-tz.netlify.app';
+const frontendUrl = process.env.FRONTEND_URL || 'https://bouncesteps.com';
       const flowType = req.googleFlowType || 'login';
       
       console.log('📍 Redirecting to frontend:', frontendUrl);
@@ -372,7 +372,7 @@ router.get('/google/callback', (req, res, next) => {
       res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
     } catch (error) {
       console.error('❌ Google OAuth callback error:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'https://isafari-tz.netlify.app';
+const frontendUrl = process.env.FRONTEND_URL || 'https://bouncesteps.com';
       res.redirect(`${frontendUrl}/login?error=auth_failed`);
     }
   }
