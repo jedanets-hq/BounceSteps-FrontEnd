@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "env": {
+    "VITE_API_URL": "https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api",
+    "VITE_API_BASE_URL": "https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api"
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

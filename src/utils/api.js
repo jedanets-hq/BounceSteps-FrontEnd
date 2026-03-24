@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// 🌐 PRODUCTION BACKEND - Connect to Render PostgreSQL
+// 🌐 PRODUCTION BACKEND - Connect to Google Cloud Run
 // ═══════════════════════════════════════════════════════════════════════════
-// Frontend ALWAYS connects to production backend on Render
-// All data (cart, favorites, plans, bookings) saves to production PostgreSQL
+// Frontend connects to production backend on Google Cloud Run
+// All data (cart, favorites, plans, bookings) saves to Cloud SQL PostgreSQL
 // Backend URL is set in .env file: VITE_API_BASE_URL
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Use localhost for development, production for deployment
+// Use environment variable or fallback to localhost for development
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const API_URL = API_BASE_URL;
 
@@ -14,8 +14,8 @@ const API_URL = API_BASE_URL;
 console.log('🌐 API Configuration:');
 console.log('   Backend URL:', API_BASE_URL);
 console.log('   Environment:', import.meta.env.MODE);
-console.log('   Database: Local PostgreSQL');
-console.log('   ✅ All data saves to LOCAL database');
+console.log('   Platform: Vercel');
+console.log('   ✅ Connected to Google Cloud Run backend');
 
 // Helper function to get auth token
 const getAuthToken = () => {
