@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { X } from 'lucide-react';
 
 // Get build version embedded during build
@@ -9,7 +9,7 @@ const LOCAL_VERSION = {
 
 export default function VersionChecker() {
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
+  const isCheckingRef = useRef(false);
 
   useEffect(() => {
     let checkInterval;
@@ -18,9 +18,9 @@ export default function VersionChecker() {
 
     const checkVersion = async () => {
       // Don't check if already checking or in development
-      if (isChecking || import.meta.env.DEV) return;
+      if (isCheckingRef.current || import.meta.env.DEV) return;
       
-      setIsChecking(true);
+      isCheckingRef.current = true;
 
       try {
         // Add timestamp to prevent caching of version.json
@@ -66,7 +66,7 @@ export default function VersionChecker() {
           }
         }
       } finally {
-        setIsChecking(false);
+        isCheckingRef.current = false;
       }
     };
 
@@ -81,7 +81,7 @@ export default function VersionChecker() {
         clearInterval(checkInterval);
       }
     };
-  }, [isChecking]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpdate = () => {
     // Clear all caches and reload
