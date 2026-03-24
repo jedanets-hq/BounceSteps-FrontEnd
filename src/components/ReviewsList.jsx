@@ -3,6 +3,15 @@ import Icon from './AppIcon';
 import RatingStars from './RatingStars';
 import Button from './ui/Button';
 
+// 🚨 PRODUCTION FIX: Get API URL without localhost fallback
+const getApiUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (!apiUrl) {
+    throw new Error('🚨 VITE_API_URL environment variable is required in production');
+  }
+  return apiUrl;
+};
+
 const ReviewsList = ({ serviceId, showAddReview = false, onAddReview = null }) => {
   const [reviews, setReviews] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -19,7 +28,7 @@ const ReviewsList = ({ serviceId, showAddReview = false, onAddReview = null }) =
   const fetchReviews = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/service/${serviceId}`
+        `${getApiUrl()}/api/reviews/service/${serviceId}`
       );
       const data = await response.json();
       
@@ -37,7 +46,7 @@ const ReviewsList = ({ serviceId, showAddReview = false, onAddReview = null }) =
   const fetchSummary = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/service/${serviceId}/summary`
+        `${getApiUrl()}/api/reviews/service/${serviceId}/summary`
       );
       const data = await response.json();
       

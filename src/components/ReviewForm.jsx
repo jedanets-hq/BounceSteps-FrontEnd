@@ -3,6 +3,15 @@ import Icon from './AppIcon';
 import Button from './ui/Button';
 import RatingStars from './RatingStars';
 
+// 🚨 PRODUCTION FIX: Get API URL without localhost fallback
+const getApiUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (!apiUrl) {
+    throw new Error('🚨 VITE_API_URL environment variable is required in production');
+  }
+  return apiUrl;
+};
+
 const ReviewForm = ({ 
   serviceId, 
   bookingId = null, 
@@ -33,8 +42,8 @@ const ReviewForm = ({
       }
       
       const url = existingReview 
-        ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${existingReview.id}`
-        : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews`;
+        ? `${getApiUrl()}/api/reviews/${existingReview.id}`
+        : `${getApiUrl()}/api/reviews`;
       
       const method = existingReview ? 'PUT' : 'POST';
       

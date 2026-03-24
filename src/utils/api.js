@@ -10,7 +10,13 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api';
 const API_URL = API_BASE_URL;
 
+// 🚨 FORCE FAIL IF LOCALHOST IN PRODUCTION
+if (import.meta.env.MODE === 'production' && API_BASE_URL.includes('localhost')) {
+  throw new Error('🚨 LOCALHOST DETECTED IN PRODUCTION! Check environment variables.');
+}
+
 // Log API configuration for verification
+console.log('🚨 API URL IN USE:', API_BASE_URL);
 console.log('🌐 API Configuration:');
 console.log('   Backend URL:', API_BASE_URL);
 console.log('   Environment:', import.meta.env.MODE);
