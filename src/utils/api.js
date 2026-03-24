@@ -6,8 +6,8 @@
 // Backend URL is set in .env file: VITE_API_BASE_URL
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Use environment variable or fallback to localhost for development
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Use environment variable - MUST be set in production
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api';
 const API_URL = API_BASE_URL;
 
 // Log API configuration for verification
