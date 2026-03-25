@@ -8,8 +8,13 @@
   },
   "redirects": [
     {
+      "source": "https://bouncesteps.com/:path*",
+      "destination": "https://www.bouncesteps.com/:path*",
+      "permanent": true
+    },
+    {
       "source": "http://bouncesteps.com/:path*",
-      "destination": "https://bouncesteps.com/:path*",
+      "destination": "https://www.bouncesteps.com/:path*",
       "permanent": true
     }
   ],
