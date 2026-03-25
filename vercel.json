@@ -6,6 +6,13 @@
     "VITE_API_URL": "https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api",
     "VITE_API_BASE_URL": "https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api"
   },
+  "redirects": [
+    {
+      "source": "http://bouncesteps.com/:path*",
+      "destination": "https://bouncesteps.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
