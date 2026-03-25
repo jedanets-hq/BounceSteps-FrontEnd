@@ -2,25 +2,25 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
-    <loc>https://bouncesteps.com/</loc>
+    <loc>https://www.bouncesteps.com/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://bouncesteps.com/about</loc>
+    <loc>https://www.bouncesteps.com/about</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://bouncesteps.com/services</loc>
+    <loc>https://www.bouncesteps.com/services</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://bouncesteps.com/contact</loc>
+    <loc>https://www.bouncesteps.com/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
