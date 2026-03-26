@@ -3,8 +3,8 @@
   command = "npm run build"
 
 [build.environment]
-  VITE_API_BASE_URL = "https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api"
-  VITE_API_URL = "https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api"
+  VITE_API_BASE_URL = "https://bouncesteps-backend-392429231515.us-central1.run.app/api"
+  VITE_API_URL = "https://bouncesteps-backend-392429231515.us-central1.run.app/api"
   VITE_FRONTEND_URL = "https://bouncesteps.com"
   VITE_NODE_ENV = "production"
   NODE_ENV = "production"
@@ -68,8 +68,8 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
 
 [context.production.environment]
-  VITE_API_BASE_URL = "https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api"
-  VITE_API_URL = "https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api"
+  VITE_API_BASE_URL = "https://bouncesteps-backend-392429231515.us-central1.run.app/api"
+  VITE_API_URL = "https://bouncesteps-backend-392429231515.us-central1.run.app/api"
   VITE_FRONTEND_URL = "https://bouncesteps.com"
   VITE_NODE_ENV = "production"
   NODE_ENV = "production"
