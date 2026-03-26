@@ -62,6 +62,7 @@ const Login = () => {
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
+      // ALWAYS redirect to home as requested
       navigate('/');
     } else {
       setError(result.error || 'Login failed. Please check your credentials.');

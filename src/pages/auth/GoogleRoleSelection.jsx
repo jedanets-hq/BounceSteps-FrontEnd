@@ -289,7 +289,7 @@ const GoogleRoleSelection = () => {
           const dashboardPath = userData.userType === 'service_provider' 
             ? '/service-provider-dashboard' 
             : '/traveler-dashboard';
-          window.location.href = '/';
+          window.location.href = dashboardPath;
           return;
         }
       }
@@ -511,7 +511,7 @@ const GoogleRoleSelection = () => {
         
         // Use window.location.href for navigation (allows back button)
         // This is more reliable than replace() for OAuth flows
-        window.location.href = '/';
+        window.location.href = targetPath;
       } else {
         console.error('❌ Auto-registration failed:', data.message);
         setError(data.message || 'Registration failed. Please try again.');
@@ -971,7 +971,7 @@ const GoogleRoleSelection = () => {
         }
         
         // Use window.location.href for more reliable navigation after OAuth
-        window.location.href = '/';
+        window.location.href = targetPath;
       } else {
         setError(data.message || 'Registration failed. Please try again.');
         setIsLoading(false);

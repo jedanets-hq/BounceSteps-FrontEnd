@@ -6,22 +6,21 @@
 // Backend URL is set in .env file: VITE_API_BASE_URL
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Use environment variable - MUST be set in production
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://bouncesteps-backend-392429231515.us-central1.run.app/api';
-const API_URL = API_BASE_URL;
+// 🚨 PRODUCTION FIX: Remove localhost fallback - MUST have environment variable set
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
 
-// 🚨 FORCE FAIL IF LOCALHOST IN PRODUCTION
-if (import.meta.env.MODE === 'production' && API_BASE_URL.includes('localhost')) {
-  throw new Error('🚨 LOCALHOST DETECTED IN PRODUCTION! Check environment variables.');
+if (!API_BASE_URL) {
+  throw new Error('🚨 VITE_API_URL or VITE_API_BASE_URL environment variable is required in production');
 }
 
+const API_URL = API_BASE_URL;
+
 // Log API configuration for verification
-console.log('🚨 API URL IN USE:', API_BASE_URL);
 console.log('🌐 API Configuration:');
 console.log('   Backend URL:', API_BASE_URL);
 console.log('   Environment:', import.meta.env.MODE);
-console.log('   Platform: Vercel');
-console.log('   ✅ Connected to Google Cloud Run backend');
+console.log('   Platform: Google Cloud Run');
+console.log('   ✅ Connected to production backend');
 
 // Helper function to get auth token
 const getAuthToken = () => {
