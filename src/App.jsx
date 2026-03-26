@@ -7,6 +7,7 @@ import { TripsProvider } from './contexts/TripsContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import VersionChecker from './components/VersionChecker';
+import AutoLogout from './components/AutoLogout';
 import HomePage from './pages/homepage';
 import LoginPage from './pages/auth/login';
 import RegisterPage from './pages/auth/register';
@@ -35,6 +36,7 @@ function App() {
                 <FavoritesProvider>
                   <TripsProvider>
                     <VersionChecker />
+                    <AutoLogout />
                     <div className="App">
                 <Routes>
                   <Route path="/" element={<HomePage />} />

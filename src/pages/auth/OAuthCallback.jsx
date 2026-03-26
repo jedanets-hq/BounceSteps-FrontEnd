@@ -14,15 +14,9 @@ const OAuthCallback = () => {
    */
   const getDashboardPath = (userType) => {
     switch (userType) {
-      case 'service_provider':
-        return '/service-provider-dashboard';
-      case 'traveler':
-        return '/traveler-dashboard';
       case 'admin':
         return '/admin';
       default:
-        // Default to home for unknown roles
-        console.warn('⚠️ Unknown user type:', userType, '- redirecting to home');
         return '/';
     }
   };
