@@ -278,8 +278,59 @@ const GoogleRoleSelection = () => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [description, setDescription] = useState('');
 
-  // Check if user is already logged in and redirect to dashboard
-  useEffect(() => {
+  // Helper function for auto-completing registration
+  const autoCompleteRegistration = async (gData, sData) => {
+    try {
+      // Build registration object correctly based on role
+      const role = sData.userType === 'service_provider' ? 'provider' : 'traveler';
+      
+      console.log('🎯 Auto-completing registration for:', gData.email);
+      
+      const response = await fetch(`${API_URL}/auth/google/complete-registration`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          googleId: gData.googleId,
+          email: gData.email,
+          firstName: sData.firstName || gData.firstName,
+          lastName: sData.lastName || gData.lastName,
+          avatarUrl: gData.avatarUrl,
+          userType: sData.userType,
+          phone: sData.phone,
+          companyName: sData.companyName,
+          serviceLocation: sData.serviceLocation,
+          serviceCategories: sData.serviceCategories,
+          locationData: sData.locationData,
+          description: sData.description
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('✅ Auto-registration successful!');
+        clearRoleSelection();
+        
+        const userWithToken = { ...data.user, token: data.token };
+        localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
+        
+        // Notify AuthContext
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'isafari_user',
+          newValue: JSON.stringify(userWithToken),
+          url: window.location.href
+        }));
+        
+        // Use longer delay to ensure localStorage is fully committed
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Redirect to home as requested
+        window.location.href = '/';
+      } else {
+        console.error('❌ Auto-registration failed:', data.message);
+        setError(data.message || 'Registration failed. Please try again.');
         setIsLoading(false);
         setIsInitialized(true);
         // Restore form state from stored data so user can retry
@@ -299,33 +350,9 @@ const GoogleRoleSelection = () => {
       }
     } catch (err) {
       console.error('❌ Auto-registration error:', err);
-      
-      // Handle specific error types
-      let errorMessage = 'Registration failed. Please try again.';
-      if (err.name === 'AbortError') {
-        errorMessage = 'Request timed out. Please check your connection and try again.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
+      setError(err.message || 'Registration failed. Please try again.');
       setIsLoading(false);
       setIsInitialized(true);
-      
-      // Restore form state from stored data so user can retry
-      const role = sData.userType === 'service_provider' ? 'provider' : 'traveler';
-      setSelectedRole(role);
-      setPhone(sData.phone || '');
-      if (role === 'provider') {
-        setCompanyName(sData.companyName || '');
-        if (sData.locationData) setServiceLocation(sData.locationData);
-        if (sData.serviceCategories) setSelectedCategories(sData.serviceCategories);
-        if (sData.description) setDescription(sData.description);
-      } else {
-        if (sData.firstName) setFirstName(sData.firstName);
-        if (sData.lastName) setLastName(sData.lastName);
-      }
-      // Show form so user can retry - but keep googleData flow (NOT newUserFlow)
       setIsNewUserFlow(false);
     }
   };
@@ -333,8 +360,6 @@ const GoogleRoleSelection = () => {
   // Initialize component - runs once on mount
   useEffect(() => {
     console.log('🔍 GoogleRoleSelection mounted');
-    console.log('🔍 Full URL:', window.location.href);
-    console.log('🔍 URL search params:', window.location.search);
     
     // Flag to prevent double initialization
     let isSubscribed = true;
@@ -342,87 +367,53 @@ const GoogleRoleSelection = () => {
     // CRITICAL: Set a maximum timeout to prevent infinite loading
     const maxTimeoutId = setTimeout(() => {
       if (!isSubscribed) return;
-      console.log('⚠️ Max timeout reached - forcing initialization');
       if (!isInitialized) {
         setIsNewUserFlow(true);
         setError('');
         setIsInitialized(true);
         setIsLoading(false);
       }
-    }, 5000); // 5 second max timeout - show form quickly
+    }, 5000);
     
-    // Small delay to ensure URL params are fully available
     const initializeComponent = async () => {
       try {
-        // Check if this is a new user flow (from "Sign up with Google" button)
         const newUser = searchParams.get('newUser');
         if (newUser === 'true') {
-          console.log('📝 New user flow detected');
           if (!isSubscribed) return;
           setIsNewUserFlow(true);
           
-          // Check for previously stored role selection (in case of OAuth redirect back)
           const storedData = getStoredRoleSelection();
           if (storedData) {
             setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
             setPhone(storedData.phone || '');
             setCompanyName(storedData.companyName || '');
-            // Restore name fields for travelers
-            if (storedData.firstName) {
-              setFirstName(storedData.firstName);
-            }
-            if (storedData.lastName) {
-              setLastName(storedData.lastName);
-            }
-            // Restore location and categories for service providers
-            if (storedData.locationData) {
-              setServiceLocation(storedData.locationData);
-            }
+            if (storedData.firstName) setFirstName(storedData.firstName);
+            if (storedData.lastName) setLastName(storedData.lastName);
+            if (storedData.locationData) setServiceLocation(storedData.locationData);
             if (storedData.serviceCategories && storedData.serviceCategories.length > 0) {
               setSelectedCategories(storedData.serviceCategories);
             }
-            if (storedData.description) {
-              setDescription(storedData.description);
-            }
+            if (storedData.description) setDescription(storedData.description);
           }
           setIsInitialized(true);
           return;
         }
 
-        // Get Google data from URL params (from OAuth callback)
         const googleDataParam = searchParams.get('googleData');
-        console.log('🔍 googleData param:', googleDataParam ? `exists (length: ${googleDataParam.length})` : 'missing');
-        
-        // CRITICAL DEBUG: Log the raw parameter for troubleshooting
         if (googleDataParam) {
-          console.log('🔍 googleData first 100 chars:', googleDataParam.substring(0, 100));
-          console.log('🔍 googleData last 50 chars:', googleDataParam.substring(googleDataParam.length - 50));
-        }
-        
-        if (googleDataParam) {
-          // Use the robust parsing function
           const parsedData = parseGoogleData(googleDataParam);
           
           if (parsedData) {
-            console.log('✅ Successfully parsed Google data for:', parsedData.email);
             if (!isSubscribed) return;
             setGoogleData(parsedData);
             
-            // Check for stored role selection from before OAuth
             const storedData = getStoredRoleSelection();
             if (storedData && storedData.userType && storedData.phone) {
-              // We have both Google data and stored registration data
-              // AUTO-COMPLETE REGISTRATION immediately!
-              console.log('🎯 Both googleData and storedData found - auto-completing registration!');
-              setIsInitialized(true); // Set initialized FIRST to show loading state
+              setIsInitialized(true);
               setIsLoading(true);
-              
-              // Call auto-complete registration (don't await - let it run async)
               autoCompleteRegistration(parsedData, storedData);
               return;
             } else {
-              // No stored data or incomplete - show form for user to fill
-              console.log('⚠️ No complete stored data - showing form');
               if (storedData) {
                 setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
                 setPhone(storedData.phone || '');
@@ -438,71 +429,46 @@ const GoogleRoleSelection = () => {
               setIsInitialized(true);
             }
           } else {
-            // Parsing failed - show form with error instead of blank screen
-            console.error('❌ Failed to parse Google data - showing form anyway');
             if (!isSubscribed) return;
             setError('Unable to process Google sign-in data. Please try again.');
-            // Still show the form so user can retry
             setIsNewUserFlow(true);
             setIsInitialized(true);
-            return;
           }
         } else {
-          // No Google data - check if this is a return from OAuth
           const storedData = getStoredRoleSelection();
           if (!isSubscribed) return;
-          
           if (storedData) {
-            // Role data exists but Google data is missing
-            console.log('⚠️ Role data exists but no Google data - showing form');
             setIsNewUserFlow(true);
             setSelectedRole(storedData.userType === 'service_provider' ? 'provider' : 'traveler');
             setPhone(storedData.phone || '');
             setCompanyName(storedData.companyName || '');
-            // Restore name fields for travelers
-            if (storedData.firstName) {
-              setFirstName(storedData.firstName);
-            }
-            if (storedData.lastName) {
-              setLastName(storedData.lastName);
-            }
-            // Restore location and categories for service providers
-            if (storedData.locationData) {
-              setServiceLocation(storedData.locationData);
-            }
+            if (storedData.firstName) setFirstName(storedData.firstName);
+            if (storedData.lastName) setLastName(storedData.lastName);
+            if (storedData.locationData) setServiceLocation(storedData.locationData);
             if (storedData.serviceCategories && storedData.serviceCategories.length > 0) {
               setSelectedCategories(storedData.serviceCategories);
             }
-            if (storedData.description) {
-              setDescription(storedData.description);
-            }
+            if (storedData.description) setDescription(storedData.description);
             setError('Please complete the Google sign-in process.');
             setIsInitialized(true);
           } else {
-            // No data at all - show form with error (NOT blank screen)
-            console.log('⚠️ No registration data found - showing form');
             setIsNewUserFlow(true);
             setError('No registration data found. Please select your account type and try again.');
             setIsInitialized(true);
           }
         }
       } catch (err) {
-        console.error('❌ Initialization error:', err);
-        console.error('❌ Error stack:', err.stack);
         if (!isSubscribed) return;
-        // On any error, show the form instead of blank screen
         setIsNewUserFlow(true);
         setError('An error occurred. Please try signing up again.');
         setIsInitialized(true);
       }
     };
 
-    // Run initialization with a small delay to ensure URL is fully parsed
-    const timer = setTimeout(initializeComponent, 100);
+    setTimeout(initializeComponent, 100);
     
     return () => {
       isSubscribed = false;
-      clearTimeout(timer);
       clearTimeout(maxTimeoutId);
     };
   }, [searchParams]);
@@ -512,27 +478,21 @@ const GoogleRoleSelection = () => {
     setError('');
   };
 
-  // Handle new user flow - redirect to Google OAuth after role selection
   const handleNewUserSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate role selection is mandatory
     if (!selectedRole) {
       setError('Please select how you want to use iSafari Global');
       return;
     }
-
     if (!phone) {
       setError('Phone number is required');
       return;
     }
-
     if (selectedRole === 'provider' && !companyName) {
       setError('Company/Business name is required for service providers');
       return;
     }
-
-    // Validate traveler name fields
     if (selectedRole === 'traveler') {
       if (!firstName.trim()) {
         setError('First name is required');
@@ -543,8 +503,6 @@ const GoogleRoleSelection = () => {
         return;
       }
     }
-
-    // Validate service provider location and categories
     if (selectedRole === 'provider') {
       if (!serviceLocation.region || !serviceLocation.district) {
         setError('Please select your service location (Region and District are required)');
@@ -559,57 +517,41 @@ const GoogleRoleSelection = () => {
     setIsLoading(true);
     setError('');
 
-    // Build service location string for providers
     const serviceLocationString = selectedRole === 'provider' 
       ? `${serviceLocation.street}, ${serviceLocation.ward}, ${serviceLocation.district}, ${serviceLocation.region}, Tanzania`
           .replace(/^, |, , /g, ', ').replace(/^, /, '').trim()
       : null;
 
-    // Store selection in sessionStorage with timestamp for after OAuth
     storeRoleSelection({
       userType: selectedRole === 'provider' ? 'service_provider' : 'traveler',
       phone,
       companyName: selectedRole === 'provider' ? companyName : null,
-      firstName: selectedRole === 'traveler' ? firstName.trim() : null,  // Will use Google name for providers
-      lastName: selectedRole === 'traveler' ? lastName.trim() : null,    // Will use Google name for providers
+      firstName: selectedRole === 'traveler' ? firstName.trim() : null,
+      lastName: selectedRole === 'traveler' ? lastName.trim() : null,
       serviceLocation: serviceLocationString,
       serviceCategories: selectedRole === 'provider' ? selectedCategories : [],
       locationData: selectedRole === 'provider' ? serviceLocation : null,
       description: selectedRole === 'provider' ? description : null
     });
 
-    console.log('✅ Registration data stored in sessionStorage');
-    console.log('   userType:', selectedRole === 'provider' ? 'service_provider' : 'traveler');
-    console.log('   phone:', phone);
-    console.log('   firstName:', selectedRole === 'traveler' ? firstName.trim() : 'will use Google name');
-    console.log('   lastName:', selectedRole === 'traveler' ? lastName.trim() : 'will use Google name');
-
-    // Redirect to Google OAuth - use /auth/google/register for registration flow
-    console.log('🔄 Redirecting to Google OAuth:', `${API_URL}/auth/google/register`);
     window.location.href = `${API_URL}/auth/google/register`;
   };
 
-  // Handle OAuth callback flow - complete registration
   const handleOAuthSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate role selection is mandatory
     if (!selectedRole) {
       setError('Please select how you want to use iSafari Global');
       return;
     }
-
     if (!phone) {
       setError('Phone number is required');
       return;
     }
-
     if (selectedRole === 'provider' && !companyName) {
       setError('Company/Business name is required for service providers');
       return;
     }
-
-    // Validate traveler name fields
     if (selectedRole === 'traveler') {
       if (!firstName.trim()) {
         setError('First name is required');
@@ -620,8 +562,6 @@ const GoogleRoleSelection = () => {
         return;
       }
     }
-
-    // Validate service provider location and categories
     if (selectedRole === 'provider') {
       if (!serviceLocation.region || !serviceLocation.district) {
         setError('Please select your service location (Region and District are required)');
@@ -637,17 +577,14 @@ const GoogleRoleSelection = () => {
     setError('');
 
     try {
-      // Build service location string for providers
       const serviceLocationString = selectedRole === 'provider' 
         ? `${serviceLocation.street}, ${serviceLocation.ward}, ${serviceLocation.district}, ${serviceLocation.region}, Tanzania`
             .replace(/^, |, , /g, ', ').replace(/^, /, '').trim()
         : undefined;
 
-      // Use user-entered names for travelers (REQUIRED), Google names for providers
       const finalFirstName = selectedRole === 'traveler' ? firstName.trim() : googleData.firstName;
       const finalLastName = selectedRole === 'traveler' ? lastName.trim() : googleData.lastName;
 
-      // Register the Google user with selected role
       const response = await fetch(`${API_URL}/auth/google/complete-registration`, {
         method: 'POST',
         headers: {
@@ -670,33 +607,19 @@ const GoogleRoleSelection = () => {
       });
 
       const data = await response.json();
-      console.log('📥 Registration response:', data.success ? 'SUCCESS' : 'FAILED');
 
       if (data.success) {
-        // Clear session storage after successful registration
         clearRoleSelection();
-        
-        // Store user data and token with verification
         const userWithToken = { ...data.user, token: data.token };
         
         try {
           localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
           
-          // Verify the data was actually saved
-          const savedData = localStorage.getItem('isafari_user');
-          if (!savedData) {
-            throw new Error('Failed to save user data to localStorage');
-          }
-          
-          const parsedSaved = JSON.parse(savedData);
-          if (!parsedSaved.token || !parsedSaved.userType) {
-            throw new Error('Saved user data is incomplete');
-          }
-          
-          console.log('✅ Registration successful!');
-          console.log('👤 User type:', data.user.userType);
-          console.log('🔑 Token verified in localStorage');
-          
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'isafari_user',
+            newValue: JSON.stringify(userWithToken),
+            url: window.location.href
+          }));
         } catch (storageError) {
           console.error('❌ localStorage error:', storageError);
           setError('Failed to save login data. Please try again.');
@@ -704,39 +627,10 @@ const GoogleRoleSelection = () => {
           return;
         }
         
-        // Redirect to appropriate dashboard based on user type
-        const targetPath = data.user.userType === 'service_provider' 
-          ? '/service-provider-dashboard' 
-          : '/traveler-dashboard';
-        console.log('🚀 Redirecting to dashboard:', targetPath);
-        console.log('👤 User type:', data.user.userType);
-        
-        // CRITICAL: Dispatch storage event to notify AuthContext immediately
-        try {
-          window.dispatchEvent(new StorageEvent('storage', {
-            key: 'isafari_user',
-            newValue: JSON.stringify(userWithToken),
-            url: window.location.href
-          }));
-          console.log('📢 Storage event dispatched to notify AuthContext');
-        } catch (e) {
-          console.warn('Could not dispatch storage event:', e);
-        }
-        
-        // Use longer delay to ensure localStorage is fully committed
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Double-check localStorage before redirect
-        const finalCheck = localStorage.getItem('isafari_user');
-        if (!finalCheck) {
-          console.error('❌ localStorage lost data before redirect!');
-          setError('Session data was lost. Please try again.');
-          setIsLoading(false);
-          return;
-        }
-        
-        // Use window.location.href for more reliable navigation after OAuth
-        window.location.href = targetPath;
+        // ALWAYS redirect to home page as requested
+        window.location.href = '/';
       } else {
         setError(data.message || 'Registration failed. Please try again.');
         setIsLoading(false);
@@ -748,47 +642,27 @@ const GoogleRoleSelection = () => {
     }
   };
 
-  // Loading state - show ONLY during initial parsing, with timeout protection
   if (!isInitialized) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading registration data...</p>
-          <p className="text-xs text-gray-400 mt-2">Please wait...</p>
-          {/* Fallback button in case loading takes too long */}
-          <button 
-            onClick={() => {
-              setIsNewUserFlow(true);
-              setIsInitialized(true);
-              setIsLoading(false);
-            }}
-            className="mt-6 text-sm text-blue-600 hover:text-blue-800 underline"
-          >
-            Taking too long? Click here to continue
-          </button>
         </div>
       </div>
     );
   }
 
-  // Show loading screen during auto-registration or any loading state
   if (isLoading && !error) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">
-            {googleData ? 'Creating your account...' : 'Processing...'}
-          </p>
-          <p className="text-xs text-gray-400 mt-2">Please wait while we set up your profile</p>
+          <p className="text-gray-600">{googleData ? 'Creating your account...' : 'Processing...'}</p>
         </div>
       </div>
     );
   }
-
-  // ALWAYS show the form after initialization - never show blank screen
-  // The form handles all states: googleData present, newUserFlow, or error
 
   return (
     <div className="min-h-screen bg-background">
@@ -800,7 +674,6 @@ const GoogleRoleSelection = () => {
       <main className="pt-20 pb-12">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-card rounded-lg shadow-lg p-8">
-            {/* Header */}
             <div className="text-center mb-8">
               {googleData?.avatarUrl && (
                 <img 
@@ -809,170 +682,105 @@ const GoogleRoleSelection = () => {
                   className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-primary/20"
                 />
               )}
-              {isNewUserFlow ? (
-                <>
-                  <div className="w-20 h-20 rounded-full mx-auto mb-4 bg-primary/10 flex items-center justify-center">
-                    <svg className="w-10 h-10" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                  </div>
-                  <h1 className="text-3xl font-display font-medium text-foreground mb-2">
-                    Sign up with Google
-                  </h1>
-                  <p className="text-muted-foreground">
-                    Choose your account type and provide your details to get started
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h1 className="text-3xl font-display font-medium text-foreground mb-2">
-                    Welcome, {googleData?.firstName}!
-                  </h1>
-                  <p className="text-muted-foreground">
-                    Complete your registration to start using iSafari Global
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Signed in as: {googleData?.email}
-                  </p>
-                </>
-              )}
+              <h1 className="text-3xl font-display font-medium text-foreground mb-2">
+                {googleData ? `Welcome, ${googleData.firstName}!` : 'Complete Your Profile'}
+              </h1>
+              <p className="text-muted-foreground">
+                Please tell us how you'll be using iSafari Global
+              </p>
             </div>
 
-            {/* Error Display */}
             {error && (
-              <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Icon name="AlertCircle" size={20} className="text-destructive" />
-                  <p className="text-sm text-destructive">{error}</p>
-                </div>
+              <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-lg flex items-center">
+                <Icon name="AlertCircle" size={20} className="mr-3 shrink-0" />
+                <p className="text-sm font-medium">{error}</p>
               </div>
             )}
 
-            <form onSubmit={isNewUserFlow ? handleNewUserSubmit : handleOAuthSubmit} className="space-y-6">
-              {/* Role Selection */}
-              <div>
-                <h2 className="text-lg font-semibold text-foreground mb-4">
-                  How would you like to use iSafari Global?
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => handleRoleSelect('traveler')}
-                    className={`p-6 border-2 rounded-lg transition-all text-left ${
-                      selectedRole === 'traveler'
-                        ? 'border-primary bg-primary/5 shadow-md'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-4 mb-3">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        selectedRole === 'traveler' ? 'bg-primary/20' : 'bg-primary/10'
-                      }`}>
-                        <Icon name="User" size={24} className="text-primary" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-foreground">Traveler</h3>
-                    </div>
-                    <p className="text-muted-foreground text-sm">
-                      Explore destinations, book services, and plan your perfect trip
-                    </p>
-                    {selectedRole === 'traveler' && (
-                      <div className="mt-3 flex items-center text-primary text-sm">
-                        <Icon name="Check" size={16} className="mr-1" />
-                        Selected
-                      </div>
-                    )}
-                  </button>
+            <form onSubmit={isNewUserFlow ? handleNewUserSubmit : handleOAuthSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleRoleSelect('traveler')}
+                  className={`p-6 rounded-xl border-2 transition-all text-left flex flex-col items-center text-center space-y-3 ${
+                    selectedRole === 'traveler'
+                      ? 'border-primary bg-primary/5 shadow-md'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className={`p-3 rounded-full ${selectedRole === 'traveler' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    <Icon name="Suitcase" size={32} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">I'm a Traveler</h3>
+                    <p className="text-xs text-muted-foreground mt-1">I want to discover and book authentic experiences</p>
+                  </div>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleRoleSelect('provider')}
-                    className={`p-6 border-2 rounded-lg transition-all text-left ${
-                      selectedRole === 'provider'
-                        ? 'border-secondary bg-secondary/5 shadow-md'
-                        : 'border-border hover:border-secondary/50'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-4 mb-3">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        selectedRole === 'provider' ? 'bg-secondary/20' : 'bg-secondary/10'
-                      }`}>
-                        <Icon name="Briefcase" size={24} className="text-secondary" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-foreground">Service Provider</h3>
-                    </div>
-                    <p className="text-muted-foreground text-sm">
-                      List your services and connect with travelers worldwide
-                    </p>
-                    {selectedRole === 'provider' && (
-                      <div className="mt-3 flex items-center text-secondary text-sm">
-                        <Icon name="Check" size={16} className="mr-1" />
-                        Selected
-                      </div>
-                    )}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRoleSelect('provider')}
+                  className={`p-6 rounded-xl border-2 transition-all text-left flex flex-col items-center text-center space-y-3 ${
+                    selectedRole === 'provider'
+                      ? 'border-primary bg-primary/5 shadow-md'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className={`p-3 rounded-full ${selectedRole === 'provider' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    <Icon name="Store" size={32} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">I'm a Service Provider</h3>
+                    <p className="text-xs text-muted-foreground mt-1">I want to list my services and manage bookings</p>
+                  </div>
+                </button>
               </div>
 
-              {/* Company Name - Only for Service Providers */}
               {selectedRole === 'provider' && (
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Company / Business Name *
+                    Business / Company Name *
                   </label>
                   <input
                     type="text"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="Enter your company or business name"
+                    placeholder="Enter your business name"
                     className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                     required={selectedRole === 'provider'}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    This will be displayed to travelers
-                  </p>
                 </div>
               )}
 
-              {/* Name Fields - Only for Travelers */}
               {selectedRole === 'traveler' && (
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      First Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Enter your first name"
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      required={selectedRole === 'traveler'}
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">First Name *</label>
+                      <input
+                        type="text"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="First Name"
+                        className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        required={selectedRole === 'traveler'}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Last Name *</label>
+                      <input
+                        type="text"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Last Name"
+                        className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        required={selectedRole === 'traveler'}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Last Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Enter your last name"
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                      required={selectedRole === 'traveler'}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    This name will be used for your account and displayed to service providers
-                  </p>
                 </div>
               )}
 
-              {/* Phone Number */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   Phone Number *
@@ -985,131 +793,47 @@ const GoogleRoleSelection = () => {
                   className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   required
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  We'll use this to contact you about your bookings
-                </p>
               </div>
 
-              {/* Service Location - Only for Service Providers */}
               {selectedRole === 'provider' && (
-                <div className="border border-border rounded-lg p-4 bg-muted/30">
-                  <h4 className="font-medium text-foreground mb-4 flex items-center">
-                    <Icon name="MapPin" size={18} className="mr-2" />
-                    Service Location (Tanzania) *
-                  </h4>
-                  <LocationSelector
-                    value={serviceLocation}
-                    onChange={setServiceLocation}
-                    required={true}
-                    showWard={true}
-                    showStreet={true}
-                  />
-                </div>
-              )}
-
-              {/* Service Categories - Only for Service Providers */}
-              {selectedRole === 'provider' && (
-                <div className="border border-border rounded-lg p-4 bg-muted/30">
-                  <h4 className="font-medium text-foreground mb-4 flex items-center">
-                    <Icon name="Briefcase" size={18} className="mr-2" />
-                    Service Categories *
-                  </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {Object.keys(allServiceCategories).map((category) => (
-                      <button
-                        key={category}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCategories(prev =>
-                            prev.includes(category)
-                              ? prev.filter(c => c !== category)
-                              : [...prev, category]
-                          );
-                        }}
-                        className={`p-3 text-sm rounded-lg border transition-all flex items-center justify-center ${
-                          selectedCategories.includes(category)
-                            ? 'bg-secondary text-secondary-foreground border-secondary shadow-md'
-                            : 'bg-background border-border hover:border-secondary hover:shadow-sm'
-                        }`}
-                      >
-                        {category}
-                      </button>
-                    ))}
+                <div className="space-y-6">
+                  <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                    <h4 className="font-medium mb-4 flex items-center"><Icon name="MapPin" size={18} className="mr-2" /> Service Location *</h4>
+                    <LocationSelector value={serviceLocation} onChange={setServiceLocation} required={true} showWard={true} showStreet={true} />
                   </div>
-                  {selectedCategories.length > 0 && (
-                    <div className="mt-3 text-sm text-muted-foreground">
-                      Selected: {selectedCategories.join(', ')}
+                  <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                    <h4 className="font-medium mb-4 flex items-center"><Icon name="Briefcase" size={18} className="mr-2" /> Service Categories *</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.keys(allServiceCategories).map((category) => (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() => setSelectedCategories(prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category])}
+                          className={`p-2 text-xs rounded border transition-all ${selectedCategories.includes(category) ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-background border-border hover:border-secondary'}`}
+                        >
+                          {category}
+                        </button>
+                      ))}
                     </div>
-                  )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Business Description</label>
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Tell us about your business..." />
+                  </div>
                 </div>
               )}
 
-              {/* Business Description - Only for Service Providers */}
-              {selectedRole === 'provider' && (
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Business Description
-                  </label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Tell us about your business and services..."
-                  />
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                fullWidth
-                disabled={isLoading || !selectedRole}
-                className="mt-6"
-              >
-                {isLoading ? (
-                  <>
-                    <Icon name="Loader2" size={20} className="animate-spin" />
-                    {isNewUserFlow ? 'Connecting to Google...' : 'Creating Account...'}
-                  </>
-                ) : (
-                  <>
-                    {isNewUserFlow ? (
-                      <>
-                        <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                          <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                          <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                          <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                          <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Continue with Google
-                      </>
-                    ) : (
-                      <>
-                        <Icon name="UserPlus" size={20} />
-                        Complete Registration
-                      </>
-                    )}
-                  </>
-                )}
+              <Button type="submit" fullWidth disabled={isLoading || !selectedRole} className="mt-6">
+                {isLoading ? <><Icon name="Loader2" size={20} className="animate-spin mr-2" /> Processing...</> : (isNewUserFlow ? 'Continue with Google' : 'Complete Registration')}
               </Button>
 
-              {/* Back to Login */}
               <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => navigate('/login')}
-                  className="text-sm text-muted-foreground hover:text-primary"
-                >
-                  ← Back to Login
-                </button>
+                <button type="button" onClick={() => navigate('/login')} className="text-sm text-muted-foreground hover:text-primary">← Back to Login</button>
               </div>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-border text-center">
-              <p className="text-xs text-muted-foreground">
-                Powered by <span className="font-semibold">JEDA NETWORKS</span>
-              </p>
+            <div className="mt-8 pt-6 border-t border-border text-center text-xs text-muted-foreground">
+              Powered by <span className="font-semibold text-primary">JEDA NETWORKS</span>
             </div>
           </div>
         </div>

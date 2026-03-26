@@ -112,7 +112,12 @@ const Register = () => {
     }
 
     // Strict age verification for travelers (18+)
-    if (userType === 'traveler' && formData.dateOfBirth) {
+    if (userType === 'traveler') {
+      if (!formData.dateOfBirth) {
+        alert('Registration failed: Date of birth is required for travelers.');
+        return;
+      }
+      
       const calculateAge = (dob) => {
         const birthDate = new Date(dob);
         const today = new Date();
@@ -407,6 +412,7 @@ const Register = () => {
                           value={formData.dateOfBirth}
                           onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
                           className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                          required={userType === 'traveler'}
                         />
                       </div>
                       <div>
