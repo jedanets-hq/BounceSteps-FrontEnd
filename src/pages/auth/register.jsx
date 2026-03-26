@@ -104,6 +104,31 @@ const Register = () => {
       alert('Passwords do not match!');
       return;
     }
+
+    // Standardize phone number to Tanzanian format (+255)
+    if (!formData.phone.startsWith('+255')) {
+      alert('Registration failed: Phone number must start with +255 (Tanzanian standard). Example: +255 700 000 000');
+      return;
+    }
+
+    // Strict age verification for travelers (18+)
+    if (userType === 'traveler' && formData.dateOfBirth) {
+      const calculateAge = (dob) => {
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        return age;
+      };
+
+      if (calculateAge(formData.dateOfBirth) < 18) {
+        alert('Registration failed: You must be at least 18 years old to create a traveler account.');
+        return;
+      }
+    }
     
     // Validate service provider location and categories
     if (userType === 'provider') {

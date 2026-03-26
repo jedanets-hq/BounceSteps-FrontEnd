@@ -228,7 +228,7 @@ const OAuthCallback = () => {
               </svg>
             </div>
             <h2 className="text-xl font-semibold mb-2 text-green-600">Welcome Back!</h2>
-            <p className="text-gray-600">Redirecting you to {getDashboardDisplayName() === 'home page' ? 'the home page' : getDashboardDisplayName()}...</p>
+            <p className="text-gray-600">Redirecting you to the home page...</p>
           </div>
         )}
 
