@@ -13,7 +13,7 @@ function versionManifestPlugin() {
     name: 'version-manifest',
     closeBundle() {
       const manifest = {
-        version: process.env.npm_package_version || '1.0.0',
+        version: process.env.npm_package_version || '1.0.1',
         buildTime: new Date().toISOString(),
         buildHash: process.env.GIT_COMMIT || Date.now().toString(36),
         environment: process.env.NODE_ENV || 'production'
