@@ -53,14 +53,15 @@ const User = {
       google_id,
       avatar_url,
       is_verified,
-      auth_provider
+      auth_provider,
+      date_of_birth
     } = userData;
 
     const result = await pool.query(
       `INSERT INTO users (
         email, password, first_name, last_name, phone, 
-        user_type, google_id, avatar_url, is_verified, auth_provider, is_active
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+        user_type, google_id, avatar_url, is_verified, auth_provider, is_active, date_of_birth
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
       RETURNING *`,
       [
         email,
@@ -73,7 +74,8 @@ const User = {
         avatar_url || null,
         is_verified !== undefined ? is_verified : false,
         auth_provider || (password ? 'email' : 'google'),
-        true // is_active defaults to true
+        true, // is_active defaults to true
+        date_of_birth || null
       ]
     );
     return result.rows[0];

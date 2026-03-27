@@ -280,8 +280,13 @@ const GoogleRoleSelection = () => {
         // Use longer delay to ensure localStorage is fully committed
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        // Redirect to home as requested
-        window.location.href = '/';
+        // Redirect to appropriate dashboard based on user type
+        const dashboardPath = data.user.userType === 'traveler' 
+          ? '/traveler-dashboard' 
+          : data.user.userType === 'service_provider' || data.user.userType === 'provider'
+            ? '/service-provider-dashboard'
+            : '/';
+        window.location.href = dashboardPath;
       } else {
         console.error('❌ Auto-registration failed:', data.message);
         setError(data.message || 'Registration failed. Please try again.');
@@ -610,8 +615,13 @@ const GoogleRoleSelection = () => {
         
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        // ALWAYS redirect to home page as requested
-        window.location.href = '/';
+        // Redirect to appropriate dashboard based on user type
+        const dashboardPath = data.user.userType === 'traveler' 
+          ? '/traveler-dashboard' 
+          : data.user.userType === 'service_provider' || data.user.userType === 'provider'
+            ? '/service-provider-dashboard'
+            : '/';
+        window.location.href = dashboardPath;
       } else {
         setError(data.message || 'Registration failed. Please try again.');
         setIsLoading(false);

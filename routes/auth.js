@@ -26,10 +26,29 @@ router.post('/register', getValidationMiddleware('register'), async (req, res) =
   try {
     const { 
       email, password, firstName, lastName, userType, phone, googleId,
-      serviceLocation, serviceCategories, locationData, companyName, businessType, description
+      serviceLocation, serviceCategories, locationData, companyName, businessType, description,
+      dateOfBirth
     } = req.body;
 
     console.log('📝 Registration attempt for:', email, 'userType:', userType);
+
+    // Additional age validation for travelers (safety check)
+    if (userType === 'traveler' && dateOfBirth) {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        return res.status(400).json({
+          success: false,
+          message: 'You must be at least 18 years old to register',
+          field: 'dateOfBirth'
+        });
+      }
+    }
 
     // Check if user already exists by email (PostgreSQL)
     const existingUser = await User.findByEmail(email.toLowerCase().trim());
@@ -66,7 +85,8 @@ router.post('/register', getValidationMiddleware('register'), async (req, res) =
       last_name: lastName,
       phone: phone || null,
       user_type: userType,
-      google_id: googleId || null
+      google_id: googleId || null,
+      date_of_birth: dateOfBirth || null
     });
 
     console.log('✅ User created:', newUser.id, newUser.email);

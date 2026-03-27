@@ -25,7 +25,26 @@ const getValidationMiddleware = (type) => {
         body('businessName')
           .if(body('userType').equals('service_provider'))
           .notEmpty()
-          .withMessage('Business name is required for service providers')
+          .withMessage('Business name is required for service providers'),
+        body('dateOfBirth')
+          .if(body('userType').equals('traveler'))
+          .notEmpty()
+          .withMessage('Date of birth is required for travelers')
+          .isISO8601()
+          .withMessage('Please provide a valid date of birth')
+          .custom((value) => {
+            const birthDate = new Date(value);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+            if (age < 18) {
+              throw new Error('You must be at least 18 years old to register');
+            }
+            return true;
+          })
       ];
       break;
 

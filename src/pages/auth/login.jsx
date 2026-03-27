@@ -26,8 +26,15 @@ const Login = () => {
   // Redirect if user is already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      console.log('✅ User already logged in, redirecting to home');
-      navigate('/', { replace: true });
+      console.log('✅ User already logged in, redirecting to dashboard');
+      // Redirect to appropriate dashboard based on user type
+      if (user.userType === 'traveler') {
+        navigate('/traveler-dashboard', { replace: true });
+      } else if (user.userType === 'service_provider' || user.userType === 'provider') {
+        navigate('/service-provider-dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     }
   }, [authLoading, user, navigate]);
   
@@ -62,8 +69,16 @@ const Login = () => {
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
-      // ALWAYS redirect to home as requested
-      navigate('/');
+      // Redirect to appropriate dashboard based on user type
+      const userType = result.user?.userType || result.userType;
+      if (userType === 'traveler') {
+        navigate('/traveler-dashboard');
+      } else if (userType === 'service_provider' || userType === 'provider') {
+        navigate('/service-provider-dashboard');
+      } else {
+        // Fallback to home for unknown user types
+        navigate('/');
+      }
     } else {
       setError(result.error || 'Login failed. Please check your credentials.');
     }

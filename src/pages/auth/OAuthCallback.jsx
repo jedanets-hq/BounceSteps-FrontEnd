@@ -13,7 +13,12 @@ const OAuthCallback = () => {
    * Implements role-based redirection as per Requirements 3.2, 3.3
    */
   const getDashboardPath = (userType) => {
-    // ALWAYS redirect to home page (/) for all users after login
+    if (userType === 'traveler') {
+      return '/traveler-dashboard';
+    } else if (userType === 'service_provider' || userType === 'provider') {
+      return '/service-provider-dashboard';
+    }
+    // Fallback to home for unknown user types
     return '/';
   };
 
