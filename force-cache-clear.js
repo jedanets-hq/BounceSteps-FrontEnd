@@ -4,3 +4,5 @@ console.log(`Cache cleared at: ${timestamp}`);
 
 // This file forces browsers to reload by changing content
 window.CACHE_BUST = timestamp;
+
+// Force redeploy trigger - ${new Date().toISOString()}
