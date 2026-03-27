@@ -44,6 +44,13 @@ const apiRequest = async (endpoint, options = {}) => {
   };
 
   try {
+    // Log request for debugging (always log in production for debugging 400 errors)
+    console.log('🔍 [API Request]:', {
+      url,
+      method: config.method,
+      body: options.body ? JSON.parse(options.body) : null
+    });
+
     const response = await fetch(url, config);
 
     // Handle 401 specifically - authentication failed (check BEFORE 404)
@@ -66,6 +73,19 @@ const apiRequest = async (endpoint, options = {}) => {
         success: false,
         message: 'API endpoint not available. Please try again later.',
         status: 404
+      };
+    }
+
+    // Handle 400 specifically - validation error
+    if (response.status === 400) {
+      console.warn(`⚠️ [API] 400 Bad Request: ${endpoint}`);
+      const data = await response.json().catch(() => ({}));
+      console.error('❌ Validation Error:', data);
+      return {
+        success: false,
+        message: data.message || 'Invalid request data. Please check your input.',
+        errors: data.errors || [],
+        status: 400
       };
     }
 

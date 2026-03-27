@@ -144,7 +144,22 @@ export const AuthProvider = ({ children }) => {
         })
       };
 
+      // Debug logging - log the data being sent
+      console.log('🔍 [Registration] Sending data:', {
+        ...userData,
+        password: userData.password ? '***' : 'MISSING',
+        passwordLength: userData.password?.length || 0
+      });
+
       const response = await authAPI.register(userData);
+      
+      // Debug logging - log the response
+      console.log('📥 [Registration] Response:', {
+        success: response.success,
+        message: response.message,
+        status: response.status,
+        errors: response.errors
+      });
       
       if (response.success) {
         const userWithToken = { ...response.user, token: response.token };
