@@ -1,6 +1,6 @@
 {
   "name": "isafari-frontend",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "iSafari Global Frontend",
   "scripts": {
     "start": "node server.cjs",
