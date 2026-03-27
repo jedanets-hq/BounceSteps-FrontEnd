@@ -272,6 +272,7 @@ const GoogleRoleSelection = () => {
   const [isNewUserFlow, setIsNewUserFlow] = useState(false);
   // CRITICAL: Track initialization state to prevent blank screen
   const [isInitialized, setIsInitialized] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState('');
   
   // Service Provider specific fields - Location and Categories
   const [serviceLocation, setServiceLocation] = useState({ region: '', district: '', ward: '', street: '' });
@@ -299,6 +300,7 @@ const GoogleRoleSelection = () => {
           avatarUrl: gData.avatarUrl,
           userType: sData.userType,
           phone: sData.phone,
+          dateOfBirth: sData.dateOfBirth,
           companyName: sData.companyName,
           serviceLocation: sData.serviceLocation,
           serviceCategories: sData.serviceCategories,
@@ -336,6 +338,7 @@ const GoogleRoleSelection = () => {
         // Restore form state from stored data so user can retry
         setSelectedRole(role);
         setPhone(sData.phone || '');
+        setDateOfBirth(sData.dateOfBirth || '');
         if (role === 'provider') {
           setCompanyName(sData.companyName || '');
           if (sData.locationData) setServiceLocation(sData.locationData);
@@ -528,6 +531,7 @@ const GoogleRoleSelection = () => {
       companyName: selectedRole === 'provider' ? companyName : null,
       firstName: selectedRole === 'traveler' ? firstName.trim() : null,
       lastName: selectedRole === 'traveler' ? lastName.trim() : null,
+      dateOfBirth: dateOfBirth,
       serviceLocation: serviceLocationString,
       serviceCategories: selectedRole === 'provider' ? selectedCategories : [],
       locationData: selectedRole === 'provider' ? serviceLocation : null,
@@ -576,6 +580,30 @@ const GoogleRoleSelection = () => {
     setIsLoading(true);
     setError('');
 
+    // Strict age verification (18+)
+    if (!dateOfBirth) {
+      setError('Date of birth is required');
+      setIsLoading(false);
+      return;
+    }
+
+    const calculateAge = (dob) => {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    };
+
+    if (calculateAge(dateOfBirth) < 18) {
+      setError('You must be at least 18 years old to join iSafari Global.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const serviceLocationString = selectedRole === 'provider' 
         ? `${serviceLocation.street}, ${serviceLocation.ward}, ${serviceLocation.district}, ${serviceLocation.region}, Tanzania`
@@ -598,6 +626,7 @@ const GoogleRoleSelection = () => {
           avatarUrl: googleData.avatarUrl,
           userType: selectedRole === 'provider' ? 'service_provider' : 'traveler',
           phone: phone,
+          dateOfBirth: dateOfBirth,
           companyName: selectedRole === 'provider' ? companyName : undefined,
           serviceLocation: serviceLocationString,
           serviceCategories: selectedRole === 'provider' ? selectedCategories : undefined,
@@ -780,6 +809,19 @@ const GoogleRoleSelection = () => {
                   </div>
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Date of Birth *
+                </label>
+                <input
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  required
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
