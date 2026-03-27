@@ -152,7 +152,14 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
         return { success: true, user: userWithToken };
       } else {
-        const errorMsg = response.message || 'Registration failed';
+        // Handle validation errors array from backend
+        let errorMsg = response.message || 'Registration failed';
+        
+        if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
+          // Format validation errors into a readable message
+          errorMsg = response.errors.map(err => err.message).join('. ');
+        }
+        
         setErrorWithTimeout(errorMsg);
         return { success: false, error: errorMsg };
       }

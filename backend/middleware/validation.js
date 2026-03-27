@@ -22,27 +22,26 @@ const getValidationMiddleware = (type) => {
           .trim()
           .isLength({ min: 2 })
           .withMessage('Full name must be at least 2 characters long'),
+        body('firstName')
+          .optional()
+          .trim()
+          .isLength({ min: 1 })
+          .withMessage('First name is required'),
+        body('lastName')
+          .optional()
+          .trim()
+          .isLength({ min: 1 })
+          .withMessage('Last name is required'),
         body('businessName')
-          .if(body('userType').equals('service_provider'))
           .optional()
           .trim()
           .isLength({ min: 2 })
           .withMessage('Business name must be at least 2 characters long'),
         body('companyName')
-          .if(body('userType').equals('service_provider'))
           .optional()
           .trim()
           .isLength({ min: 2 })
-          .withMessage('Company name must be at least 2 characters long'),
-        // At least one of businessName or companyName must be provided for service providers
-        body('userType')
-          .if(body('userType').equals('service_provider'))
-          .custom((value, { req }) => {
-            if (!req.body.businessName && !req.body.companyName) {
-              throw new Error('Business name or company name is required for service providers');
-            }
-            return true;
-          })
+          .withMessage('Company name must be at least 2 characters long')
       ];
       break;
 
