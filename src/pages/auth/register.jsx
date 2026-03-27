@@ -111,28 +111,26 @@ const Register = () => {
       return;
     }
 
-    // Strict age verification for travelers (18+)
-    if (userType === 'traveler') {
-      if (!formData.dateOfBirth) {
-        alert('Registration failed: Date of birth is required for travelers.');
-        return;
+    // Strict age verification (18+)
+    if (!formData.dateOfBirth) {
+      alert('Registration failed: Date of birth is required.');
+      return;
+    }
+    
+    const calculateAge = (dob) => {
+      const birthDate = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
       }
-      
-      const calculateAge = (dob) => {
-        const birthDate = new Date(dob);
-        const today = new Date();
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-          age--;
-        }
-        return age;
-      };
+      return age;
+    };
 
-      if (calculateAge(formData.dateOfBirth) < 18) {
-        alert('Registration failed: You must be at least 18 years old to create a traveler account.');
-        return;
-      }
+    if (calculateAge(formData.dateOfBirth) < 18) {
+      alert('Registration failed: You must be at least 18 years old to create an account on iSafari Global.');
+      return;
     }
     
     // Validate service provider location and categories
@@ -402,32 +400,6 @@ const Register = () => {
                 {/* Traveler Specific Fields */}
                 {userType === 'traveler' && (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Date of Birth
-                        </label>
-                        <input
-                          type="date"
-                          value={formData.dateOfBirth}
-                          onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                          required={userType === 'traveler'}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Nationality
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.nationality}
-                          onChange={(e) => handleInputChange('nationality', e.target.value)}
-                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">
                         Travel Preferences
