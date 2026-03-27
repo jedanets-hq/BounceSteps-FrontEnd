@@ -1,0 +1,48 @@
+#!/bin/bash
+
+echo "=========================================="
+echo "🔍 VERCEL DEPLOYMENT STATUS CHECK"
+echo "=========================================="
+echo ""
+
+echo "📦 Latest commits on GitHub:"
+git log origin/main --oneline -5
+echo ""
+
+echo "🎯 Vercel Project: bounce-steps-front-end"
+echo "🌐 Production URL: https://www.bouncesteps.com"
+echo ""
+
+echo "✅ Changes that should be live:"
+echo "   1. Login redirect → Home page (/) not dashboard"
+echo "   2. Registration → 18+ age verification (under 18 blocked)"
+echo "   3. Date of birth field → Required for all registrations"
+echo "   4. Vite warning → Fixed (Header static import)"
+echo ""
+
+echo "🔧 Next steps:"
+echo ""
+echo "1. Fungua Vercel Dashboard:"
+echo "   https://vercel.com/jedanets-hqs-projects/bounce-steps-front-end"
+echo ""
+echo "2. Angalia deployment status:"
+echo "   - Building... (inaendelea)"
+echo "   - Ready (imekamilika)"
+echo "   - Error (kuna tatizo)"
+echo ""
+echo "3. Kama deployment iko 'Ready', test production:"
+echo "   a) Clear browser cache (Ctrl+Shift+Delete)"
+echo "   b) Fungua: https://www.bouncesteps.com"
+echo "   c) Test login → Should redirect to home page"
+echo "   d) Test registration → Should require DOB and block under 18"
+echo ""
+echo "4. Kama changes bado hazijaonekana:"
+echo "   a) Kwenye Vercel dashboard → Settings → General"
+echo "   b) Scroll down → 'Clear Cache'"
+echo "   c) Redeploy latest commit"
+echo ""
+
+echo "=========================================="
+echo "⏳ Deployment inachukua ~2-5 minutes"
+echo "=========================================="
+echo ""

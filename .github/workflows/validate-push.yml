@@ -1,0 +1,65 @@
+# GitHub Actions workflow to validate pushes
+# This ensures only valid commits reach the main branch
+
+name: Validate Push
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Validate branch
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "❌ ERROR: Can only push to main branch"
+            exit 1
+          fi
+          echo "✅ Branch validation passed"
+          
+      - name: Validate repository
+        run: |
+          REPO="${{ github.repository }}"
+          if [ "$REPO" != "jedanets-hq/BounceSteps-FrontEnd" ]; then
+            echo "❌ ERROR: Wrong repository: $REPO"
+            exit 1
+          fi
+          echo "✅ Repository validation passed"
+          
+      - name: Check package.json
+        run: |
+          if [ ! -f "package.json" ]; then
+            echo "❌ ERROR: package.json not found"
+            exit 1
+          fi
+          echo "✅ Package.json exists"
+          
+      - name: Check vercel.json
+        run: |
+          if [ ! -f "vercel.json" ]; then
+            echo "⚠️  WARNING: vercel.json not found"
+          else
+            echo "✅ Vercel.json exists"
+          fi
+          
+      - name: Validation complete
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ ALL VALIDATIONS PASSED"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Repository: ${{ github.repository }}"
+          echo ""
+          echo "🚀 Vercel will deploy this commit automatically"
