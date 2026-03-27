@@ -14,6 +14,8 @@ server.log
 
 # Build output
 build-output.log
+dist/
+build/
 
 # Uploads
 uploads/
