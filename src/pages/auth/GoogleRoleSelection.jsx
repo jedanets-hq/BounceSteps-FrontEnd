@@ -1,59 +1,11 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import { API_URL } from '../../utils/api';
 import LocationSelector from '../../components/LocationSelector';
 import { serviceCategories as allServiceCategories } from '../../data/locations';
-
-// Lazy load Header to prevent context errors from blocking the page
-const Header = React.lazy(() => import('../../components/ui/Header'));
-
-// Simple header fallback that doesn't use any contexts
-const SimpleHeader = () => (
-  <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-    <div className="max-w-7xl mx-auto">
-      <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-        <a href="/" className="flex items-center space-x-3">
-          <img 
-            src="/assets/images/isafari-logo.png" 
-            alt="iSafari Global" 
-            className="h-10 w-auto"
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
-          />
-        </a>
-        <a href="/login" className="text-sm text-gray-600 hover:text-gray-900">
-          ← Back to Login
-        </a>
-      </div>
-    </div>
-  </header>
-);
-
-// Error boundary specifically for Header
-class HeaderErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.warn('Header failed to load, using simple header:', error.message);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <SimpleHeader />;
-    }
-    return this.props.children;
-  }
-}
+import Header from '../../components/ui/Header';
 
 // Session storage key and expiration time (10 minutes)
 const GOOGLE_REGISTRATION_KEY = 'google_registration_data';
@@ -695,11 +647,7 @@ const GoogleRoleSelection = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <HeaderErrorBoundary>
-        <Suspense fallback={<SimpleHeader />}>
-          <Header />
-        </Suspense>
-      </HeaderErrorBoundary>
+      <Header />
       <main className="pt-20 pb-12">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-card rounded-lg shadow-lg p-8">

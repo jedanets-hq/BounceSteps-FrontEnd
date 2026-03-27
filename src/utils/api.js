@@ -44,6 +44,13 @@ const apiRequest = async (endpoint, options = {}) => {
   };
 
   try {
+    // Log request for debugging (always log in production for debugging 400 errors)
+    console.log('🔍 [API Request]:', {
+      url,
+      method: config.method,
+      body: options.body ? JSON.parse(options.body) : null
+    });
+
     const response = await fetch(url, config);
 
     // Handle 401 specifically - authentication failed (check BEFORE 404)
@@ -66,6 +73,19 @@ const apiRequest = async (endpoint, options = {}) => {
         success: false,
         message: 'API endpoint not available. Please try again later.',
         status: 404
+      };
+    }
+
+    // Handle 400 specifically - validation error
+    if (response.status === 400) {
+      console.warn(`⚠️ [API] 400 Bad Request: ${endpoint}`);
+      const data = await response.json().catch(() => ({}));
+      console.error('❌ Validation Error:', data);
+      return {
+        success: false,
+        message: data.message || 'Invalid request data. Please check your input.',
+        errors: data.errors || [],
+        status: 400
       };
     }
 
@@ -105,12 +125,21 @@ const apiRequest = async (endpoint, options = {}) => {
 
     const data = JSON.parse(text);
 
-    // If response is not ok but has success:false, return the data with error message
+    // If response is not ok, return error data
     if (!response.ok) {
-      if (data.success === false && data.message) {
-        return { ...data, status: response.status }; // Return the error response from backend with status
-      }
-      throw new Error(data.message || 'API request failed');
+      console.error('❌ [API] Request failed:', {
+        status: response.status,
+        data
+      });
+      
+      // Return the error response from backend with status
+      return { 
+        success: false,
+        message: data.message || 'API request failed',
+        errors: data.errors || [],
+        status: response.status,
+        ...data
+      };
     }
 
     return data;

@@ -131,6 +131,7 @@ export const AuthProvider = ({ children }) => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
+        dateOfBirth: formData.dateOfBirth,
         userType: userType,
         // Service provider specific fields
         ...(userType === 'service_provider' && {
@@ -143,7 +144,22 @@ export const AuthProvider = ({ children }) => {
         })
       };
 
+      // Debug logging - log the data being sent
+      console.log('🔍 [Registration] Sending data:', {
+        ...userData,
+        password: userData.password ? '***' : 'MISSING',
+        passwordLength: userData.password?.length || 0
+      });
+
       const response = await authAPI.register(userData);
+      
+      // Debug logging - log the response
+      console.log('📥 [Registration] Response:', {
+        success: response.success,
+        message: response.message,
+        status: response.status,
+        errors: response.errors
+      });
       
       if (response.success) {
         const userWithToken = { ...response.user, token: response.token };
@@ -151,11 +167,20 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('isafari_user', JSON.stringify(userWithToken));
         return { success: true, user: userWithToken };
       } else {
-        const errorMsg = response.message || 'Registration failed';
+        // Handle validation errors array from backend
+        let errorMsg = response.message || 'Registration failed';
+        
+        if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
+          // Format validation errors into a readable message
+          errorMsg = response.errors.map(err => err.message).join('. ');
+        }
+        
+        console.error('❌ [Registration] Failed:', errorMsg, response);
         setErrorWithTimeout(errorMsg);
         return { success: false, error: errorMsg };
       }
     } catch (error) {
+      console.error('❌ [Registration] Exception:', error);
       const errorMsg = error.message || 'Registration failed. Please try again.';
       setErrorWithTimeout(errorMsg);
       return { success: false, error: errorMsg };
