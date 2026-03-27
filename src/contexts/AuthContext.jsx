@@ -131,6 +131,7 @@ export const AuthProvider = ({ children }) => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
+        dateOfBirth: formData.dateOfBirth,
         userType: userType,
         // Service provider specific fields
         ...(userType === 'service_provider' && {
