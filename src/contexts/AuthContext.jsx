@@ -175,10 +175,12 @@ export const AuthProvider = ({ children }) => {
           errorMsg = response.errors.map(err => err.message).join('. ');
         }
         
+        console.error('❌ [Registration] Failed:', errorMsg, response);
         setErrorWithTimeout(errorMsg);
         return { success: false, error: errorMsg };
       }
     } catch (error) {
+      console.error('❌ [Registration] Exception:', error);
       const errorMsg = error.message || 'Registration failed. Please try again.';
       setErrorWithTimeout(errorMsg);
       return { success: false, error: errorMsg };

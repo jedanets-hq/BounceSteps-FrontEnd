@@ -125,12 +125,21 @@ const apiRequest = async (endpoint, options = {}) => {
 
     const data = JSON.parse(text);
 
-    // If response is not ok but has success:false, return the data with error message
+    // If response is not ok, return error data
     if (!response.ok) {
-      if (data.success === false && data.message) {
-        return { ...data, status: response.status }; // Return the error response from backend with status
-      }
-      throw new Error(data.message || 'API request failed');
+      console.error('❌ [API] Request failed:', {
+        status: response.status,
+        data
+      });
+      
+      // Return the error response from backend with status
+      return { 
+        success: false,
+        message: data.message || 'API request failed',
+        errors: data.errors || [],
+        status: response.status,
+        ...data
+      };
     }
 
     return data;
