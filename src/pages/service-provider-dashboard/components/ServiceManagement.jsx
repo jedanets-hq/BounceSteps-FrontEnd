@@ -37,10 +37,7 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
     images: [],
     // Payment Methods
     paymentMethods: {
-      visa: { enabled: false, cardHolder: '', lastFourDigits: '' },
-      paypal: { enabled: false, email: '' },
-      googlePay: { enabled: false, email: '' },
-      mobileMoney: { enabled: false, provider: '', phone: '' }
+      bankAccount: { enabled: false, accountName: '', accountNumber: '', bankName: '', swiftCode: '' }
     },
     // Contact Information
     contactInfo: {
@@ -228,10 +225,7 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
       requirements: '',
       images: [],
       paymentMethods: {
-        visa: { enabled: false, cardHolder: '', lastFourDigits: '' },
-        paypal: { enabled: false, email: '' },
-        googlePay: { enabled: false, email: '' },
-        mobileMoney: { enabled: false, provider: '', phone: '' }
+        bankAccount: { enabled: false, accountName: '', accountNumber: '', bankName: '', swiftCode: '' }
       },
       contactInfo: {
         email: { enabled: false, address: '' },
@@ -498,10 +492,7 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
         : [],
       // IMPORTANT: Preserve payment methods and contact info
       paymentMethods: {
-        visa: paymentMethods.visa || { enabled: false, cardHolder: '', lastFourDigits: '' },
-        paypal: paymentMethods.paypal || { enabled: false, email: '' },
-        googlePay: paymentMethods.googlePay || { enabled: false, email: '' },
-        mobileMoney: paymentMethods.mobileMoney || { enabled: false, provider: '', phone: '' }
+        bankAccount: paymentMethods.bankAccount || { enabled: false, accountName: '', accountNumber: '', bankName: '', swiftCode: '' }
       },
       contactInfo: {
         email: contactInfo.email || { enabled: false, address: '' },
@@ -829,189 +820,83 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
             <h4 className="font-medium text-foreground mb-4 flex items-center">
               <Icon name="CreditCard" size={18} className="mr-2 text-primary" />
               Payment Methods
-              <span className="ml-2 text-xs font-normal text-muted-foreground">(Select methods you accept)</span>
+              <span className="ml-2 text-xs font-normal text-muted-foreground">(Bank Account Details)</span>
             </h4>
             <p className="text-xs text-muted-foreground mb-4">
-              Choose which payment methods travelers can use to pay for this service. Only enabled methods with complete details will be shown to travelers.
+              Provide your bank account details for receiving payments. This information will be used for payment processing.
             </p>
             
             <div className="space-y-4">
-              {/* Visa/Credit Card */}
-              <div className={`p-4 rounded-lg border transition-all ${serviceForm.paymentMethods.visa.enabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
+              {/* Bank Account */}
+              <div className={`p-4 rounded-lg border transition-all ${serviceForm.paymentMethods.bankAccount.enabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
                 <div className="flex items-center justify-between mb-3">
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={serviceForm.paymentMethods.visa.enabled}
+                      checked={serviceForm.paymentMethods.bankAccount.enabled}
                       onChange={(e) => setServiceForm({
                         ...serviceForm,
                         paymentMethods: {
                           ...serviceForm.paymentMethods,
-                          visa: { ...serviceForm.paymentMethods.visa, enabled: e.target.checked }
+                          bankAccount: { ...serviceForm.paymentMethods.bankAccount, enabled: e.target.checked }
                         }
                       })}
                       className="w-4 h-4 text-primary border-border rounded focus:ring-primary mr-3"
                     />
-                    <Icon name="CreditCard" size={20} className="mr-2 text-blue-600" />
-                    <span className="font-medium text-foreground">Visa/Credit Card</span>
+                    <Icon name="Building" size={20} className="mr-2 text-blue-600" />
+                    <span className="font-medium text-foreground">Bank Account</span>
                   </label>
                 </div>
-                {serviceForm.paymentMethods.visa.enabled && (
+                {serviceForm.paymentMethods.bankAccount.enabled && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                     <input
                       type="text"
-                      placeholder="Card Holder Name"
-                      value={serviceForm.paymentMethods.visa.cardHolder}
+                      placeholder="Account Holder Name"
+                      value={serviceForm.paymentMethods.bankAccount.accountName}
                       onChange={(e) => setServiceForm({
                         ...serviceForm,
                         paymentMethods: {
                           ...serviceForm.paymentMethods,
-                          visa: { ...serviceForm.paymentMethods.visa, cardHolder: e.target.value }
+                          bankAccount: { ...serviceForm.paymentMethods.bankAccount, accountName: e.target.value }
                         }
                       })}
                       className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
                     />
                     <input
                       type="text"
-                      placeholder="Last 4 digits (for verification)"
-                      maxLength={4}
-                      value={serviceForm.paymentMethods.visa.lastFourDigits}
+                      placeholder="Account Number"
+                      value={serviceForm.paymentMethods.bankAccount.accountNumber}
                       onChange={(e) => setServiceForm({
                         ...serviceForm,
                         paymentMethods: {
                           ...serviceForm.paymentMethods,
-                          visa: { ...serviceForm.paymentMethods.visa, lastFourDigits: e.target.value.replace(/\D/g, '') }
+                          bankAccount: { ...serviceForm.paymentMethods.bankAccount, accountNumber: e.target.value }
                         }
                       })}
                       className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
                     />
-                  </div>
-                )}
-              </div>
-
-              {/* PayPal */}
-              <div className={`p-4 rounded-lg border transition-all ${serviceForm.paymentMethods.paypal.enabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="flex items-center cursor-pointer">
                     <input
-                      type="checkbox"
-                      checked={serviceForm.paymentMethods.paypal.enabled}
+                      type="text"
+                      placeholder="Bank Name"
+                      value={serviceForm.paymentMethods.bankAccount.bankName}
                       onChange={(e) => setServiceForm({
                         ...serviceForm,
                         paymentMethods: {
                           ...serviceForm.paymentMethods,
-                          paypal: { ...serviceForm.paymentMethods.paypal, enabled: e.target.checked }
-                        }
-                      })}
-                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary mr-3"
-                    />
-                    <div className="w-5 h-5 mr-2 bg-blue-700 rounded flex items-center justify-center text-white text-xs font-bold">P</div>
-                    <span className="font-medium text-foreground">PayPal</span>
-                  </label>
-                </div>
-                {serviceForm.paymentMethods.paypal.enabled && (
-                  <input
-                    type="email"
-                    placeholder="PayPal Email Address"
-                    value={serviceForm.paymentMethods.paypal.email}
-                    onChange={(e) => setServiceForm({
-                      ...serviceForm,
-                      paymentMethods: {
-                        ...serviceForm.paymentMethods,
-                        paypal: { ...serviceForm.paymentMethods.paypal, email: e.target.value }
-                      }
-                    })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm mt-3"
-                  />
-                )}
-              </div>
-
-              {/* Google Pay */}
-              <div className={`p-4 rounded-lg border transition-all ${serviceForm.paymentMethods.googlePay.enabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={serviceForm.paymentMethods.googlePay.enabled}
-                      onChange={(e) => setServiceForm({
-                        ...serviceForm,
-                        paymentMethods: {
-                          ...serviceForm.paymentMethods,
-                          googlePay: { ...serviceForm.paymentMethods.googlePay, enabled: e.target.checked }
-                        }
-                      })}
-                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary mr-3"
-                    />
-                    <div className="w-5 h-5 mr-2 bg-gradient-to-r from-blue-500 via-red-500 to-yellow-500 rounded flex items-center justify-center text-white text-xs font-bold">G</div>
-                    <span className="font-medium text-foreground">Google Pay</span>
-                  </label>
-                </div>
-                {serviceForm.paymentMethods.googlePay.enabled && (
-                  <input
-                    type="email"
-                    placeholder="Google Pay Email"
-                    value={serviceForm.paymentMethods.googlePay.email}
-                    onChange={(e) => setServiceForm({
-                      ...serviceForm,
-                      paymentMethods: {
-                        ...serviceForm.paymentMethods,
-                        googlePay: { ...serviceForm.paymentMethods.googlePay, email: e.target.value }
-                      }
-                    })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm mt-3"
-                  />
-                )}
-              </div>
-
-              {/* Mobile Money (Escrow) */}
-              <div className={`p-4 rounded-lg border transition-all ${serviceForm.paymentMethods.mobileMoney.enabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={serviceForm.paymentMethods.mobileMoney.enabled}
-                      onChange={(e) => setServiceForm({
-                        ...serviceForm,
-                        paymentMethods: {
-                          ...serviceForm.paymentMethods,
-                          mobileMoney: { ...serviceForm.paymentMethods.mobileMoney, enabled: e.target.checked }
-                        }
-                      })}
-                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary mr-3"
-                    />
-                    <Icon name="Smartphone" size={20} className="mr-2 text-green-600" />
-                    <span className="font-medium text-foreground">Mobile Money (Escrow)</span>
-                    <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Coming Soon</span>
-                  </label>
-                </div>
-                {serviceForm.paymentMethods.mobileMoney.enabled && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                    <select
-                      value={serviceForm.paymentMethods.mobileMoney.provider}
-                      onChange={(e) => setServiceForm({
-                        ...serviceForm,
-                        paymentMethods: {
-                          ...serviceForm.paymentMethods,
-                          mobileMoney: { ...serviceForm.paymentMethods.mobileMoney, provider: e.target.value }
+                          bankAccount: { ...serviceForm.paymentMethods.bankAccount, bankName: e.target.value }
                         }
                       })}
                       className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                    >
-                      <option value="">Select Provider</option>
-                      <option value="M-Pesa">M-Pesa</option>
-                      <option value="Tigo Pesa">Tigo Pesa</option>
-                      <option value="Airtel Money">Airtel Money</option>
-                      <option value="Halo Pesa">Halo Pesa</option>
-                    </select>
+                    />
                     <input
-                      type="tel"
-                      placeholder="Phone Number (+255...)"
-                      value={serviceForm.paymentMethods.mobileMoney.phone}
+                      type="text"
+                      placeholder="SWIFT/BIC Code (Optional)"
+                      value={serviceForm.paymentMethods.bankAccount.swiftCode}
                       onChange={(e) => setServiceForm({
                         ...serviceForm,
                         paymentMethods: {
                           ...serviceForm.paymentMethods,
-                          mobileMoney: { ...serviceForm.paymentMethods.mobileMoney, phone: e.target.value }
+                          bankAccount: { ...serviceForm.paymentMethods.bankAccount, swiftCode: e.target.value }
                         }
                       })}
                       className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
