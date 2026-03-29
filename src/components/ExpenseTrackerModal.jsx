@@ -21,7 +21,7 @@ const ExpenseTrackerModal = ({ isOpen, onClose }) => {
   ]);
 
   const categories = [
-    { id: 'accommodation', name: 'Accommodation', icon: 'Home', color: 'bg-blue-500' },
+    { id: 'accommodation', name: 'Accommodation', icon: 'Home', color: 'bg-primary' },
     { id: 'transportation', name: 'Transportation', icon: 'Car', color: 'bg-green-500' },
     { id: 'food', name: 'Food & Dining', icon: 'Utensils', color: 'bg-yellow-500' },
     { id: 'activities', name: 'Activities', icon: 'Camera', color: 'bg-purple-500' },
@@ -93,9 +93,9 @@ const ExpenseTrackerModal = ({ isOpen, onClose }) => {
                   </div>
                 </div>
               </div>
-              <div className="bg-blue-100 rounded-lg p-4">
+              <div className="bg-primary/10 rounded-lg p-4">
                 <div className="flex items-center space-x-3">
-                  <Icon name="Calendar" size={24} className="text-blue-600" />
+                  <Icon name="Calendar" size={24} className="text-primary" />
                   <div>
                     <p className="text-2xl font-bold">${(getTotalExpenses() / 7).toFixed(0)}</p>
                     <p className="text-sm text-muted-foreground">Daily Average</p>

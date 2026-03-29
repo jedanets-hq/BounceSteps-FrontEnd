@@ -99,7 +99,7 @@ app.use('/api/admin', adminRoutes);
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    service: 'iSafari Global API',
+    service: 'BounceSteps API',
     timestamp: new Date().toISOString()
   });
 });
@@ -107,7 +107,7 @@ app.get('/health', (req, res) => {
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'iSafari Global API - Travel & Tourism Platform',
+    message: 'BounceSteps API - Travel & Tourism Platform',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
@@ -166,7 +166,7 @@ async function startServer() {
   try {
     console.log('');
     console.log('🌍 ========================================');
-    console.log('🚀 iSafari Global API Server Starting...');
+    console.log('🚀 BounceSteps API Server Starting...');
     console.log('========================================');
     console.log(`📍 Port: ${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -198,7 +198,7 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log('');
       console.log('🌍 ========================================');
-      console.log('🚀 iSafari Global API Server Started');
+      console.log('🚀 BounceSteps API Server Started');
       console.log('========================================');
       console.log(`📍 Port: ${PORT}`);
       console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);

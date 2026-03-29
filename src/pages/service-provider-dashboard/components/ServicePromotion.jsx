@@ -90,7 +90,7 @@ const ServicePromotion = () => {
       duration: '30 days',
       benefits: ['Top search results', 'Category priority', 'Enhanced listing'],
       icon: 'Search',
-      color: 'bg-blue-500'
+      color: 'bg-primary'
     }
   ];
 
@@ -489,10 +489,10 @@ const ServicePromotion = () => {
                     </div>
                   </div>
 
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <div className="bg-primary/5 dark:bg-primary/20 border border-primary/20 dark:border-blue-800 rounded-lg p-3">
                     <div className="flex items-start gap-2">
-                      <Icon name="Shield" size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-blue-700 dark:text-blue-300">Your payment is secure. Card details are encrypted and processed securely.</p>
+                      <Icon name="Shield" size={16} className="text-primary dark:text-primary/60 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-primary dark:text-primary/70">Your payment is secure. Card details are encrypted and processed securely.</p>
                     </div>
                   </div>
                 </div>

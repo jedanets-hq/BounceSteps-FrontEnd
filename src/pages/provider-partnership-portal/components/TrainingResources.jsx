@@ -19,7 +19,7 @@ const TrainingResources = () => {
       {
         id: 'luxury-service-1',
         title: 'Luxury Service Excellence',
-        description: 'Understanding iSafari\'s premium service expectations and delivery standards',
+        description: 'Understanding BounceSteps\'s premium service expectations and delivery standards',
         duration: '45 min',
         type: 'video',
         difficulty: 'intermediate',
@@ -125,7 +125,7 @@ const TrainingResources = () => {
     technology: [
       {
         id: 'platform-basics-1',
-        title: 'iSafari Platform Basics',
+        title: 'BounceSteps Platform Basics',
         description: 'Navigating the partner portal and managing bookings effectively',
         duration: '30 min',
         type: 'tutorial',
@@ -198,7 +198,7 @@ const TrainingResources = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-semibold text-foreground mb-2">Training Resources</h2>
-            <p className="text-muted-foreground">Enhance your skills and maintain iSafari quality standards</p>
+            <p className="text-muted-foreground">Enhance your skills and maintain BounceSteps quality standards</p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-primary">{completedModules?.length}</div>

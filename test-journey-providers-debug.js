@@ -1,5 +1,5 @@
 // Test script to debug Journey Planner providers issue
-const API_URL = 'https://isafari-backend.onrender.com/api';
+const API_URL = 'https://bouncesteps-backend.onrender.com/api';
 
 async function testProvidersEndpoint() {
   console.log('🔍 Testing Journey Planner Providers Endpoint...\n');

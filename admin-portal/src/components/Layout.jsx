@@ -82,8 +82,8 @@ const Layout = () => {
           {sidebarOpen && (
             <div className="flex items-center space-x-3">
               <img 
-                src="/assets/images/isafari-logo.png" 
-                alt="iSafari" 
+                src="/bouncesteps-logo.png" 
+                alt="BounceSteps" 
                 className="h-8 w-auto"
                 onError={(e) => {
                   e.target.style.display = 'none';

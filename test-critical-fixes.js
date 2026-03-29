@@ -5,7 +5,7 @@
 
 const fetch = require('node-fetch');
 
-const API_URL = process.env.VITE_API_BASE_URL || 'https://isafarimasterorg.onrender.com/api';
+const API_URL = process.env.VITE_API_BASE_URL || 'https://bouncestepsmasterorg.onrender.com/api';
 
 async function testProviderDetails() {
   console.log('\n🧪 TEST 1: Provider Details Fetch');

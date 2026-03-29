@@ -295,8 +295,8 @@ const PreOrdersSection = ({ bookings, loading }) => {
 
         {/* Completed Bookings */}
         {completedBookings.length > 0 && (
-          <div className="border border-blue-200 bg-blue-50 dark:bg-blue-900/10 rounded-lg p-4">
-            <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center">
+          <div className="border border-primary/20 bg-primary/5 dark:bg-blue-900/10 rounded-lg p-4">
+            <h4 className="font-semibold text-primary dark:text-primary/80 mb-3 flex items-center">
               <Icon name="CheckCircle2" size={18} className="mr-2" />
               🎉 Trip Completed ({completedBookings.length})
             </h4>
@@ -308,12 +308,12 @@ const PreOrdersSection = ({ bookings, loading }) => {
                       <h5 className="font-semibold text-foreground">{booking.service_title}</h5>
                       <p className="text-sm text-muted-foreground">{booking.business_name}</p>
                     </div>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 rounded-full text-xs font-medium">
+                    <span className="px-3 py-1 bg-primary/10 text-primary dark:bg-blue-900/30 dark:text-primary/80 rounded-full text-xs font-medium">
                       ✅ Completed
                     </span>
                   </div>
-                  <div className="bg-blue-100 dark:bg-blue-900/20 rounded-lg p-3 mt-3">
-                    <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center">
+                  <div className="bg-primary/10 dark:bg-primary/20 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-primary dark:text-primary/70 flex items-center">
                       <Icon name="Star" size={14} className="mr-1" />
                       We hope you had a great experience! Please consider leaving a review for {booking.business_name}.
                     </p>

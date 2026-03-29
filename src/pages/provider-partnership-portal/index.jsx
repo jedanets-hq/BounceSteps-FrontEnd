@@ -407,7 +407,7 @@ const ProviderPartnershipPortal = () => {
                       <button style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-top: 10px;" onclick="this.style.background='#dcfce7'; this.textContent='✓ Marked as Read';">Mark as Read</button>
                     </div>
                     
-                    <div style="padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #2563eb; background: #eff6ff;">
+                    <div style="padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #2C5F41; background: #eff6ff;">
                       <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
                         <h3 style="font-weight: 600; color: #374151; margin: 0;">Training Module Available</h3>
                         <span style="font-size: 12px; color: #6b7280;">1 day ago</span>
@@ -417,7 +417,7 @@ const ProviderPartnershipPortal = () => {
                     </div>
                     
                     <div style="display: flex; gap: 12px; justify-content: center; margin-top: 30px;">
-                      <button style="padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: #3b82f6; color: white;" onclick="document.querySelectorAll('button').forEach(btn => { if (btn.textContent === 'Mark as Read') { btn.style.background='#dcfce7'; btn.textContent='✓ Marked as Read'; } }); alert('✅ All notifications marked as read!');">Mark All Read</button>
+                      <button style="padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: #10B981; color: white;" onclick="document.querySelectorAll('button').forEach(btn => { if (btn.textContent === 'Mark as Read') { btn.style.background='#dcfce7'; btn.textContent='✓ Marked as Read'; } }); alert('✅ All notifications marked as read!');">Mark All Read</button>
                       <button style="padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: #6b7280; color: white;" onclick="document.body.removeChild(document.querySelector('[style*=\"z-index: 9999\"]'));">Close</button>
                     </div>
                   `;
@@ -508,7 +508,7 @@ const ProviderPartnershipPortal = () => {
                         </ul>
                       </div>
                       
-                      <button style="background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600;" onclick="document.body.removeChild(document.querySelector('[style*=\"z-index: 9999\"]'));">Close Guide</button>
+                      <button style="background: #2C5F41; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600;" onclick="document.body.removeChild(document.querySelector('[style*=\"z-index: 9999\"]'));">Close Guide</button>
                     `;
                     
                     modalOverlay.appendChild(modalContent);
@@ -567,7 +567,7 @@ const ProviderPartnershipPortal = () => {
                           </div>
                           <h3 style="margin: 0 0 10px 0; color: #374151;">Setting Up Your Profile</h3>
                           <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">Learn how to create an attractive business profile that converts visitors to customers.</p>
-                          <button onclick="alert('Playing video: Setting Up Your Profile');" style="background: #2563eb; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Watch Now</button>
+                          <button onclick="alert('Playing video: Setting Up Your Profile');" style="background: #2C5F41; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Watch Now</button>
                         </div>
                         <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px;">
                           <div style="width: 100%; height: 150px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 5px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; color: white; font-size: 24px;">
@@ -575,7 +575,7 @@ const ProviderPartnershipPortal = () => {
                           </div>
                           <h3 style="margin: 0 0 10px 0; color: #374151;">Managing Bookings</h3>
                           <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">Master the booking system to maximize your revenue and customer satisfaction.</p>
-                          <button onclick="alert('Playing video: Managing Bookings');" style="background: #2563eb; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Watch Now</button>
+                          <button onclick="alert('Playing video: Managing Bookings');" style="background: #2C5F41; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Watch Now</button>
                         </div>
                         <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px;">
                           <div style="width: 100%; height: 150px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 5px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; color: white; font-size: 24px;">
@@ -583,7 +583,7 @@ const ProviderPartnershipPortal = () => {
                           </div>
                           <h3 style="margin: 0 0 10px 0; color: #374151;">Photography Tips</h3>
                           <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">Take stunning photos that showcase your services and attract more bookings.</p>
-                          <button onclick="alert('Playing video: Photography Tips');" style="background: #2563eb; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Watch Now</button>
+                          <button onclick="alert('Playing video: Photography Tips');" style="background: #2C5F41; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Watch Now</button>
                         </div>
                         <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px;">
                           <div style="width: 100%; height: 150px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 5px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; color: white; font-size: 24px;">
@@ -591,7 +591,7 @@ const ProviderPartnershipPortal = () => {
                           </div>
                           <h3 style="margin: 0 0 10px 0; color: #374151;">Customer Communication</h3>
                           <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">Best practices for communicating with customers and handling inquiries.</p>
-                          <button onclick="alert('Playing video: Customer Communication');" style="background: #2563eb; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Watch Now</button>
+                          <button onclick="alert('Playing video: Customer Communication');" style="background: #2C5F41; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Watch Now</button>
                         </div>
                       </div>
                       
@@ -662,7 +662,7 @@ const ProviderPartnershipPortal = () => {
                             <h3 style="margin: 0 0 5px 0; color: #374151;">📸 Photo Contest: Best Safari Shots</h3>
                             <p style="color: #6b7280; font-size: 14px; margin: 0 0 10px 0;">Share your best safari photos and win marketing credits...</p>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                              <small style="color: #9ca3af;">Started by iSafari Team • 45 replies</small>
+                              <small style="color: #9ca3af;">Started by BounceSteps Team • 45 replies</small>
                               <button onclick="alert('Joining contest...');" style="background: #f3f4f6; border: 1px solid #d1d5db; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Participate</button>
                             </div>
                           </div>
@@ -678,7 +678,7 @@ const ProviderPartnershipPortal = () => {
                       </div>
                       
                       <div style="text-align: center;">
-                        <button onclick="alert('Creating new discussion...');" style="background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">Start Discussion</button>
+                        <button onclick="alert('Creating new discussion...');" style="background: #2C5F41; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">Start Discussion</button>
                         <button onclick="document.body.removeChild(document.querySelector('[style*=\"z-index: 9999\"]'));" style="background: #6b7280; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer;">Close Community</button>
                       </div>
                     `;
@@ -760,7 +760,7 @@ const ProviderPartnershipPortal = () => {
                           <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #374151;">Attach Files (Optional)</label>
                           <input type="file" multiple style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 5px; background: white;">
                         </div>
-                        <button type="button" onclick="alert('Support ticket submitted successfully! We will respond within 24 hours.'); document.body.removeChild(document.querySelector('[style*=\"z-index: 9999\"]'));" style="background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600;">Submit Ticket</button>
+                        <button type="button" onclick="alert('Support ticket submitted successfully! We will respond within 24 hours.'); document.body.removeChild(document.querySelector('[style*=\"z-index: 9999\"]'));" style="background: #2C5F41; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600;">Submit Ticket</button>
                         <button type="button" onclick="document.body.removeChild(document.querySelector('[style*=\"z-index: 9999\"]'));" style="background: #6b7280; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600;">Cancel</button>
                       </form>
                     `;

@@ -59,7 +59,7 @@ const ProviderBadge = ({ badgeType, size = 'md', showText = true, className = ''
         
         {/* Optional text */}
         {showText && (
-          <span className={`font-semibold text-blue-600 ${currentSize.text}`}>
+          <span className={`font-semibold text-primary ${currentSize.text}`}>
             Verified
           </span>
         )}

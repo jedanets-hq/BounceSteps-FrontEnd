@@ -11,8 +11,8 @@ const HowItWorksSection = () => {
       description: "Explore curated destinations with AI-powered recommendations tailored to your preferences and travel style.",
       icon: "Compass",
       features: ["AI-powered matching", "Local insights", "Real-time availability"],
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
+      color: "text-primary",
+      bgColor: "bg-primary/5"
     },
     {
       id: 2,
@@ -55,7 +55,7 @@ const HowItWorksSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-display font-medium text-foreground mb-6">
-            How iSafari Works
+            How BounceSteps Works
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             From inspiration to memories, we guide you through every step of your journey 

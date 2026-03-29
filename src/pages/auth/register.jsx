@@ -133,7 +133,7 @@ const Register = () => {
     const result = await register(registrationData, dbUserType);
     
     if (result.success) {
-      alert(`Registration successful! Welcome to iSafari Global!`);
+      alert(`Registration successful! Welcome to BounceSteps!`);
       // Redirect to main home page after successful registration
       navigate('/');
     } else {
@@ -167,7 +167,7 @@ const Register = () => {
             {/* Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-display font-medium text-foreground mb-2">
-                Join iSafari Global
+                Join BounceSteps
               </h1>
               <p className="text-muted-foreground">
                 Create your account and start your journey with us

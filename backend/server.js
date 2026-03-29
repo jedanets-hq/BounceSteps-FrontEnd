@@ -105,7 +105,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Session middleware (required for Passport OAuth state verification)
 const session = require('express-session');
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'isafari-oauth-session-secret',
+  secret: process.env.SESSION_SECRET || 'bouncesteps-oauth-session-secret',
   resave: false,
   saveUninitialized: false,
   cookie: { 
@@ -149,7 +149,7 @@ app.use('/api/admin/services', adminServicesRoutes);
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    service: 'iSafari Global API',
+    service: 'BounceSteps API',
     timestamp: new Date().toISOString()
   });
 });
@@ -157,7 +157,7 @@ app.get('/health', (req, res) => {
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'iSafari Global API - Travel & Tourism Platform',
+    message: 'BounceSteps API - Travel & Tourism Platform',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
@@ -170,7 +170,7 @@ app.get('/', (req, res) => {
 app.get('/api', (req, res) => {
   res.json({
     success: true,
-    message: 'iSafari Global API',
+    message: 'BounceSteps API',
     version: '1.0.0',
     endpoints: {
       auth: '/api/auth',
@@ -245,7 +245,7 @@ async function startServer() {
   try {
     console.log('');
     console.log('🌍 ========================================');
-    console.log('🚀 iSafari Global API Server Starting...');
+    console.log('🚀 BounceSteps API Server Starting...');
     console.log('========================================');
     console.log(`📍 Port: ${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -280,7 +280,7 @@ async function startServer() {
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log('');
       console.log('🌍 ========================================');
-      console.log('🚀 iSafari Global API Server Started');
+      console.log('🚀 BounceSteps API Server Started');
       console.log('========================================');
       console.log(`📍 Port: ${PORT}`);
       console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);

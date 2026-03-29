@@ -44,7 +44,7 @@ const WorldMap = ({ destinations = [], onDestinationClick }) => {
         <h3 className="text-xl font-semibold text-foreground">Trending Destinations Worldwide</h3>
         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <div className="w-3 h-3 rounded-full bg-primary"></div>
             <span>Beach</span>
           </div>
           <div className="flex items-center space-x-2">

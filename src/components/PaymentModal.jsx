@@ -130,7 +130,7 @@ const PaymentModal = ({ isOpen, onClose, paymentType, serviceData, onSuccess }) 
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
           >
             <option value="USD">USD ($)</option>
             <option value="KES">KES (KSh)</option>
@@ -176,7 +176,7 @@ const PaymentModal = ({ isOpen, onClose, paymentType, serviceData, onSuccess }) 
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="254712345678"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary"
               required
             />
             <p className="text-xs text-gray-500 mt-1">Enter your M-Pesa registered phone number</p>
@@ -194,7 +194,7 @@ const PaymentModal = ({ isOpen, onClose, paymentType, serviceData, onSuccess }) 
           <button
             onClick={handlePayment}
             disabled={isProcessing || (paymentMethod === 'mpesa' && !phoneNumber)}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isProcessing ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

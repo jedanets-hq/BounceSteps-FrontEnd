@@ -27,7 +27,7 @@ const ExpenseTracker = ({ expenses, onOpenExpenseTracker }) => {
 
   const getCategoryColor = (category) => {
     switch (category) {
-      case 'accommodation': return 'text-blue-600 bg-blue-100';
+      case 'accommodation': return 'text-primary bg-primary/10';
       case 'transportation': return 'text-green-600 bg-green-100';
       case 'food': return 'text-orange-600 bg-orange-100';
       case 'activities': return 'text-purple-600 bg-purple-100';

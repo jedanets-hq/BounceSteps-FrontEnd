@@ -16,7 +16,7 @@ const ServicesPreview = () => {
       image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
       features: ["Best price guarantee", "Flexible booking", "Priority support"],
       stats: "50K+ flights booked",
-      color: "from-blue-500 to-blue-600"
+      color: "from-primary/50 to-primary/90"
     },
     {
       id: 2,

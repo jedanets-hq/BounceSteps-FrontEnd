@@ -187,13 +187,13 @@ const JourneyPlannerEnhanced = () => {
 
   const paymentMethods = [
     { id: 'mpesa', name: 'M-Pesa (Vodacom)', icon: 'Smartphone', color: 'bg-red-500', type: 'mobile' },
-    { id: 'tigopesa', name: 'Tigo Pesa', icon: 'Smartphone', color: 'bg-blue-500', type: 'mobile' },
+    { id: 'tigopesa', name: 'Tigo Pesa', icon: 'Smartphone', color: 'bg-primary', type: 'mobile' },
     { id: 'airtel', name: 'Airtel Money', icon: 'Smartphone', color: 'bg-red-600', type: 'mobile' },
     { id: 'halopesa', name: 'Halo Pesa', icon: 'Smartphone', color: 'bg-orange-500', type: 'mobile' },
-    { id: 'visa', name: 'Visa Card', icon: 'CreditCard', color: 'bg-blue-600', type: 'card' },
+    { id: 'visa', name: 'Visa Card', icon: 'CreditCard', color: 'bg-primary', type: 'card' },
     { id: 'mastercard', name: 'Mastercard', icon: 'CreditCard', color: 'bg-orange-600', type: 'card' },
-    { id: 'amex', name: 'American Express', icon: 'CreditCard', color: 'bg-blue-700', type: 'card' },
-    { id: 'paypal', name: 'PayPal', icon: 'Wallet', color: 'bg-blue-500', type: 'online' },
+    { id: 'amex', name: 'American Express', icon: 'CreditCard', color: 'bg-primary', type: 'card' },
+    { id: 'paypal', name: 'PayPal', icon: 'Wallet', color: 'bg-primary', type: 'online' },
     { id: 'bank', name: 'Bank Transfer', icon: 'Building2', color: 'bg-green-600', type: 'bank' }
   ];
 

@@ -1,4 +1,4 @@
-/* iSafari Global - Main App Styles */
+/* BounceSteps - Main App Styles */
 
 .App {
   text-align: center;
@@ -124,7 +124,7 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
   .App {
-    padding: 1rem;
+    padding: 0;
   }
   
   .card-body {

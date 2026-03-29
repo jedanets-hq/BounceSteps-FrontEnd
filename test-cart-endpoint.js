@@ -3,7 +3,7 @@
  * This script tests if the cart API endpoint is accessible
  */
 
-const API_URL = 'https://isafarimasterorg.onrender.com/api';
+const API_URL = 'https://bouncestepsmasterorg.onrender.com/api';
 
 async function testEndpoint(endpoint, method = 'GET', token = null, body = null) {
   console.log(`\n🔍 Testing ${method} ${endpoint}`);

@@ -75,10 +75,10 @@ const HeroSection = () => {
 
   if (heroSlides.length === 0) {
     return (
-      <section className="relative h-screen overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center">
+      <section className="relative h-screen overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center w-full max-w-none px-0">
+        <div className="w-full px-4 md:max-w-7xl md:mx-auto md:px-6 lg:px-8 text-center">
           <h1 className="text-5xl lg:text-7xl font-display font-medium text-foreground mb-6">
-            Welcome to iSafari Global
+            Welcome to BounceSteps
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
             Discover authentic travel experiences from verified local providers
@@ -130,7 +130,7 @@ const HeroSection = () => {
   const currentService = heroSlides[currentSlide];
 
   return (
-    <section className="relative h-screen sm:h-screen overflow-hidden bg-gray-900">
+    <section className="relative min-h-[70vh] md:h-screen w-full max-w-none px-0 overflow-hidden bg-gray-900 border-b border-border shadow-sm">
       {/* Background Images */}
       <div className="absolute inset-0">
         {heroSlides?.map((slide, index) => (
@@ -149,15 +149,15 @@ const HeroSection = () => {
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/30 to-secondary/30" />
             )}
-            <div className="absolute inset-0 bg-black/40"></div>
+            <div className="absolute inset-0 bg-black/60 backdrop-brightness-95 md:bg-black/40"></div>
           </div>
         ))}
       </div>
       {/* Content Overlay */}
-      <div className="relative z-10 h-full flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div className="max-w-3xl">
-            <div className="mb-6 flex items-center gap-3">
+      <div className="relative z-10 h-full flex items-center justify-center md:justify-start">
+        <div className="w-full px-4 md:max-w-7xl md:mx-auto md:px-6 lg:px-8">
+          <div className="max-w-3xl flex flex-col items-center text-center md:items-start md:text-left">
+            <div className="mb-4 md:mb-6 flex items-center gap-3">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/20 text-accent border border-accent/30">
                 <Icon name="MapPin" size={16} className="mr-2" />
                 {currentService?.location}
@@ -170,7 +170,7 @@ const HeroSection = () => {
               )}
             </div>
             
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-display font-medium text-white mb-4 leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-medium text-white mb-4 leading-tight tracking-tight">
               {currentService?.title}
             </h1>
             
@@ -189,7 +189,7 @@ const HeroSection = () => {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 md:mt-8 w-full sm:w-auto px-4 sm:px-0">
               {/* Show different buttons based on user type */}
               {isServiceProvider ? (
                 <>
@@ -266,28 +266,29 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-      {/* Navigation Controls */}
+      {/* Navigation Controls - Hidden on mobile for cleaner look */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all duration-200"
+        className="hidden sm:flex absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full items-center justify-center text-white transition-all duration-300"
       >
         <Icon name="ChevronLeft" size={24} />
       </button>
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all duration-200"
+        className="hidden sm:flex absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full items-center justify-center text-white transition-all duration-300"
       >
         <Icon name="ChevronRight" size={24} />
       </button>
       {/* Slide Indicators */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex space-x-2.5">
         {heroSlides?.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-200 ${
-              index === currentSlide ? 'bg-white' : 'bg-white/50'
+            className={`h-2.5 rounded-full transition-all duration-300 ${
+              index === currentSlide ? 'w-8 bg-white' : 'w-2.5 bg-white/40 hover:bg-white/60'
             }`}
+            aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>

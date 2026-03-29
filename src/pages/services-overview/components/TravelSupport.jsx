@@ -49,7 +49,7 @@ const TravelSupport = () => {
       name: "David Chen",
       location: "Singapore",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face",
-      content: "When I had a medical emergency in Morocco, iSafari's support team arranged everything - from hospital transfer to insurance claims. Incredible service!",
+      content: "When I had a medical emergency in Morocco, BounceSteps's support team arranged everything - from hospital transfer to insurance claims. Incredible service!",
       rating: 5,
       service: "Emergency Assistance"
     },
@@ -172,7 +172,7 @@ const TravelSupport = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex items-center space-x-2">
                   <Icon name="Phone" size={16} className="text-error" />
-                  <span className="font-mono text-lg font-semibold text-foreground">+1-800-ISAFARI</span>
+                  <span className="font-mono text-lg font-semibold text-foreground">+1-800-BOUNCESTEPS</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Icon name="MessageCircle" size={16} className="text-primary" />

@@ -73,7 +73,7 @@ const InteractiveWorldMap = () => {
 
         <div className="relative">
           {/* World Map Container */}
-          <div className="relative w-full h-96 lg:h-[500px] bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl overflow-hidden border border-border shadow-lg">
+          <div className="relative w-full h-96 lg:h-[500px] bg-gradient-to-br from-primary/5 to-blue-100 rounded-2xl overflow-hidden border border-border shadow-lg">
             {/* Simplified World Map SVG Background */}
             <div className="absolute inset-0 opacity-20">
               <svg viewBox="0 0 1000 500" className="w-full h-full">

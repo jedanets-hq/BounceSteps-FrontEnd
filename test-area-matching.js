@@ -2,7 +2,7 @@
  * Test Area Partial Matching
  */
 
-const API_URL = process.env.VITE_API_URL || 'https://isafarimasterorg.onrender.com/api';
+const API_URL = process.env.VITE_API_URL || 'https://bouncestepsmasterorg.onrender.com/api';
 
 async function testAreaMatching() {
   console.log('🧪 TESTING AREA PARTIAL MATCHING\n');

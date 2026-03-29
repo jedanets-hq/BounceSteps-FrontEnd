@@ -28,7 +28,7 @@ const About = () => {
     }
   ];
 
-  // Page title is now "About iSafari Global"
+  // Page title is now "About BounceSteps"
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,9 +38,9 @@ const About = () => {
         <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl md:text-6xl font-display font-medium text-foreground mb-6">
-              About iSafari Global
+              About BounceSteps
             </h1>
-            {/* Title updated to "About iSafari Global" */}
+            {/* Title updated to "About BounceSteps" */}
             <h2 className="text-2xl md:text-3xl font-display text-primary mb-4">
               Powered by JEDA NETWORKS
             </h2>

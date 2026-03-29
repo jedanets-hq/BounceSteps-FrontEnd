@@ -34,7 +34,7 @@ const VerifiedBadge = ({ size = 'md', showText = false, className = '' }) => {
           {/* Instagram Blue Starburst/Seal Shape - 12 points scalloped */}
           <path 
             d="M12 1.5L13.5 4.5L16.5 3L16.5 6.5L20 6L18.5 9L21.5 11L18.5 13L20 16L16.5 15.5L16.5 19L13.5 17.5L12 20.5L10.5 17.5L7.5 19L7.5 15.5L4 16L5.5 13L2.5 11L5.5 9L4 6L7.5 6.5L7.5 3L10.5 4.5L12 1.5Z" 
-            fill="#1DA1F2"
+            fill="#10B981"
           />
           
           {/* White checkmark inside - centered */}
@@ -51,7 +51,7 @@ const VerifiedBadge = ({ size = 'md', showText = false, className = '' }) => {
       
       {/* Optional text */}
       {showText && (
-        <span className={`font-semibold text-blue-500 ${currentSize.text}`}>
+        <span className={`font-semibold text-primary ${currentSize.text}`}>
           Verified
         </span>
       )}
@@ -76,7 +76,7 @@ export const VerifiedBadgeCircle = ({ size = 'md', showText = false, className =
   return (
     <div className={`inline-flex items-center gap-1.5 ${className}`}>
       <div 
-        className="relative flex items-center justify-center bg-blue-500 rounded-full"
+        className="relative flex items-center justify-center bg-success rounded-full"
         style={{ width: currentSize.container, height: currentSize.container }}
         title="Verified Provider"
       >
@@ -97,7 +97,7 @@ export const VerifiedBadgeCircle = ({ size = 'md', showText = false, className =
       </div>
       
       {showText && (
-        <span className={`font-semibold text-blue-500 ${currentSize.text}`}>
+        <span className={`font-semibold text-primary ${currentSize.text}`}>
           Verified
         </span>
       )}
@@ -136,7 +136,7 @@ export const VerifiedBadgePremium = ({ size = 'md', showText = false, className 
           {/* Instagram Blue Starburst/Seal Shape */}
           <path 
             d="M12 1.5L13.5 4.5L16.5 3L16.5 6.5L20 6L18.5 9L21.5 11L18.5 13L20 16L16.5 15.5L16.5 19L13.5 17.5L12 20.5L10.5 17.5L7.5 19L7.5 15.5L4 16L5.5 13L2.5 11L5.5 9L4 6L7.5 6.5L7.5 3L10.5 4.5L12 1.5Z" 
-            fill="#1DA1F2"
+            fill="#10B981"
           />
           
           {/* White checkmark - bold and centered */}
@@ -152,7 +152,7 @@ export const VerifiedBadgePremium = ({ size = 'md', showText = false, className 
       </div>
       
       {showText && (
-        <span className={`font-semibold text-blue-500 ${currentSize.text}`}>
+        <span className={`font-semibold text-primary ${currentSize.text}`}>
           Verified
         </span>
       )}

@@ -63,7 +63,7 @@ const BusinessAnalytics = () => {
 
   const handleExportReport = () => {
     const csvData = [
-      ['iSafari Business Analytics Report'],
+      ['BounceSteps Business Analytics Report'],
       ['Period:', timeRange],
       ['Generated:', new Date().toLocaleDateString()],
       [''],

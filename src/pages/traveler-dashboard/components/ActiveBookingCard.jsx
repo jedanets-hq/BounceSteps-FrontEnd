@@ -83,7 +83,7 @@ const ActiveBookingCard = ({ booking }) => {
                 <head><title>Booking Details - ${booking.title}</title></head>
                 <body style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
                   <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto;">
-                    <h1 style="color: #2563eb; margin-bottom: 20px;">${booking.title}</h1>
+                    <h1 style="color: #2C5F41; margin-bottom: 20px;">${booking.title}</h1>
                     <p style="color: #666; margin-bottom: 20px;">${booking.subtitle}</p>
                     <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                       <h3 style="margin-bottom: 15px;">Booking Information</h3>
@@ -102,7 +102,7 @@ const ActiveBookingCard = ({ booking }) => {
                       </div>
                     ` : ''}
                     <div style="text-align: center; margin-top: 30px;">
-                      <button onclick="window.print()" style="background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">Print</button>
+                      <button onclick="window.print()" style="background: #2C5F41; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">Print</button>
                       <button onclick="window.close()" style="background: #6b7280; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Close</button>
                     </div>
                   </div>

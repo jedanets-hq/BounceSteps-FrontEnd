@@ -28,7 +28,7 @@ const ChatSystem = ({ isOpen, onClose, chatType = 'ai', recipientId = null, reci
       "I can help you plan a custom tour based on your interests and duration. What would you like to explore?"
     ],
     general: [
-      "Welcome to iSafari Global! I'm here to help you plan your perfect Tanzanian adventure.",
+      "Welcome to BounceSteps! I'm here to help you plan your perfect Tanzanian adventure.",
       "I can assist you with accommodation, transportation, tours, and local experiences. What would you like to know?",
       "Feel free to ask me anything about our services, destinations, or travel tips for Tanzania!"
     ]
@@ -40,7 +40,7 @@ const ChatSystem = ({ isOpen, onClose, chatType = 'ai', recipientId = null, reci
       setMessages([{
         id: 1,
         sender: 'ai',
-        content: "Hello! I'm your iSafari AI assistant. I can help you with questions about our services, destinations, and travel planning. What would you like to know?",
+        content: "Hello! I'm your BounceSteps AI assistant. I can help you with questions about our services, destinations, and travel planning. What would you like to know?",
         timestamp: new Date(),
         type: 'text'
       }]);
@@ -188,7 +188,7 @@ const ChatSystem = ({ isOpen, onClose, chatType = 'ai', recipientId = null, reci
                     ? 'bg-primary text-primary-foreground'
                     : message.sender === 'ai'
                     ? 'bg-muted text-foreground'
-                    : 'bg-blue-100 text-blue-900'
+                    : 'bg-primary/10 text-primary'
                 }`}
               >
                 <p className="text-sm">{message.content}</p>

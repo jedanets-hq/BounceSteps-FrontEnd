@@ -4,7 +4,7 @@ const https = require('https');
 const testEndpoint = (path, method = 'OPTIONS') => {
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: 'isafarimasterorg.onrender.com',
+      hostname: 'bouncestepsmasterorg.onrender.com',
       port: 443,
       path: path,
       method: method,
@@ -42,7 +42,7 @@ const testEndpoint = (path, method = 'OPTIONS') => {
 
 async function testAllRoutes() {
   console.log('🧪 Testing Backend Routes on Production...\n');
-  console.log('Backend URL: https://isafarimasterorg.onrender.com');
+  console.log('Backend URL: https://bouncestepsmasterorg.onrender.com');
   console.log('='.repeat(60));
 
   const routes = [

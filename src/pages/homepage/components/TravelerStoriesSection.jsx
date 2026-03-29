@@ -107,7 +107,7 @@ const TravelerStoriesSection = () => {
             Traveler Stories
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Real experiences from real travelers who discovered the world through iSafari
+            Real experiences from real travelers who discovered the world through BounceSteps
           </p>
         </div>
 

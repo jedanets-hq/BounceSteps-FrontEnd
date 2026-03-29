@@ -28,7 +28,7 @@
     --color-primary-foreground: #FFFFFF; /* white */
     
     /* Secondary Colors */
-    --color-secondary: #4A90A4; /* blue-500 */
+    --color-secondary: #10B981; /* emerald-500 */
     --color-secondary-foreground: #FFFFFF; /* white */
     
     /* Accent Colors */
@@ -56,7 +56,7 @@
     --color-foreground: #f1f5f9; /* slate-100 */
     --color-border: #334155; /* slate-700 */
     --color-input: #1e293b; /* slate-800 */
-    --color-ring: #3b82f6; /* blue-500 */
+    --color-ring: #10B981; /* emerald-500 */
     
     /* Card Colors - Dark */
     --color-card: #1e293b; /* slate-800 */
@@ -73,7 +73,7 @@
     --color-primary-foreground: #0f172a; /* slate-900 */
     
     /* Secondary Colors - Dark */
-    --color-secondary: #60a5fa; /* blue-400 */
+    --color-secondary: #34d399; /* emerald-400 */
     --color-secondary-foreground: #0f172a; /* slate-900 */
     
     /* Accent Colors - Dark */

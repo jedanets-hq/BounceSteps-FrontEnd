@@ -204,7 +204,7 @@ router.post('/login', getValidationMiddleware('login'), async (req, res) => {
     if (!user.is_active) {
       return res.status(403).json({
         success: false,
-        message: 'Your account has been suspended by Admin. Please contact support for assistance at: support@isafari.co.tz',
+        message: 'Your account has been suspended by Admin. Please contact support for assistance at: support@bouncesteps.co.tz',
         field: 'account',
         code: 'ACCOUNT_SUSPENDED'
       });
@@ -361,12 +361,12 @@ router.get('/google/callback', (req, res, next) => {
   // Clear the flow tracking cookie
   res.clearCookie('google_auth_flow', { path: '/' });
   
-  const frontendUrl = process.env.FRONTEND_URL || 'https://isafari-tz.netlify.app';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://bouncesteps-tz.netlify.app';
   passport.authenticate('google', { session: false, failureRedirect: `${frontendUrl}/login?error=google_auth_failed` })(req, res, next);
 }, async (req, res) => {
     try {
       // CRITICAL: Use production frontend URL
-      const frontendUrl = process.env.FRONTEND_URL || 'https://isafari-tz.netlify.app';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://bouncesteps-tz.netlify.app';
       const flowType = req.googleFlowType || 'login';
       
       console.log('📍 Redirecting to frontend:', frontendUrl);
@@ -408,7 +408,7 @@ router.get('/google/callback', (req, res, next) => {
       res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
     } catch (error) {
       console.error('❌ Google OAuth callback error:', error);
-      const frontendUrl = process.env.FRONTEND_URL || 'https://isafari-tz.netlify.app';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://bouncesteps-tz.netlify.app';
       res.redirect(`${frontendUrl}/login?error=auth_failed`);
     }
   }

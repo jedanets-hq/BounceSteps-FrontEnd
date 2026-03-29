@@ -130,7 +130,7 @@ const TripDetailsModal = ({ trip, isOpen, onClose }) => {
                       statusClass = 'bg-green-100 text-green-700';
                     } else if (startDate && startDate <= today && (!endDate || endDate >= today)) {
                       statusLabel = '🔄 In Progress';
-                      statusClass = 'bg-blue-100 text-blue-700';
+                      statusClass = 'bg-primary/10 text-primary';
                     } else {
                       statusLabel = '🟡 Upcoming';
                       statusClass = 'bg-yellow-100 text-yellow-700';
@@ -260,7 +260,7 @@ const TripDetailsModal = ({ trip, isOpen, onClose }) => {
                             : booking.status === 'pending'
                             ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300'
                             : booking.status === 'completed'
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-300'
+                            ? 'bg-primary/10 text-primary dark:bg-blue-800 dark:text-primary/70'
                             : 'bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-300'
                         }`}>
                           {booking.status === 'confirmed' ? '✅ Confirmed' : 

@@ -189,12 +189,12 @@ const AccountVerification = () => {
 
   const renderRequirementsStep = () => (
     <div className="space-y-6">
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div className="bg-primary/5 dark:bg-primary/20 border border-primary/20 dark:border-blue-800 rounded-lg p-4">
         <div className="flex items-start space-x-3">
-          <Icon name="Info" size={20} className="text-blue-600 dark:text-blue-400 mt-0.5" />
+          <Icon name="Info" size={20} className="text-primary dark:text-primary/60 mt-0.5" />
           <div>
-            <h4 className="font-medium text-blue-900 dark:text-blue-100">Get Verified Badge</h4>
-            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+            <h4 className="font-medium text-primary dark:text-blue-100">Get Verified Badge</h4>
+            <p className="text-sm text-primary dark:text-primary/70 mt-1">
               Pay verification fee to get your account verified. Once payment is confirmed, 
               admin will review and approve your verification request within 24-48 hours.
             </p>
@@ -357,7 +357,7 @@ const AccountVerification = () => {
         </div>
         
         {isVerified && (
-          <div className="flex items-center space-x-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center space-x-2 bg-primary/5 dark:bg-primary/20 text-primary dark:text-primary/70 px-4 py-2 rounded-lg border border-primary/20 dark:border-blue-800">
             <VerifiedBadgePremium size="md" />
             <span className="font-medium">Verified Account</span>
           </div>
@@ -507,10 +507,10 @@ const AccountVerification = () => {
                   </div>
                 </div>
 
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <div className="bg-primary/5 dark:bg-primary/20 border border-primary/20 dark:border-blue-800 rounded-lg p-3">
                   <div className="flex items-start gap-2">
-                    <Icon name="Shield" size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                    <Icon name="Shield" size={16} className="text-primary dark:text-primary/60 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-primary dark:text-primary/70">
                       Your payment is secure. Card details are encrypted and processed securely. 
                       Payment will be received by admin account.
                     </p>
@@ -662,12 +662,12 @@ export default AccountVerification;
 
   const renderRequirementsStep = () => (
     <div className="space-y-6">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
         <div className="flex items-start space-x-3">
-          <Icon name="Info" size={20} className="text-blue-600 mt-0.5" />
+          <Icon name="Info" size={20} className="text-primary mt-0.5" />
           <div>
-            <h4 className="font-medium text-blue-900">Verification Process</h4>
-            <p className="text-sm text-blue-700 mt-1">
+            <h4 className="font-medium text-primary">Verification Process</h4>
+            <p className="text-sm text-primary mt-1">
               Complete account verification to unlock premium features and build customer trust. 
               The process typically takes 2-3 business days after document submission.
             </p>
@@ -867,7 +867,7 @@ export default AccountVerification;
         </div>
         
         {isVerified && (
-          <div className="flex items-center space-x-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg border border-blue-200">
+          <div className="flex items-center space-x-2 bg-primary/5 text-primary px-4 py-2 rounded-lg border border-primary/20">
             <VerifiedBadgePremium size="md" />
             <span className="font-medium">Verified Account</span>
           </div>

@@ -1,7 +1,7 @@
 // Test new backend connection
 const https = require('https');
 
-const BACKEND_URL = 'https://isafarimasterorg.onrender.com';
+const BACKEND_URL = 'https://bouncestepsmasterorg.onrender.com';
 
 function makeRequest(path, method = 'GET', data = null) {
   return new Promise((resolve, reject) => {
@@ -12,7 +12,7 @@ function makeRequest(path, method = 'GET', data = null) {
       method: method,
       headers: {
         'Content-Type': 'application/json',
-        'Origin': 'https://isafari-tz.netlify.app'
+        'Origin': 'https://bouncesteps-tz.netlify.app'
       }
     };
 
@@ -51,7 +51,7 @@ function makeRequest(path, method = 'GET', data = null) {
 }
 
 async function testBackend() {
-  console.log('🧪 Testing New Backend: https://isafarimasterorg.onrender.com\n');
+  console.log('🧪 Testing New Backend: https://bouncestepsmasterorg.onrender.com\n');
   
   // Test 1: Health check
   console.log('1️⃣ Testing /health endpoint...');
@@ -131,8 +131,8 @@ async function testBackend() {
   console.log('═══════════════════════════════════════');
   console.log('📊 Test Summary');
   console.log('═══════════════════════════════════════');
-  console.log('Backend URL: https://isafarimasterorg.onrender.com');
-  console.log('Frontend URL: https://isafari-tz.netlify.app');
+  console.log('Backend URL: https://bouncestepsmasterorg.onrender.com');
+  console.log('Frontend URL: https://bouncesteps-tz.netlify.app');
   console.log('═══════════════════════════════════════\n');
 }
 
