@@ -124,9 +124,9 @@ const LandingPage = () => {
       <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="logo-container">
-              <img src="/must-logo.png" alt="MUST" className="logo-responsive" />
-              <div className="ml-2">
+            <div className="flex items-center space-x-4">
+              <img src="/must-logo.png" alt="MUST" className="h-16 w-16 object-contain" />
+              <div>
                 <h1 className="text-2xl font-bold text-gray-900">MUST</h1>
                 <p className="text-sm text-gray-600">Mbeya University of Science and Technology</p>
               </div>
@@ -326,9 +326,9 @@ const LandingPage = () => {
           </div>
           
           <div className="border-t border-gray-700 mt-12 pt-8 text-center">
-            <div className="logo-container justify-center mb-4">
-              <img src="/must-logo.png" alt="MUST" className="logo-mobile" />
-              <span className="font-semibold ml-2">MUST Learning Management System</span>
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <img src="/must-logo.png" alt="MUST" className="h-8 w-8" />
+              <span className="font-semibold">MUST Learning Management System</span>
             </div>
             <p className="text-gray-400 text-sm mb-2">
               © 2024 Mbeya University of Science and Technology. All rights reserved.

@@ -25,12 +25,12 @@ const Button = React.forwardRef(({
     };
     
     const sizeClasses = {
-        default: "h-10 px-4 py-2 sm:h-10 sm:px-4 sm:py-2 md:h-10 md:px-4 md:py-2",
-        sm: "h-9 rounded-md px-3 py-2 sm:h-9 sm:rounded-md sm:px-3 sm:py-2 md:h-9 md:rounded-md md:px-3",
-        lg: "h-11 rounded-md px-8 py-3 sm:h-11 sm:rounded-md sm:px-8 sm:py-3 md:h-11 md:rounded-md md:px-8",
-        icon: "h-10 w-10 sm:h-10 sm:w-10 md:h-10 md:w-10",
-        xs: "h-8 rounded-md px-2 text-xs py-2 sm:h-8 sm:rounded-md sm:px-2 sm:text-xs sm:py-2 md:h-8 md:rounded-md md:px-2 md:text-xs",
-        xl: "h-12 rounded-md px-10 text-base py-3 sm:h-12 sm:rounded-md sm:px-10 sm:text-base sm:py-3 md:h-12 md:rounded-md md:px-10 md:text-base",
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+        xs: "h-8 rounded-md px-2 text-xs",
+        xl: "h-12 rounded-md px-10 text-base",
     };
     
     return (

@@ -83,14 +83,13 @@ const HeroSection = () => {
           <p className="text-xl text-muted-foreground mb-8">
             Discover authentic travel experiences from verified local providers
           </p>
-          <div className="flex flex-col gap-4 justify-center sm:flex-row sm:gap-4 md:flex-row md:gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {isServiceProvider ? (
               <>
                 {/* Service Provider Buttons */}
                 <Button 
                   variant="default" 
                   size="lg"
-                  className="w-full py-3 text-sm font-semibold rounded-lg sm:w-auto sm:py-3 sm:text-sm md:w-auto"
                   onClick={() => navigate('/service-provider-dashboard?tab=services')}
                 >
                   <Icon name="Package" size={20} />
@@ -99,7 +98,6 @@ const HeroSection = () => {
                 <Button 
                   variant="outline" 
                   size="lg"
-                  className="w-full py-3 text-sm font-semibold rounded-lg sm:w-auto sm:py-3 sm:text-sm md:w-auto"
                   onClick={() => navigate('/service-provider-dashboard?tab=bookings')}
                 >
                   <Icon name="Calendar" size={20} />
@@ -110,13 +108,13 @@ const HeroSection = () => {
               <>
                 {/* Traveler Buttons */}
                 <Link to="/journey-planner">
-                  <Button variant="default" size="lg" className="w-full py-3 text-sm font-semibold rounded-lg sm:w-auto sm:py-3 sm:text-sm md:w-auto">
+                  <Button variant="default" size="lg">
                     <Icon name="Map" size={20} />
                     Start Your Journey
                   </Button>
                 </Link>
                 <Link to="/destination-discovery">
-                  <Button variant="outline" size="lg" className="w-full py-3 text-sm font-semibold rounded-lg sm:w-auto sm:py-3 sm:text-sm md:w-auto">
+                  <Button variant="outline" size="lg">
                     <Icon name="Compass" size={20} />
                     Explore Services
                   </Button>
@@ -191,7 +189,7 @@ const HeroSection = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 mt-6 w-full px-4 sm:flex-row sm:gap-4 sm:mt-8 sm:w-auto sm:px-0 md:flex-row md:gap-4 md:mt-8 md:w-auto md:px-0">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 md:mt-8 w-full sm:w-auto px-4 sm:px-0">
               {/* Show different buttons based on user type */}
               {isServiceProvider ? (
                 <>
@@ -199,7 +197,7 @@ const HeroSection = () => {
                   <Button 
                     variant="default" 
                     size="lg" 
-                    className="w-full py-3 text-sm font-semibold rounded-lg sm:w-auto sm:py-3 sm:text-sm md:w-auto"
+                    className="w-full sm:w-auto"
                     onClick={() => navigate('/service-provider-dashboard?tab=services')}
                   >
                     <Icon name="Package" size={20} />
@@ -208,7 +206,7 @@ const HeroSection = () => {
                   <Button 
                     variant="outline" 
                     size="lg" 
-                    className="w-full py-3 text-sm font-semibold rounded-lg bg-white/10 border-white/30 text-white hover:bg-white/20 sm:w-auto sm:py-3 sm:text-sm md:w-auto md:bg-white/10 md:border-white/30 md:text-white md:hover:bg-white/20"
+                    className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20"
                     onClick={() => navigate('/service-provider-dashboard?tab=bookings')}
                   >
                     <Icon name="Calendar" size={20} />
@@ -221,7 +219,7 @@ const HeroSection = () => {
                   <Button 
                     variant="default" 
                     size="lg" 
-                    className="w-full py-3 text-sm font-semibold rounded-lg sm:w-auto sm:py-3 sm:text-sm md:w-auto"
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       // Check if user is logged in before booking - check isafari_user not token
                       const savedUser = localStorage.getItem('isafari_user');
@@ -251,13 +249,13 @@ const HeroSection = () => {
                     Book Now
                   </Button>
                   <Link to="/journey-planner">
-                    <Button variant="outline" size="lg" className="w-full py-3 text-sm font-semibold rounded-lg bg-white/10 border-white/30 text-white hover:bg-white/20 sm:w-auto sm:py-3 sm:text-sm md:w-auto md:bg-white/10 md:border-white/30 md:text-white md:hover:bg-white/20">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
                       <Icon name="Map" size={20} />
                       Plan Your Journey
                     </Button>
                   </Link>
                   <Link to="/destination-discovery">
-                    <Button variant="outline" size="lg" className="w-full py-3 text-sm font-semibold rounded-lg bg-white/10 border-white/30 text-white hover:bg-white/20 sm:w-auto sm:py-3 sm:text-sm md:w-auto md:bg-white/10 md:border-white/30 md:text-white md:hover:bg-white/20">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
                       <Icon name="Compass" size={20} />
                       Explore Destinations
                     </Button>
