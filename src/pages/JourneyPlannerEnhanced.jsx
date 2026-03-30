@@ -1020,14 +1020,22 @@ const JourneyPlannerEnhanced = () => {
           <p className="text-muted-foreground mb-4">
             No service providers available in {selectedLocation.district || selectedLocation.region || 'this location'} yet.
           </p>
-          <div className="flex justify-center gap-3">
-            <Button variant="outline" onClick={prevStep}>
+          <div className="flex flex-col sm:flex-row justify-center gap-3 px-4">
+            <Button 
+              variant="outline" 
+              onClick={prevStep}
+              className="w-full sm:w-auto text-sm px-3 py-2"
+            >
               <Icon name="ArrowLeft" size={16} />
-              Change Location
+              <span className="ml-1">Change Location</span>
             </Button>
-            <Button variant="default" onClick={() => navigate('/destination-discovery')}>
+            <Button 
+              variant="default" 
+              onClick={() => navigate('/destination-discovery')}
+              className="w-full sm:w-auto text-sm px-3 py-2"
+            >
               <Icon name="Search" size={16} />
-              Browse All Services
+              <span className="ml-1">Browse All Services</span>
             </Button>
           </div>
         </div>
