@@ -170,56 +170,56 @@ const HeroSection = () => {
               )}
             </div>
             
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-medium text-white mb-4 leading-tight tracking-tight">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-medium text-white mb-3 sm:mb-4 leading-tight tracking-tight">
               {currentService?.title}
             </h1>
             
-            <p className="text-lg sm:text-xl lg:text-2xl text-white/90 mb-2 font-light">
+            <p className="text-sm sm:text-lg md:text-xl lg:text-2xl text-white/90 mb-2 font-light line-clamp-2 sm:line-clamp-none">
               {currentService?.description || `Discover ${currentService?.category} services`}
             </p>
             
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6 mb-8 text-white/80">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-6 mb-6 sm:mb-8 text-white/80">
               <div className="flex items-center">
-                <Icon name="Tag" size={18} className="mr-2" />
-                <span className="text-base sm:text-lg">{currentService?.category}</span>
+                <Icon name="Tag" size={14} className="mr-2 sm:size-18" />
+                <span className="text-xs sm:text-base lg:text-lg">{currentService?.category}</span>
               </div>
               <div className="flex items-center">
-                <Icon name="DollarSign" size={18} className="mr-2" />
-                <span className="text-base sm:text-lg font-medium">Tshs {parseFloat(currentService?.price || 0).toLocaleString()}/day</span>
+                <Icon name="DollarSign" size={14} className="mr-2 sm:size-18" />
+                <span className="text-xs sm:text-base lg:text-lg font-medium">Tshs {parseFloat(currentService?.price || 0).toLocaleString()}/day</span>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 md:mt-8 w-full sm:w-auto px-4 sm:px-0">
+            <div className="flex flex-col gap-2 mt-3 px-3 sm:flex-row sm:gap-4 sm:mt-6 md:mt-8 sm:w-auto sm:px-0">
               {/* Show different buttons based on user type */}
               {isServiceProvider ? (
                 <>
-                  {/* Service Provider Buttons - FIXED: Changed button text and navigation */}
+                  {/* Service Provider Buttons - Mobile optimized */}
                   <Button 
                     variant="default" 
-                    size="lg" 
-                    className="w-full sm:w-auto"
+                    size="sm"
+                    className="w-full text-xs py-2 h-auto sm:w-auto sm:size-lg sm:text-sm"
                     onClick={() => navigate('/service-provider-dashboard?tab=services')}
                   >
-                    <Icon name="Package" size={20} />
+                    <Icon name="Package" size={14} className="sm:size-20" />
                     My Services
                   </Button>
                   <Button 
                     variant="outline" 
-                    size="lg" 
-                    className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20"
+                    size="sm"
+                    className="w-full text-xs py-2 h-auto bg-white/10 border-white/30 text-white hover:bg-white/20 sm:w-auto sm:size-lg sm:text-sm"
                     onClick={() => navigate('/service-provider-dashboard?tab=bookings')}
                   >
-                    <Icon name="Calendar" size={20} />
+                    <Icon name="Calendar" size={14} className="sm:size-20" />
                     Bookings
                   </Button>
                 </>
               ) : (
                 <>
-                  {/* Traveler Buttons */}
+                  {/* Traveler Buttons - Mobile optimized */}
                   <Button 
                     variant="default" 
-                    size="lg" 
-                    className="w-full sm:w-auto"
+                    size="sm"
+                    className="w-full text-xs py-2 h-auto sm:w-auto sm:size-lg sm:text-sm"
                     onClick={() => {
                       // Check if user is logged in before booking - check isafari_user not token
                       const savedUser = localStorage.getItem('isafari_user');
@@ -245,19 +245,19 @@ const HeroSection = () => {
                       }
                     }}
                   >
-                    <Icon name="Calendar" size={20} />
+                    <Icon name="Calendar" size={14} className="sm:size-20" />
                     Book Now
                   </Button>
                   <Link to="/journey-planner">
-                    <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
-                      <Icon name="Map" size={20} />
-                      Plan Your Journey
+                    <Button variant="outline" size="sm" className="w-full text-xs py-2 h-auto bg-white/10 border-white/30 text-white hover:bg-white/20 sm:w-auto sm:size-lg sm:text-sm">
+                      <Icon name="Map" size={14} className="sm:size-20" />
+                      Plan Journey
                     </Button>
                   </Link>
                   <Link to="/destination-discovery">
-                    <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
-                      <Icon name="Compass" size={20} />
-                      Explore Destinations
+                    <Button variant="outline" size="sm" className="w-full text-xs py-2 h-auto bg-white/10 border-white/30 text-white hover:bg-white/20 sm:w-auto sm:size-lg sm:text-sm">
+                      <Icon name="Compass" size={14} className="sm:size-20" />
+                      Explore
                     </Button>
                   </Link>
                 </>
