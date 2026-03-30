@@ -235,19 +235,19 @@ const TrendingServices = () => {
         </div>
 
         {/* Category Filter */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-6 sm:gap-4 sm:mb-12 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8 sm:mb-12 max-w-5xl mx-auto">
           {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 sm:px-6 py-2 sm:py-3 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center justify-center space-x-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 ${
                 selectedCategory === category.id
                   ? 'bg-primary text-primary-foreground shadow-md'
                   : 'bg-background text-muted-foreground hover:text-foreground hover:bg-muted border border-border'
               }`}
             >
-              <Icon name={category.icon} size={14} className="shrink-0 sm:size-16" />
-              <span className="truncate text-xs sm:text-sm">{category.name}</span>
+              <Icon name={category.icon} size={16} className="shrink-0" />
+              <span className="truncate">{category.name}</span>
             </button>
           ))}
         </div>
@@ -284,7 +284,7 @@ const TrendingServices = () => {
             {/* Carousel Container */}
             <div 
               className="flex transition-transform duration-500 ease-out"
-              style={{ transform: `translateX(calc(-${currentIndex} * min(90vw, 280px)))` }}
+              style={{ transform: `translateX(calc(-${currentIndex} * min(85vw, 300px)))` }}
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
@@ -292,7 +292,7 @@ const TrendingServices = () => {
               {filteredServices.map((service, index) => (
                 <div 
                   key={service.id} 
-                  className="w-[90vw] sm:w-[280px] md:w-[300px] flex-shrink-0 px-2 pb-4"
+                  className="w-[85vw] sm:w-[300px] flex-shrink-0 px-2 sm:px-3 pb-4"
                 >
                   <ServiceCard 
                     service={service}

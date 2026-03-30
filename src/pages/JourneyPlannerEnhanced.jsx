@@ -628,26 +628,26 @@ const JourneyPlannerEnhanced = () => {
   };
 
   const renderStepIndicator = () => (
-    <div className="mb-6 sm:mb-8">
+    <div className="mb-8">
       <div className="flex items-center justify-between max-w-3xl mx-auto">
         {[
           { num: 1, name: 'Location' },
-          { num: 2, name: 'Details' },
+          { num: 2, name: 'Travel Details' },
           { num: 3, name: 'Services' },
           { num: 4, name: 'Providers' },
           { num: 5, name: 'Summary' }
         ].map((s, idx) => (
           <React.Fragment key={s.num}>
             <div className="flex flex-col items-center">
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold text-xs sm:text-sm ${
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
                 step >= s.num ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'
               }`}>
                 {s.num}
               </div>
-              <span className="text-xs mt-1 sm:mt-2 text-center">{s.name}</span>
+              <span className="text-xs mt-2">{s.name}</span>
             </div>
             {idx < 4 && (
-              <div className={`flex-1 h-0.5 sm:h-1 mx-1 sm:mx-2 ${step > s.num ? 'bg-primary' : 'bg-gray-200'}`} />
+              <div className={`flex-1 h-1 mx-2 ${step > s.num ? 'bg-primary' : 'bg-gray-200'}`} />
             )}
           </React.Fragment>
         ))}
@@ -753,14 +753,12 @@ const JourneyPlannerEnhanced = () => {
         </div>
       )}
 
-      <div className="flex justify-end space-x-3 pt-4 sm:pt-6">
+      <div className="flex justify-end space-x-4 pt-6">
         <Button 
           onClick={nextStep} 
           disabled={isMultiTripEnabled ? !areAllDestinationsComplete() : (!selectedLocation.region || !selectedLocation.district)}
-          size="sm" 
-          className="text-xs sm:text-sm"
         >
-          Next <Icon name="ArrowRight" size={14} className="sm:size-16" />
+          Next <Icon name="ArrowRight" size={16} />
         </Button>
       </div>
     </div>
@@ -770,14 +768,14 @@ const JourneyPlannerEnhanced = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-semibold mb-4">Travel Details</h2>
       
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-2">Check-in Date *</label>
           <input
             type="date"
             value={journeyData.checkInDate}
             onChange={(e) => setJourneyData({...journeyData, checkInDate: e.target.value})}
-            className="w-full px-3 py-2 sm:px-4 text-sm sm:text-base border rounded-lg"
+            className="w-full px-4 py-2 border rounded-lg"
             required
           />
         </div>
@@ -788,7 +786,7 @@ const JourneyPlannerEnhanced = () => {
             type="date"
             value={journeyData.checkOutDate}
             onChange={(e) => setJourneyData({...journeyData, checkOutDate: e.target.value})}
-            className="w-full px-3 py-2 sm:px-4 text-sm sm:text-base border rounded-lg"
+            className="w-full px-4 py-2 border rounded-lg"
             required
           />
         </div>
@@ -800,7 +798,7 @@ const JourneyPlannerEnhanced = () => {
             min="1"
             value={journeyData.adults}
             onChange={(e) => setJourneyData({...journeyData, adults: parseInt(e.target.value)})}
-            className="w-full px-3 py-2 sm:px-4 text-sm sm:text-base border rounded-lg"
+            className="w-full px-4 py-2 border rounded-lg"
             placeholder="Total number of travelers"
           />
         </div>
@@ -808,30 +806,30 @@ const JourneyPlannerEnhanced = () => {
 
       <div>
         <label className="block text-sm font-medium mb-3">Purpose of Travel <span className="text-muted-foreground text-xs">(Optional)</span></label>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 sm:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {travelPurposes.map(purpose => (
             <button
               key={purpose.id}
               onClick={() => setJourneyData({...journeyData, travelPurpose: purpose.id})}
-              className={`p-3 border rounded-lg flex items-center space-x-2 text-left ${
+              className={`p-3 border rounded-lg flex items-center space-x-2 ${
                 journeyData.travelPurpose === purpose.id
                   ? 'border-primary bg-primary/10'
                   : 'border-border hover:bg-muted'
               }`}
             >
-              <Icon name={purpose.icon} size={18} className="shrink-0 sm:size-20" />
-              <span className="text-xs sm:text-sm truncate">{purpose.name}</span>
+              <Icon name={purpose.icon} size={20} />
+              <span className="text-sm">{purpose.name}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="flex justify-between pt-4 sm:pt-6">
-        <Button variant="outline" onClick={prevStep} size="sm" className="text-xs sm:text-sm">
-          <Icon name="ArrowLeft" size={14} className="sm:size-16" /> Back
+      <div className="flex justify-between pt-6">
+        <Button variant="outline" onClick={prevStep}>
+          <Icon name="ArrowLeft" size={16} /> Back
         </Button>
-        <Button onClick={nextStep} disabled={!journeyData.checkInDate || !journeyData.checkOutDate} size="sm" className="text-xs sm:text-sm">
-          Next <Icon name="ArrowRight" size={14} className="sm:size-16" />
+        <Button onClick={nextStep} disabled={!journeyData.checkInDate || !journeyData.checkOutDate}>
+          Next <Icon name="ArrowRight" size={16} />
         </Button>
       </div>
     </div>
@@ -864,29 +862,29 @@ const JourneyPlannerEnhanced = () => {
       
       <div>
         <label className="block text-sm font-medium mb-3">Available Services</label>
-        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {serviceCategories.map(service => (
             <button
               key={service.id}
               onClick={() => toggleService(service.id)}
-              className={`p-3 sm:p-4 border rounded-lg text-left transition-all ${
+              className={`p-4 border rounded-lg text-left transition-all ${
                 journeyData.selectedServices.includes(service.id)
                   ? 'border-primary bg-primary/10 shadow-md'
                   : 'border-border hover:bg-muted hover:border-primary/50'
               }`}
             >
               <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center space-x-2 sm:space-x-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
-                    <Icon name={service.icon} size={20} className="text-primary sm:size-24" />
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Icon name={service.icon} size={24} className="text-primary" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-semibold text-foreground text-sm sm:text-base">{service.name}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{service.description}</div>
+                  <div>
+                    <div className="font-semibold text-foreground">{service.name}</div>
+                    <div className="text-sm text-muted-foreground">{service.description}</div>
                   </div>
                 </div>
                 {journeyData.selectedServices.includes(service.id) && (
-                  <Icon name="CheckCircle" size={20} className="text-primary shrink-0 sm:size-24" />
+                  <Icon name="CheckCircle" size={24} className="text-primary" />
                 )}
               </div>
             </button>
@@ -912,12 +910,12 @@ const JourneyPlannerEnhanced = () => {
         </div>
       )}
 
-      <div className="flex justify-between pt-4 sm:pt-6">
-        <Button variant="outline" onClick={prevStep} size="sm" className="text-xs sm:text-sm">
-          <Icon name="ArrowLeft" size={14} className="sm:size-16" /> Back
+      <div className="flex justify-between pt-6">
+        <Button variant="outline" onClick={prevStep}>
+          <Icon name="ArrowLeft" size={16} /> Back
         </Button>
-        <Button onClick={nextStep} size="sm" className="text-xs sm:text-sm">
-          Next <Icon name="ArrowRight" size={14} className="sm:size-16" />
+        <Button onClick={nextStep}>
+          Next <Icon name="ArrowRight" size={16} />
         </Button>
       </div>
     </div>
@@ -954,7 +952,7 @@ const JourneyPlannerEnhanced = () => {
         </div>
       ) : providers.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {providers.map((provider) => (
               <ProviderCard
                 key={provider.id}
@@ -1035,17 +1033,15 @@ const JourneyPlannerEnhanced = () => {
         </div>
       )}
 
-      <div className="flex justify-between pt-4 sm:pt-6">
-        <Button variant="outline" onClick={prevStep} size="sm" className="text-xs sm:text-sm">
-          <Icon name="ArrowLeft" size={14} className="sm:size-16" /> Back
+      <div className="flex justify-between pt-6">
+        <Button variant="outline" onClick={prevStep}>
+          <Icon name="ArrowLeft" size={16} /> Back
         </Button>
         <Button 
           onClick={viewSummary} 
           disabled={!journeyData.selectedProviders || journeyData.selectedProviders.length === 0}
-          size="sm" 
-          className="text-xs sm:text-sm"
         >
-          View Summary <Icon name="FileText" size={14} className="sm:size-16" />
+          View Summary <Icon name="FileText" size={16} />
         </Button>
       </div>
 
@@ -1431,11 +1427,11 @@ const JourneyPlannerEnhanced = () => {
         
         {isMultiTripEnabled && multiTripDestinations.length > 0 ? renderMultiTripSummary() : renderSingleTripSummary()}
 
-        <div className="flex justify-between pt-4 sm:pt-6">
-          <Button variant="outline" onClick={prevStep} size="sm" className="text-xs sm:text-sm">
-            <Icon name="ArrowLeft" size={14} className="sm:size-16" /> Back
+        <div className="flex justify-between pt-6">
+          <Button variant="outline" onClick={prevStep}>
+            <Icon name="ArrowLeft" size={16} /> Back
           </Button>
-          <div className="flex flex-wrap gap-2 sm:gap-3">
+          <div className="flex flex-wrap gap-3">
             <Button variant="outline" onClick={async () => {
               // Save journey plan - use API for multi-trip
               if (isMultiTripEnabled) {
@@ -1496,8 +1492,8 @@ const JourneyPlannerEnhanced = () => {
               
               alert('✅ Trip plan saved! View it in Dashboard > My Trips');
               navigate('/traveler-dashboard?tab=trips');
-            }} size="sm" className="text-xs sm:text-sm">
-              <Icon name="Save" size={14} className="sm:size-16" /> Save
+            }}>
+              <Icon name="Save" size={16} /> Save Plan
             </Button>
             <Button variant="secondary" onClick={async () => {
               // Pre-Order: Create booking requests for all selected services
@@ -1560,8 +1556,8 @@ const JourneyPlannerEnhanced = () => {
                 console.error('Pre-order error:', error);
                 alert('Error creating pre-orders. Please try again.');
               }
-            }} size="sm" className="text-xs sm:text-sm">
-              <Icon name="Clock" size={14} className="sm:size-16" /> Pre-Order
+            }}>
+              <Icon name="Clock" size={16} /> Pre-Order
             </Button>
             <Button onClick={async () => {
               // Check if services are selected
@@ -1632,8 +1628,8 @@ const JourneyPlannerEnhanced = () => {
                 console.error('❌ [Journey Planner] Critical error:', error);
                 alert('Error adding services to cart. Please try again.');
               }
-            }} size="sm" className="text-xs sm:text-sm">
-              <Icon name="ShoppingCart" size={14} className="sm:size-16" /> Cart & Payment
+            }}>
+              <Icon name="ShoppingCart" size={16} /> Continue to Cart & Payment
             </Button>
           </div>
         </div>
@@ -1658,7 +1654,7 @@ const JourneyPlannerEnhanced = () => {
           {renderStepIndicator()}
 
           <div className="max-w-4xl mx-auto">
-            <div className="bg-card border rounded-lg p-4 sm:p-6 md:p-8">
+            <div className="bg-card border rounded-lg p-8">
               {step === 1 && renderStep1()}
               {step === 2 && renderStep2()}
               {step === 3 && renderStep3()}
