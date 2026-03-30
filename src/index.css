@@ -134,3 +134,49 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Standardized Logo Classes */
+@layer components {
+  .logo-mobile {
+    height: 36px;
+    width: auto;
+    padding-left: 16px;
+  }
+
+  .logo-desktop {
+    height: 48px;
+    width: auto;
+    padding-left: 16px;
+  }
+
+  .logo-responsive {
+    height: 36px;
+    width: auto;
+    padding-left: 16px;
+  }
+
+  @media (min-width: 768px) {
+    .logo-responsive {
+      height: 48px;
+    }
+  }
+
+  .logo-centered {
+    display: flex;
+    align-items: center;
+  }
+
+  .logo-dark-optimized {
+    filter: brightness(0) invert(1);
+  }
+
+  .logo-shadow {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+  }
+
+  .logo-container {
+    display: flex;
+    align-items: center;
+    padding-left: 16px;
+  }
+}

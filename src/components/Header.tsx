@@ -19,9 +19,9 @@ export const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-32 items-center">
         {/* Logo and Branding */}
-        <div className="flex items-center space-x-8">
-          <img src="/must-logo.png" alt="MUST" className="h-28 w-28 object-contain" />
-          <div className="flex flex-col">
+        <div className="logo-container">
+          <img src="/must-logo.png" alt="MUST" className="logo-responsive" />
+          <div className="ml-2">
             <span className="text-5xl font-bold text-foreground">MUST</span>
             <span className="hidden md:block text-lg font-semibold text-primary">Learning Management System</span>
             <span className="md:hidden text-lg font-semibold text-primary">LMS</span>

@@ -235,12 +235,12 @@ const TrendingServices = () => {
         </div>
 
         {/* Category Filter */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8 sm:mb-12 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 gap-2 max-w-5xl mx-auto sm:grid-cols-3 sm:gap-4 md:grid-cols-4 md:gap-4 md:mb-12">
           {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className={`flex items-center justify-center space-x-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center justify-center space-x-2 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 sm:px-3 sm:py-3 sm:text-sm md:px-6 md:py-3 md:text-sm ${
                 selectedCategory === category.id
                   ? 'bg-primary text-primary-foreground shadow-md'
                   : 'bg-background text-muted-foreground hover:text-foreground hover:bg-muted border border-border'
@@ -292,7 +292,7 @@ const TrendingServices = () => {
               {filteredServices.map((service, index) => (
                 <div 
                   key={service.id} 
-                  className="w-[85vw] sm:w-[300px] flex-shrink-0 px-2 sm:px-3 pb-4"
+                  className="w-[85vw] flex-shrink-0 px-2 pb-4 sm:w-[300px] sm:px-3 sm:pb-4 md:w-[300px] md:px-3 md:pb-4"
                 >
                   <ServiceCard 
                     service={service}
@@ -346,10 +346,10 @@ const TrendingServices = () => {
 
       {/* Service Details Modal */}
       {selectedService && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedService(null)}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4 md:p-4" onClick={() => setSelectedService(null)}>
           <div className="bg-card rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             {/* Service Image */}
-            <div className="relative h-64">
+            <div className="relative h-48 sm:h-64 md:h-64">
               {selectedService.images && selectedService.images.length > 0 ? (
                 <img 
                   src={selectedService.images[0]} 
@@ -363,16 +363,16 @@ const TrendingServices = () => {
               )}
               <button 
                 onClick={() => setSelectedService(null)}
-                className="absolute top-4 right-4 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
+                className="absolute top-3 right-3 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors sm:top-4 sm:right-4 md:top-4 md:right-4"
               >
                 <Icon name="X" size={20} />
               </button>
-              <div className="absolute top-4 left-4 flex gap-2">
-                <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
+              <div className="absolute top-3 left-3 flex gap-2 sm:top-4 sm:left-4 md:top-4 md:left-4">
+                <span className="bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium sm:px-3 sm:py-1 sm:text-sm md:px-3 md:py-1 md:text-sm">
                   {selectedService.category}
                 </span>
                 {selectedService.provider_verified && (
-                  <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                  <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 sm:px-3 sm:py-1 sm:text-sm md:px-3 md:py-1 md:text-sm">
                     <Icon name="CheckCircle" size={14} />
                     Verified
                   </span>
@@ -381,8 +381,8 @@ const TrendingServices = () => {
             </div>
 
             {/* Service Details */}
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
+            <div className="p-4 sm:p-6 md:p-6">
+              <h2 className="text-xl font-bold text-foreground mb-2 flex items-center gap-2 sm:text-2xl md:text-2xl">
                 {selectedService.title}
                 {selectedService.provider_verified && <VerifiedBadge size="sm" showText={false} />}
               </h2>
@@ -392,16 +392,16 @@ const TrendingServices = () => {
                 {selectedService.location || 'Tanzania'}
               </p>
 
-              <div className="flex items-center justify-between mb-6 p-4 bg-muted/30 rounded-lg">
+              <div className="flex items-center justify-between mb-4 p-3 bg-muted/30 rounded-lg sm:mb-6 sm:p-4 md:mb-6 md:p-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Price</p>
-                  <p className="text-2xl font-bold text-primary">TZS {parseFloat(selectedService.price || 0).toLocaleString()}</p>
+                  <p className="text-xl font-bold text-primary sm:text-2xl md:text-2xl">TZS {parseFloat(selectedService.price || 0).toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">per day</p>
                 </div>
                 {selectedService.average_rating > 0 && (
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">Rating</p>
-                    <p className="text-xl font-bold flex items-center gap-1">
+                    <p className="text-lg font-bold flex items-center gap-1 sm:text-xl md:text-xl">
                       <Icon name="Star" size={18} className="text-yellow-500 fill-yellow-500" />
                       {parseFloat(selectedService.average_rating).toFixed(1)}
                     </p>
@@ -410,9 +410,9 @@ const TrendingServices = () => {
               </div>
 
               {/* Description */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6 md:mb-6">
                 <h3 className="font-semibold text-foreground mb-2">Description</h3>
-                <p className="text-muted-foreground">{selectedService.description || 'No description available'}</p>
+                <p className="text-muted-foreground text-sm sm:text-base md:text-base">{selectedService.description || 'No description available'}</p>
               </div>
 
               {/* Amenities */}
@@ -422,11 +422,11 @@ const TrendingServices = () => {
                   : [];
                 
                 return amenities.length > 0 && (
-                  <div className="mb-6">
+                  <div className="mb-4 sm:mb-6 md:mb-6">
                     <h3 className="font-semibold text-foreground mb-2">Amenities & Features</h3>
                     <div className="flex flex-wrap gap-2">
                       {amenities.map((amenity, index) => (
-                        <span key={index} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                        <span key={index} className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs sm:px-3 sm:py-1 sm:text-sm md:px-3 md:py-1 md:text-sm">
                           {amenity}
                         </span>
                       ))}
@@ -438,7 +438,7 @@ const TrendingServices = () => {
               {/* Provider Info */}
               {(selectedService.business_name || selectedService.provider_name) && selectedService.provider_id && (
                 <div 
-                  className="mb-6 p-4 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors border border-border"
+                  className="mb-4 p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors border border-border sm:mb-6 sm:p-4 md:mb-6 md:p-4"
                   onClick={() => {
                     if (selectedService.provider_id) {
                       setSelectedService(null);
@@ -447,15 +447,15 @@ const TrendingServices = () => {
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Icon name="User" size={24} className="text-primary" />
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center sm:w-12 sm:h-12 md:w-12 md:h-12">
+                      <Icon name="User" size={20} className="text-primary sm:size-24 md:size-24" />
                     </div>
                     <div className="flex-1">
-                      <div className="font-semibold text-foreground flex items-center gap-1">
+                      <div className="font-semibold text-foreground flex items-center gap-1 text-sm sm:text-base md:text-base">
                         {selectedService.business_name || selectedService.provider_name}
                         {selectedService.provider_badge_type && <ProviderBadge badgeType={selectedService.provider_badge_type} size="sm" showText={false} />}
                       </div>
-                      <p className="text-sm text-muted-foreground">Tap to view all services from this provider</p>
+                      <p className="text-xs text-muted-foreground sm:text-sm md:text-sm">Tap to view all services from this provider</p>
                     </div>
                     <Icon name="ChevronRight" size={20} className="text-muted-foreground" />
                   </div>
@@ -465,7 +465,7 @@ const TrendingServices = () => {
               {/* Action Buttons */}
               <div className="flex gap-3">
                 <Button 
-                  className="flex-1"
+                  className="flex-1 py-3 text-sm font-semibold rounded-lg sm:flex-1 sm:py-3 sm:text-sm md:flex-1"
                   onClick={() => {
                     const savedUser = localStorage.getItem('isafari_user');
                     if (!savedUser) {

@@ -2210,12 +2210,11 @@ const TravelerDashboard = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center h-14 px-3 sm:px-6 lg:px-8 gap-2">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+            <Link to="/" className="logo-container">
               <img
                 src="/bouncesteps-logo.png"
                 alt="BounceSteps"
-                className="h-8 sm:h-10 w-auto"
-                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' }}
+                className="logo-responsive logo-shadow"
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextElementSibling.style.display = 'flex';

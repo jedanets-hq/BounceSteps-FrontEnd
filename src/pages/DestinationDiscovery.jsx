@@ -205,12 +205,12 @@ const DestinationDiscovery = () => {
           </div>
 
           {/* Category Filters */}
-          <div className="mb-8 flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-3">
             {categories.map(category => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center space-x-2 px-3 py-3 rounded-lg text-sm font-medium transition-all sm:px-4 sm:py-2 sm:text-sm md:px-4 md:py-2 md:text-sm ${
                   selectedCategory === category.id
                     ? 'bg-primary text-primary-foreground shadow-md'
                     : 'bg-card border border-border text-foreground hover:bg-muted'
@@ -244,7 +244,7 @@ const DestinationDiscovery = () => {
 
           {/* Services Grid */}
           {!loading && !error && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 mt-6 sm:grid-cols-1 sm:gap-6 sm:mt-8 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
               {filteredServices.map(service => (
                 <ServiceCard 
                   key={service.id}

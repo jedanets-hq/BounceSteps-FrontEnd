@@ -783,12 +783,11 @@ const ServiceProviderDashboard = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3">
+            <Link to="/" className="logo-container">
               <img 
                 src="/bouncesteps-logo.png" 
                 alt="BounceSteps" 
-                className="h-10 w-auto"
-                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' }}
+                className="logo-responsive logo-shadow"
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextElementSibling.style.display = 'flex';
@@ -951,14 +950,13 @@ const ServiceProviderDashboard = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div className="md:col-span-2">
-                <div className="flex items-center space-x-2 mb-4">
+                <div className="logo-container">
                   <img 
                     src="/bouncesteps-logo.png" 
                     alt="BounceSteps" 
-                    className="h-10 w-auto"
-                    style={{ filter: 'brightness(0) invert(1)' }}
+                    className="logo-responsive logo-dark-optimized"
                   />
-                  <div className="flex flex-col">
+                  <div className="flex flex-col ml-2">
                     <span className="font-display font-medium text-lg leading-none">
                       BounceSteps
                     </span>
