@@ -107,9 +107,10 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
 
     return (
       <div className={`bg-white dark:bg-gray-800 rounded-lg overflow-hidden border-2 ${statusConfig.borderColor} shadow-sm hover:shadow-md transition-all duration-200`}>
-        {/* Service Image & Header */}
-        <div className="flex gap-4 p-4">
-          <div className="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+        {/* Service Image & Header - MOBILE RESPONSIVE */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4">
+          {/* Mobile: Image smaller and responsive, Desktop: Fixed size */}
+          <div className="w-full sm:w-20 md:w-24 lg:w-28 h-32 sm:h-20 md:h-24 lg:h-28 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-purple-100 dark:from-blue-900 dark:to-purple-900">
             {serviceImage ? (
               <img 
                 src={serviceImage} 
@@ -119,7 +120,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
                   e.target.style.display = 'none';
                   e.target.parentElement.innerHTML = `
                     <div class="w-full h-full flex items-center justify-center">
-                      <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                       </svg>
                     </div>
@@ -128,53 +129,55 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
-                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 sm:w-12 sm:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span className="text-xs mt-1">No Image</span>
+                <span className="text-xs mt-1 hidden sm:block">No Image</span>
               </div>
             )}
           </div>
           
           <div className="flex-1 min-w-0">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex-1">
-                <h5 className="font-semibold text-foreground text-lg leading-tight">
+            {/* Title and Status Badge - MOBILE STACKED */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+              <div className="flex-1 min-w-0">
+                <h5 className="font-semibold text-foreground text-base sm:text-lg leading-tight break-words">
                   {booking.service_title || booking.service?.title || 'Service Booking'}
                 </h5>
-                <p className="text-sm text-muted-foreground flex items-center mt-1">
-                  <Icon name="Building2" size={14} className="mr-1" />
-                  {booking.business_name || booking.provider?.businessName || 'Service Provider'}
+                <p className="text-sm text-muted-foreground flex items-center mt-1 break-words">
+                  <Icon name="Building2" size={14} className="mr-1 flex-shrink-0" />
+                  <span className="truncate">{booking.business_name || booking.provider?.businessName || 'Service Provider'}</span>
                 </p>
                 {(booking.service_location || booking.service?.location) && (
-                  <p className="text-xs text-muted-foreground flex items-center mt-1">
-                    <Icon name="MapPin" size={12} className="mr-1" />
-                    {booking.service_location || booking.service?.location}
+                  <p className="text-xs text-muted-foreground flex items-center mt-1 break-words">
+                    <Icon name="MapPin" size={12} className="mr-1 flex-shrink-0" />
+                    <span className="truncate">{booking.service_location || booking.service?.location}</span>
                   </p>
                 )}
               </div>
-              <span className={`px-3 py-1 ${statusConfig.badgeColor} rounded-full text-xs font-medium whitespace-nowrap ml-2`}>
+              <span className={`px-2 sm:px-3 py-1 ${statusConfig.badgeColor} rounded-full text-xs font-medium whitespace-nowrap self-start sm:ml-2`}>
                 {statusConfig.badge}
               </span>
             </div>
             
-            <div className="grid grid-cols-2 gap-3 text-sm mt-3">
+            {/* Date and Amount - MOBILE FRIENDLY GRID */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm mt-3">
               <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 ${statusConfig.iconBg} rounded-lg flex items-center justify-center`}>
-                  <Icon name="Calendar" size={14} className={statusConfig.iconColor} />
+                <div className={`w-6 h-6 sm:w-8 sm:h-8 ${statusConfig.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                  <Icon name="Calendar" size={12} className={`sm:size-14 ${statusConfig.iconColor}`} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Travel Date</p>
-                  <p className="font-medium">{new Date(booking.booking_date).toLocaleDateString()}</p>
+                  <p className="font-medium text-sm break-words">{new Date(booking.booking_date).toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 ${statusConfig.iconBg} rounded-lg flex items-center justify-center`}>
-                  <Icon name="Banknote" size={14} className={statusConfig.iconColor} />
+                <div className={`w-6 h-6 sm:w-8 sm:h-8 ${statusConfig.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                  <Icon name="Banknote" size={12} className={`sm:size-14 ${statusConfig.iconColor}`} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Amount</p>
-                  <p className={`font-medium ${status === 'cancelled' ? 'line-through text-muted-foreground' : 'text-primary'}`}>
+                  <p className={`font-medium text-sm break-words ${status === 'cancelled' ? 'line-through text-muted-foreground' : 'text-primary'}`}>
                     TZS {booking.total_price?.toLocaleString()}
                   </p>
                 </div>
@@ -223,49 +226,49 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
           </div>
         )}
 
-        {/* Provider Message Section */}
-        <div className={`${statusConfig.messageBg} border-t ${statusConfig.borderColor} p-4`}>
-          <div className="flex items-start gap-3">
-            <div className={`w-10 h-10 ${statusConfig.iconBg} rounded-full flex items-center justify-center flex-shrink-0 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 ${statusConfig.ringColor}`}>
-              <Icon name={statusConfig.icon} size={18} className={statusConfig.iconColor} />
+        {/* Provider Message Section - MOBILE OPTIMIZED */}
+        <div className={`${statusConfig.messageBg} border-t ${statusConfig.borderColor} p-3 sm:p-4`}>
+          <div className="flex items-start gap-2 sm:gap-3">
+            <div className={`w-8 h-8 sm:w-10 sm:h-10 ${statusConfig.iconBg} rounded-full flex items-center justify-center flex-shrink-0 ring-1 sm:ring-2 ring-offset-1 sm:ring-offset-2 ring-offset-white dark:ring-offset-gray-800 ${statusConfig.ringColor}`}>
+              <Icon name={statusConfig.icon} size={16} className={`sm:size-18 ${statusConfig.iconColor}`} />
             </div>
-            <div className="flex-1">
-              <p className={`text-sm font-semibold ${statusConfig.messageTitle} mb-1 flex items-center`}>
-                <Icon name="MessageSquare" size={14} className="mr-1" />
-                Provider Message
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-semibold ${statusConfig.messageTitle} mb-1 flex items-center break-words`}>
+                <Icon name="MessageSquare" size={14} className="mr-1 flex-shrink-0" />
+                <span className="break-words">Provider Message</span>
               </p>
-              <p className={`text-sm ${statusConfig.messageText} leading-relaxed`}>
+              <p className={`text-sm ${statusConfig.messageText} leading-relaxed break-words`}>
                 {statusConfig.message(booking)}
               </p>
               
-              {/* Contact Info for Confirmed Orders */}
+              {/* Contact Info for Confirmed Orders - MOBILE RESPONSIVE */}
               {status === 'confirmed' && (
-                <div className="mt-3 p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-green-200">
-                  <p className="text-xs font-semibold text-green-800 dark:text-green-200 mb-2 flex items-center">
-                    <Icon name="Phone" size={14} className="mr-1" />
-                    Contact Provider:
+                <div className="mt-3 p-2 sm:p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-green-200">
+                  <p className="text-xs font-semibold text-green-800 dark:text-green-200 mb-2 flex items-center break-words">
+                    <Icon name="Phone" size={14} className="mr-1 flex-shrink-0" />
+                    <span className="break-words">Contact Provider:</span>
                   </p>
                   <div className="flex flex-col gap-2 text-sm">
                     {(booking.provider_phone || booking.provider?.phone) && (
                       <a 
                         href={`tel:${booking.provider_phone || booking.provider?.phone}`} 
-                        className="flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
+                        className="flex items-center text-primary hover:text-primary/80 font-medium transition-colors break-all"
                       >
-                        <Icon name="Phone" size={14} className="mr-2" />
-                        {booking.provider_phone || booking.provider?.phone}
+                        <Icon name="Phone" size={14} className="mr-2 flex-shrink-0" />
+                        <span className="break-all">{booking.provider_phone || booking.provider?.phone}</span>
                       </a>
                     )}
                     {(booking.provider_email || booking.provider?.email) && (
                       <a 
                         href={`mailto:${booking.provider_email || booking.provider?.email}`} 
-                        className="flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
+                        className="flex items-center text-primary hover:text-primary/80 font-medium transition-colors break-all"
                       >
-                        <Icon name="Mail" size={14} className="mr-2" />
-                        {booking.provider_email || booking.provider?.email}
+                        <Icon name="Mail" size={14} className="mr-2 flex-shrink-0" />
+                        <span className="break-all">{booking.provider_email || booking.provider?.email}</span>
                       </a>
                     )}
                     {!(booking.provider_phone || booking.provider?.phone || booking.provider_email || booking.provider?.email) && (
-                      <p className="text-xs text-muted-foreground italic">
+                      <p className="text-xs text-muted-foreground italic break-words">
                         Contact details will be shared by the provider shortly.
                       </p>
                     )}
@@ -273,32 +276,32 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
                 </div>
               )}
 
-              {/* Action Button for Rejected Orders */}
+              {/* Action Button for Rejected Orders - MOBILE RESPONSIVE */}
               {status === 'cancelled' && (
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="mt-3 w-full border-red-300 hover:bg-red-50"
+                  className="mt-3 w-full border-red-300 hover:bg-red-50 text-sm"
                   onClick={() => navigate('/journey-planner')}
                 >
-                  <Icon name="Search" size={14} />
-                  Find Alternative Services
+                  <Icon name="Search" size={14} className="flex-shrink-0" />
+                  <span className="ml-2 break-words">Find Alternative Services</span>
                 </Button>
               )}
               
-              {/* Delete Pre-Order Button - Available for all statuses */}
+              {/* Delete Pre-Order Button - MOBILE RESPONSIVE */}
               <div className="mt-3 pt-3 border-t border-muted/50">
                 <button
                   onClick={() => handleDeletePreOrder(booking.id)}
                   disabled={deletingBooking === booking.id}
-                  className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 px-2 sm:px-3 py-2 rounded-lg transition-colors disabled:opacity-50 w-full sm:w-auto justify-center sm:justify-start"
                 >
                   {deletingBooking === booking.id ? (
-                    <Icon name="Loader2" size={14} className="animate-spin" />
+                    <Icon name="Loader2" size={14} className="animate-spin flex-shrink-0" />
                   ) : (
-                    <Icon name="Trash2" size={14} />
+                    <Icon name="Trash2" size={14} className="flex-shrink-0" />
                   )}
-                  <span>Delete Pre-Order</span>
+                  <span className="break-words">Delete Pre-Order</span>
                 </button>
               </div>
             </div>

@@ -1408,28 +1408,30 @@ const TravelerDashboard = () => {
             {/* Pre-Orders Section */}
             <PreOrdersSection bookings={myBookings} loading={loadingBookings} onRefresh={fetchMyBookings} />
             
-            {/* Cart Items */}
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center">
-                <Icon name="ShoppingCart" size={20} className="mr-2" />
+            {/* Cart Items - MOBILE OPTIMIZED */}
+            <div className="bg-card rounded-lg border border-border p-3 sm:p-6">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center text-base sm:text-lg">
+                <Icon name="ShoppingCart" size={18} className="mr-2 sm:size-20" />
                 Cart Items
               </h3>
               
               {cartItems.length === 0 ? (
-                <div className="text-center py-12">
-                  <Icon name="ShoppingCart" size={48} className="text-muted-foreground mx-auto mb-4" />
+                <div className="text-center py-8 sm:py-12">
+                  <Icon name="ShoppingCart" size={40} className="text-muted-foreground mx-auto mb-4 sm:size-48" />
                   <p className="text-muted-foreground mb-2">Your cart is empty</p>
                   <p className="text-sm text-muted-foreground mb-4">Services you add will appear here for booking</p>
                   <Button
                     type="button"
                     onClick={() => navigate('/journey-planner')}
+                    size="sm"
+                    className="w-full sm:w-auto"
                   >
                     <Icon name="Plus" size={16} />
                     Plan New Journey
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {cartItems.map((item, index) => {
                     // Get service image
                     const getItemImage = () => {
@@ -1459,10 +1461,11 @@ const TravelerDashboard = () => {
                     const itemImage = getItemImage();
                     
                     return (
-                    <div key={item.id || index} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
-                      <div className="flex gap-4 mb-3">
-                        {/* Service Image */}
-                        <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+                    <div key={item.id || index} className="border border-border rounded-lg p-3 sm:p-4 hover:border-primary/50 transition-colors max-w-full">
+                      {/* MOBILE: Stack image and content vertically, DESKTOP: Side by side */}
+                      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-3">
+                        {/* Service Image - MOBILE RESPONSIVE */}
+                        <div className="w-full sm:w-20 md:w-24 h-32 sm:h-20 md:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-purple-100 dark:from-blue-900 dark:to-purple-900">
                           {itemImage ? (
                             <img 
                               src={itemImage} 
@@ -1475,35 +1478,36 @@ const TravelerDashboard = () => {
                             />
                           ) : null}
                           <div className={`w-full h-full flex-col items-center justify-center text-gray-400 ${itemImage ? 'hidden' : 'flex'}`}>
-                            <Icon name="Image" size={24} />
-                            <span className="text-xs mt-1">No Image</span>
+                            <Icon name="Image" size={20} className="sm:size-24" />
+                            <span className="text-xs mt-1 hidden sm:block">No Image</span>
                           </div>
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-foreground text-lg">{item.title}</h4>
-                              <p className="text-sm text-muted-foreground mt-1">{item.category}</p>
+                          {/* Title and Price - MOBILE STACKED */}
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-foreground text-base sm:text-lg break-words">{item.title}</h4>
+                              <p className="text-sm text-muted-foreground mt-1 break-words">{item.category}</p>
                               {item.location && (
-                                <p className="text-xs text-muted-foreground flex items-center mt-1">
-                                  <Icon name="MapPin" size={12} className="mr-1" />
-                                  {item.location}
+                                <p className="text-xs text-muted-foreground flex items-center mt-1 break-words">
+                                  <Icon name="MapPin" size={12} className="mr-1 flex-shrink-0" />
+                                  <span className="truncate">{item.location}</span>
                                 </p>
                               )}
                             </div>
-                            <div className="text-right ml-4">
-                              <p className="text-lg font-bold text-primary">TZS {(item.price * item.quantity).toLocaleString()}</p>
-                              <p className="text-xs text-muted-foreground">TZS {item.price?.toLocaleString()} × {item.quantity}</p>
+                            <div className="text-left sm:text-right sm:ml-4 flex-shrink-0">
+                              <p className="text-lg font-bold text-primary break-words">TZS {(item.price * item.quantity).toLocaleString()}</p>
+                              <p className="text-xs text-muted-foreground break-words">TZS {item.price?.toLocaleString()} × {item.quantity}</p>
                             </div>
                           </div>
                           {item.description && (
-                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</p>
+                            <p className="text-sm text-muted-foreground mt-2 line-clamp-2 break-words">{item.description}</p>
                           )}
                         </div>
                       </div>
                       
-                      {/* Payment Methods from Service Provider */}
+                      {/* Payment Methods from Service Provider - MOBILE RESPONSIVE */}
                       {item.payment_methods && Object.keys(item.payment_methods).some(key => item.payment_methods[key]?.enabled) && (
                         <div className="mb-3 p-2 bg-muted/30 rounded-lg">
                           <p className="text-xs font-medium text-muted-foreground mb-1.5">Accepted Payments:</p>
@@ -1534,11 +1538,13 @@ const TravelerDashboard = () => {
                         </div>
                       )}
                       
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
+                      {/* Action Buttons - MOBILE RESPONSIVE */}
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                           <Button 
                             variant="default" 
                             size="sm"
+                            className="w-full sm:w-auto"
                             onClick={async (e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1557,13 +1563,13 @@ const TravelerDashboard = () => {
                               }
                             }}
                           >
-                            <Icon name="Package" size={14} />
-                            Pre-Order
+                            <Icon name="Package" size={14} className="flex-shrink-0" />
+                            <span className="ml-2">Pre-Order</span>
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="text-destructive bg-red-50 hover:bg-red-100 border-red-200"
+                            className="text-destructive bg-red-50 hover:bg-red-100 border-red-200 w-full sm:w-auto"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -1572,20 +1578,20 @@ const TravelerDashboard = () => {
                               }
                             }}
                           >
-                            <Icon name="Trash2" size={14} />
-                            Remove
+                            <Icon name="Trash2" size={14} className="flex-shrink-0" />
+                            <span className="ml-2">Remove</span>
                           </Button>
                         </div>
                       </div>
                     </div>
                   )})}
                   
-                  {/* Cart Summary & Payment Options */}
-                  <div className="border-t pt-6 mt-6">
-                    <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-lg p-4 mb-6">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-semibold">Total Amount:</span>
-                        <span className="text-2xl font-bold text-primary">
+                  {/* Cart Summary & Payment Options - MOBILE RESPONSIVE */}
+                  <div className="border-t pt-4 sm:pt-6 mt-4 sm:mt-6">
+                    <div className="bg-gradient-to-br from-primary/5 to-secondary/5 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <span className="text-base sm:text-lg font-semibold">Total Amount:</span>
+                        <span className="text-xl sm:text-2xl font-bold text-primary break-words">
                           TZS {getCartTotal().toLocaleString()}
                         </span>
                       </div>
@@ -1594,49 +1600,50 @@ const TravelerDashboard = () => {
                       </p>
                     </div>
                     
+                    {/* Payment Section - MOBILE RESPONSIVE */}
                     <div className="space-y-3" data-payment-section>
-                      {/* Direct Payment Option */}
-                      <div className="border border-border rounded-lg p-4 border-green-500/50 bg-green-50/30 dark:bg-green-900/10">
-                        <div className="flex items-start space-x-3 mb-3">
-                          <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Icon name="CreditCard" size={20} className="text-green-500" />
+                      {/* Direct Payment Option - MOBILE OPTIMIZED */}
+                      <div className="border border-border rounded-lg p-3 sm:p-4 border-green-500/50 bg-green-50/30 dark:bg-green-900/10">
+                        <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-3">
+                          <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0 self-start">
+                            <Icon name="CreditCard" size={18} className="text-green-500 sm:size-20" />
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-foreground">Direct Payment</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-foreground break-words">Direct Payment</h4>
+                            <p className="text-sm text-muted-foreground mt-1 break-words">
                               Pay now and automatically confirm your booking with service providers.
                             </p>
                           </div>
                         </div>
                         
-                        {/* Show Provider Payment Methods from Cart Items */}
+                        {/* Show Provider Payment Methods from Cart Items - MOBILE RESPONSIVE */}
                         {cartItems.length > 0 && cartItems.some(item => item.payment_methods && Object.keys(item.payment_methods).some(key => item.payment_methods[key]?.enabled)) && (
-                          <div className="mb-4 p-3 bg-muted/50 rounded-lg">
-                            <p className="text-xs font-medium text-muted-foreground mb-2">Provider Accepted Payment Methods:</p>
-                            <div className="flex flex-wrap gap-2">
+                          <div className="mb-4 p-2 sm:p-3 bg-muted/50 rounded-lg">
+                            <p className="text-xs font-medium text-muted-foreground mb-2 break-words">Provider Accepted Payment Methods:</p>
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2">
                               {cartItems.map((item, idx) => (
                                 item.payment_methods && Object.keys(item.payment_methods).some(key => item.payment_methods[key]?.enabled) && (
                                   <div key={idx} className="flex flex-wrap gap-1.5">
                                     {item.payment_methods.visa?.enabled && (
                                       <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                                        <Icon name="CreditCard" size={12} className="mr-1" />
-                                        Visa/Card
+                                        <Icon name="CreditCard" size={12} className="mr-1 flex-shrink-0" />
+                                        <span className="break-words">Visa/Card</span>
                                       </span>
                                     )}
                                     {item.payment_methods.paypal?.enabled && (
                                       <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded text-xs">
-                                        PayPal
+                                        <span className="break-words">PayPal</span>
                                       </span>
                                     )}
                                     {item.payment_methods.googlePay?.enabled && (
                                       <span className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-                                        GPay
+                                        <span className="break-words">GPay</span>
                                       </span>
                                     )}
                                     {item.payment_methods.mobileMoney?.enabled && (
                                       <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-                                        <Icon name="Smartphone" size={12} className="mr-1" />
-                                        M-Money
+                                        <Icon name="Smartphone" size={12} className="mr-1 flex-shrink-0" />
+                                        <span className="break-words">M-Money</span>
                                       </span>
                                     )}
                                   </div>
@@ -1647,7 +1654,8 @@ const TravelerDashboard = () => {
                         )}
                         
                         <Button 
-                          className="w-full bg-green-600 hover:bg-green-700"
+                          className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base"
+                          size="sm"
                           onClick={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1676,8 +1684,8 @@ const TravelerDashboard = () => {
                             }
                           }}
                         >
-                          <Icon name="CheckCircle" size={16} />
-                          Proceed to Payment
+                          <Icon name="CheckCircle" size={16} className="flex-shrink-0" />
+                          <span className="ml-2 break-words">Proceed to Payment</span>
                         </Button>
                       </div>
                     </div>
@@ -1686,48 +1694,48 @@ const TravelerDashboard = () => {
               )}
             </div>
             
-            {/* Pre-Order Status Information */}
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h3 className="font-semibold text-foreground mb-4 flex items-center">
-                <Icon name="Info" size={20} className="mr-2" />
-                How Pre-Orders Work
+            {/* Pre-Order Status Information - MOBILE RESPONSIVE */}
+            <div className="bg-card rounded-lg border border-border p-3 sm:p-6">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center text-base sm:text-lg break-words">
+                <Icon name="Info" size={18} className="mr-2 flex-shrink-0 sm:size-20" />
+                <span className="break-words">How Pre-Orders Work</span>
               </h3>
               
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-primary">1</span>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs sm:text-sm font-bold text-primary">1</span>
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">Submit Request</p>
-                    <p className="text-sm text-muted-foreground">Send pre-order to service providers</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-primary">2</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">Provider Reviews</p>
-                    <p className="text-sm text-muted-foreground">Service provider accepts or rejects your request</p>
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground text-sm sm:text-base break-words">Submit Request</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground break-words">Send pre-order to service providers</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-bold text-primary">3</span>
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs sm:text-sm font-bold text-primary">2</span>
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">Get Confirmation</p>
-                    <p className="text-sm text-muted-foreground">Receive booking confirmation and payment instructions</p>
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground text-sm sm:text-base break-words">Provider Reviews</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground break-words">Service provider accepts or rejects your request</p>
                   </div>
                 </div>
                 
-                <div className="bg-primary/5 rounded-lg p-3 mt-4">
-                  <p className="text-sm text-foreground flex items-center">
-                    <Icon name="CheckCircle" size={16} className="mr-2 text-green-500" />
-                    Track your pre-order status in the "Active Pre-Orders" section
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs sm:text-sm font-bold text-primary">3</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground text-sm sm:text-base break-words">Get Confirmation</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground break-words">Receive booking confirmation and payment instructions</p>
+                  </div>
+                </div>
+                
+                <div className="bg-primary/5 rounded-lg p-2 sm:p-3 mt-3 sm:mt-4">
+                  <p className="text-xs sm:text-sm text-foreground flex items-center break-words">
+                    <Icon name="CheckCircle" size={14} className="mr-2 text-green-500 flex-shrink-0 sm:size-16" />
+                    <span className="break-words">Track your pre-order status in the "Active Pre-Orders" section</span>
                   </p>
                 </div>
               </div>
