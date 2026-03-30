@@ -1096,16 +1096,16 @@ const TravelerDashboard = () => {
                       <div key={booking.id || index} className="bg-card border border-border rounded-lg overflow-hidden">
                         {/* Booking Header */}
                         <div className={`p-4 ${bgClass}`}>
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                             <div className="flex items-center space-x-4">
                               <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${iconBgClass}`}>
                                 <Icon name={iconName} size={24} className="text-white" />
                               </div>
-                              <div>
-                                <h3 className="font-semibold text-foreground text-lg">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-semibold text-foreground text-lg truncate">
                                   {booking.service_title || booking.service?.title || 'Service Booking'}
                                 </h3>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-muted-foreground truncate">
                                   {booking.business_name || booking.provider?.businessName || 'Provider'} • {booking.participants || 1} participant(s)
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-1 flex items-center">
@@ -1119,9 +1119,9 @@ const TravelerDashboard = () => {
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                               {/* Status Badge */}
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${statusClass}`}>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${statusClass} w-fit`}>
                                 <Icon name={statusIcon} size={14} />
                                 {statusLabel}
                               </span>
@@ -1129,6 +1129,7 @@ const TravelerDashboard = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm"
+                                className="w-full sm:w-auto text-xs px-2 py-1"
                                 onClick={() => {
                                   setSelectedTrip({
                                     ...booking,
@@ -1140,8 +1141,8 @@ const TravelerDashboard = () => {
                                   setShowTripDetails(true);
                                 }}
                               >
-                                <Icon name="Eye" size={16} />
-                                View Details
+                                <Icon name="Eye" size={14} />
+                                <span className="ml-1">View</span>
                               </Button>
                             </div>
                           </div>
@@ -1149,7 +1150,7 @@ const TravelerDashboard = () => {
                         
                         {/* Booking Details Preview */}
                         <div className="p-4 border-t border-border">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex flex-wrap gap-2">
                               <span className="inline-flex items-center px-2 py-1 bg-muted rounded text-xs text-muted-foreground">
                                 <Icon name="Tag" size={12} className="mr-1" />
@@ -1161,7 +1162,7 @@ const TravelerDashboard = () => {
                                 </span>
                               )}
                             </div>
-                            <span className="font-semibold text-primary">
+                            <span className="font-semibold text-primary text-lg">
                               TZS {(booking.total_price || booking.totalAmount || 0).toLocaleString()}
                             </span>
                           </div>
