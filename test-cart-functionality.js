@@ -3,7 +3,7 @@
  * Tests Add to Cart, Book Now, and Pre-Order functionality
  */
 
-const API_URL = process.env.VITE_API_BASE_URL || 'https://isafarimasterorg.onrender.com/api';
+const API_URL = process.env.VITE_API_BASE_URL || 'https://bouncestepsmasterorg.onrender.com/api';
 
 // Test user credentials (replace with actual test user)
 const TEST_USER = {

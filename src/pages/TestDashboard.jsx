@@ -14,7 +14,7 @@ const TestDashboard = () => {
           <p className="text-gray-600 mb-4">You need to login first.</p>
           <button
             onClick={() => navigate('/login')}
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+            className="w-full bg-primary text-white py-2 px-4 rounded hover:bg-primary"
           >
             Go to Login
           </button>
@@ -30,8 +30,8 @@ const TestDashboard = () => {
           <h1 className="text-3xl font-bold text-green-600 mb-4">✅ Login Successful!</h1>
           <p className="text-gray-600 mb-6">You are now logged in to the system.</p>
           
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold text-blue-800 mb-4">Your Profile Information:</h2>
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold text-primary mb-4">Your Profile Information:</h2>
             <div className="space-y-2">
               <p className="text-gray-700"><strong>ID:</strong> {user.id}</p>
               <p className="text-gray-700"><strong>Name:</strong> {user.firstName} {user.lastName}</p>
@@ -45,7 +45,7 @@ const TestDashboard = () => {
           <div className="flex space-x-4">
             <button
               onClick={() => navigate('/traveler-dashboard')}
-              className="flex-1 bg-blue-500 text-white py-3 px-6 rounded hover:bg-blue-600"
+              className="flex-1 bg-primary text-white py-3 px-6 rounded hover:bg-primary"
             >
               Go to Full Dashboard
             </button>

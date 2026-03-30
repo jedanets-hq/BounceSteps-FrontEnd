@@ -1,7 +1,7 @@
 // Test backend connection and registration endpoint
 const fetch = require('node-fetch');
 
-const BACKEND_URL = 'https://isafarinetworkglobal-2.onrender.com';
+const BACKEND_URL = 'https://bouncestepsnetworkglobal-2.onrender.com';
 
 async function testBackend() {
   console.log('🧪 Testing Backend Connection...\n');
@@ -38,7 +38,7 @@ async function testBackend() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Origin': 'https://isafari-tz.netlify.app'
+        'Origin': 'https://bouncesteps-tz.netlify.app'
       },
       body: JSON.stringify({
         email: testEmail,
@@ -71,7 +71,7 @@ async function testBackend() {
     const corsResponse = await fetch(`${BACKEND_URL}/api/auth/register`, {
       method: 'OPTIONS',
       headers: {
-        'Origin': 'https://isafari-tz.netlify.app',
+        'Origin': 'https://bouncesteps-tz.netlify.app',
         'Access-Control-Request-Method': 'POST',
         'Access-Control-Request-Headers': 'Content-Type'
       }

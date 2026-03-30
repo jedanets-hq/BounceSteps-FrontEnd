@@ -103,8 +103,8 @@ export default {
         'warm': '0 4px 20px rgba(0, 0, 0, 0.08)',
         'elevation': '0 20px 40px rgba(0, 0, 0, 0.15)',
       },
-      transitionTimingFunction: {
-        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
+      backgroundImage: {
+        'radial-gradient': 'radial-gradient(circle, var(--tw-gradient-stops))',
       },
     },
   },

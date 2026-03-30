@@ -69,7 +69,7 @@ const QualityAssurance = () => {
       category: 'Sustainability',
       suggestion: 'Highlight environmental conservation efforts in marketing materials',
       priority: 'medium',
-      impact: 'Attract eco-conscious travelers and align with iSafari values'
+      impact: 'Attract eco-conscious travelers and align with BounceSteps values'
     }
   ];
 

@@ -10,6 +10,8 @@ import { useFavorites } from '../../../contexts/FavoritesContext';
 import { PaymentModal, BookingConfirmation } from '../../../components/PaymentSystem';
 import { servicesAPI } from '../../../utils/api';
 import MessagingModal from '../../../components/MessagingModal';
+import { SERVICE_CATEGORIES } from '../../../data/serviceCategories';
+import ServiceCard from '../../../components/ServiceCard';
 
 const TrendingServices = () => {
   const navigate = useNavigate();
@@ -101,16 +103,110 @@ const TrendingServices = () => {
     }
   };
 
-  const categories = [
-    { id: 'all', name: 'All Services', icon: 'Grid' },
-    { id: 'Transportation', name: 'Transportation', icon: 'Car' },
-    { id: 'Accommodation', name: 'Accommodation', icon: 'Home' },
-    { id: 'Tours & Activities', name: 'Tours & Activities', icon: 'Compass' }
-  ];
+  const categories = SERVICE_CATEGORIES;
 
   const filteredServices = selectedCategory === 'all' 
     ? trendingServices 
     : trendingServices.filter(service => service.category === selectedCategory);
+
+  // --- Touch & Carousel Logic ---
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Reset index when category changes
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [selectedCategory]);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    // Using length - 1 for zero-indexed array, but we also consider that on desktop we might show multiple cards.
+    // For simplicity, we just slide by 1.
+    if (isLeftSwipe && currentIndex < filteredServices.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+    } else if (isRightSwipe && currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+    }
+  };
+
+  const nextSlide = () => {
+    if (currentIndex < filteredServices.length - 1) setCurrentIndex(prev => prev + 1);
+  };
+
+  const prevSlide = () => {
+    if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
+  };
+  // --- End Logic ---
+
+  const handleAddToCart = async (service) => {
+    const savedUser = localStorage.getItem('isafari_user');
+    if (!savedUser) {
+      navigate('/login?redirect=/');
+      return;
+    }
+    
+    const result = await addToCart({
+      id: service.id,
+      serviceId: service.id,
+      title: service.title,
+      price: parseFloat(service.price || 0),
+      quantity: 1
+    });
+    
+    if (result.success) {
+      alert(`✅ ${service.title} added to cart!`);
+    } else {
+      alert(`❌ ${result.message}`);
+    }
+  };
+
+  const handleBookNow = async (service) => {
+    const savedUser = localStorage.getItem('isafari_user');
+    if (!savedUser) {
+      navigate('/login?redirect=/');
+      return;
+    }
+    
+    localStorage.setItem('isafari_direct_payment', JSON.stringify({
+      service_id: service.id,
+      service_name: service.title,
+      price: parseFloat(service.price || 0),
+      provider_id: service.provider_id,
+      business_name: service.business_name || service.provider_name,
+      payment_methods: service.payment_methods || {},
+      contact_info: service.contact_info || {}
+    }));
+    
+    const result = await addToCart({
+      id: service.id,
+      serviceId: service.id,
+      title: service.title,
+      price: parseFloat(service.price || 0),
+      quantity: 1
+    });
+    
+    if (result.success) {
+      navigate('/traveler-dashboard?tab=cart&openPayment=true');
+    } else {
+      alert(`❌ ${result.message}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -139,24 +235,24 @@ const TrendingServices = () => {
         </div>
 
         {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8 sm:mb-12">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8 sm:mb-12 max-w-5xl mx-auto">
           {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className={`flex items-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center justify-center space-x-2 px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 ${
                 selectedCategory === category.id
-                  ? 'bg-primary text-primary-foreground shadow-lg'
+                  ? 'bg-primary text-primary-foreground shadow-md'
                   : 'bg-background text-muted-foreground hover:text-foreground hover:bg-muted border border-border'
               }`}
             >
-              <Icon name={category.icon} size={16} />
-              <span>{category.name}</span>
+              <Icon name={category.icon} size={16} className="shrink-0" />
+              <span className="truncate">{category.name}</span>
             </button>
           ))}
         </div>
 
-        {/* Services Grid */}
+        {/* Services Slider */}
         {filteredServices.length === 0 ? (
           <div className="text-center py-12">
             <Icon name="Package" size={48} className="mx-auto mb-4 text-muted-foreground/50" />
@@ -164,231 +260,53 @@ const TrendingServices = () => {
             <p className="text-muted-foreground mb-6">Check back later for new services</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-12">
-            {filteredServices.map((service) => (
-              <div key={service.id} className="group bg-card border border-border rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300">
-                <div className="relative h-48 bg-gradient-to-br from-primary/10 to-primary/5">
-                  {service.images && service.images.length > 0 ? (
-                    <img 
-                      src={service.images[0]} 
-                      alt={service.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Icon name="Package" size={48} className="text-primary/40" />
-                    </div>
-                  )}
-                  <div className="absolute top-4 left-4 flex flex-col gap-2">
-                    <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
-                      {service.category}
-                    </span>
-                    {service.is_featured && service.promotion_type === 'trending' && (
-                      <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                        <Icon name="TrendingUp" size={12} />
-                        Trending
-                      </span>
-                    )}
-                  </div>
-                  <div className="absolute top-4 right-4">
-                    <button 
-                      className={`w-8 h-8 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 ${
-                        isFavorite('service', service.id) 
-                          ? 'bg-red-500 hover:bg-red-600' 
-                          : 'bg-background/80 hover:bg-background'
-                      }`}
-                      onClick={(e) => handleFavoriteToggle(e, service)}
-                      disabled={favoriteLoading[service.id]}
-                      title={isFavorite('service', service.id) ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      {favoriteLoading[service.id] ? (
-                        <Icon name="Loader2" size={16} className="animate-spin text-muted-foreground" />
-                      ) : (
-                        <Icon 
-                          name="Heart" 
-                          size={16} 
-                          className={isFavorite('service', service.id) ? 'text-white fill-white' : 'text-muted-foreground'} 
-                        />
-                      )}
-                    </button>
-                  </div>
+          <div className="relative group overflow-hidden px-1 py-4">
+            
+            {/* Desktop Navigation Arrows */}
+            {currentIndex > 0 && (
+              <button 
+                onClick={prevSlide}
+                className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full items-center justify-center text-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+              >
+                <Icon name="ChevronLeft" size={20} />
+              </button>
+            )}
+            
+            {currentIndex < filteredServices.length - 1 && (
+              <button 
+                onClick={nextSlide}
+                className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white shadow-lg rounded-full items-center justify-center text-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+              >
+                <Icon name="ChevronRight" size={20} />
+              </button>
+            )}
+
+            {/* Carousel Container */}
+            <div 
+              className="flex transition-transform duration-500 ease-out"
+              style={{ transform: `translateX(calc(-${currentIndex} * min(85vw, 300px)))` }}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
+              {filteredServices.map((service, index) => (
+                <div 
+                  key={service.id} 
+                  className="w-[85vw] sm:w-[300px] flex-shrink-0 px-2 sm:px-3 pb-4"
+                >
+                  <ServiceCard 
+                    service={service}
+                    onViewDetails={(s) => setSelectedService(s)}
+                    onAddToCart={handleAddToCart}
+                    onBookNow={handleBookNow}
+                    isFavorite={isFavorite('service', service.id)}
+                    onToggleFavorite={handleFavoriteToggle}
+                    favoriteLoading={favoriteLoading[service.id]}
+                  />
                 </div>
-                
-                <div className="p-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors flex items-center gap-2">
-                        {service.title}
-                        {(service.provider_verified || service.is_verified || service.verified) && (
-                          <VerifiedBadge size="sm" showText={false} />
-                        )}
-                      </h3>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1 mb-1">
-                        <Icon name="MapPin" size={14} />
-                        {service.location}
-                      </p>
-                      {(service.average_rating > 0 || service.rating > 0) && (
-                        <RatingStars 
-                          rating={service.average_rating || service.rating || 0} 
-                          size={14} 
-                          showValue={false}
-                        />
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-primary">Tshs {parseFloat(service.price || 0).toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">per day</div>
-                    </div>
-                  </div>
-
-                  {service.description && (
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                      {service.description}
-                    </p>
-                  )}
-
-                  {service.amenities && service.amenities.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {service.amenities.slice(0, 3).map((amenity, index) => (
-                        <span key={index} className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
-                          {amenity}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Payment Methods Display */}
-                  {service?.payment_methods && Object.keys(service.payment_methods).some(key => service.payment_methods[key]?.enabled) && (
-                    <div className="mb-3 flex flex-wrap gap-1">
-                      {service.payment_methods.visa?.enabled && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px]">
-                          <Icon name="CreditCard" size={10} className="mr-0.5" />
-                          Card
-                        </span>
-                      )}
-                      {service.payment_methods.paypal?.enabled && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px]">
-                          PayPal
-                        </span>
-                      )}
-                      {service.payment_methods.googlePay?.enabled && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-[10px]">
-                          GPay
-                        </span>
-                      )}
-                      {service.payment_methods.mobileMoney?.enabled && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-[10px]">
-                          <Icon name="Smartphone" size={10} className="mr-0.5" />
-                          M-Money
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Contact Buttons */}
-                  {service?.contact_info && (service.contact_info.email?.enabled || service.contact_info.whatsapp?.enabled) && (
-                    <div className="mb-3 flex gap-2">
-                      {service.contact_info.whatsapp?.enabled && service.contact_info.whatsapp?.number && (
-                        <a 
-                          href={`https://wa.me/${service.contact_info.whatsapp.number.replace(/[^0-9]/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Icon name="MessageCircle" size={12} className="mr-1" />
-                          WhatsApp
-                        </a>
-                      )}
-                      {service.contact_info.email?.enabled && service.contact_info.email?.address && (
-                        <a 
-                          href={`mailto:${service.contact_info.email.address}`}
-                          className="inline-flex items-center px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Icon name="Mail" size={12} className="mr-1" />
-                          Email
-                        </a>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Provider Profile Section */}
-                  {(service.business_name || service.provider_name) && service.provider_id && (
-                    <div 
-                      className="mb-3 p-2 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (service.provider_id) {
-                          navigate(`/provider/${service.provider_id}`);
-                        }
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                          <Icon name="User" size={16} className="text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-foreground flex items-center gap-1">
-                            {service.business_name || service.provider_name}
-                            {service.provider_badge_type && <ProviderBadge badgeType={service.provider_badge_type} size="xs" showText={false} />}
-                          </div>
-                          <p className="text-xs text-muted-foreground">View Provider Profile</p>
-                        </div>
-                        <Icon name="ChevronRight" size={16} className="text-muted-foreground" />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={() => setSelectedService(service)}
-                    >
-                      View Details
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      className="flex-1"
-                      onClick={async () => {
-                        // Check isafari_user not token
-                        const savedUser = localStorage.getItem('isafari_user');
-                        if (!savedUser) {
-                          navigate('/login?redirect=/');
-                        } else {
-                          try {
-                            // Add to cart with proper service ID
-                            const result = await addToCart({
-                              id: service.id,
-                              serviceId: service.id,
-                              title: service.title,
-                              name: service.title,
-                              price: parseFloat(service.price || 0),
-                              quantity: 1
-                            });
-                            
-                            if (result.success) {
-                              // Navigate to cart with payment modal open
-                              navigate('/traveler-dashboard?tab=cart&openPayment=true');
-                            } else {
-                              alert('❌ ' + (result.message || 'Failed to add to cart'));
-                            }
-                          } catch (error) {
-                            console.error('Error booking service:', error);
-                            alert('❌ Error: ' + error.message);
-                          }
-                        }
-                      }}
-                    >
-                      <Icon name="Calendar" size={14} />
-                      Book Now
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            {/* End Carousel Container */}
           </div>
         )}
 

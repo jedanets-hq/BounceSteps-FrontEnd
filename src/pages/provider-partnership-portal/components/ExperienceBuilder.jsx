@@ -73,7 +73,7 @@ const ExperienceBuilder = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-semibold text-foreground mb-2">Experience Builder</h2>
-          <p className="text-muted-foreground">Create unique packages exclusively for iSafari travelers</p>
+          <p className="text-muted-foreground">Create unique packages exclusively for BounceSteps travelers</p>
         </div>
         <div className="flex items-center space-x-2">
           <button

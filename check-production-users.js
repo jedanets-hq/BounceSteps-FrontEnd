@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 
 // Production database connection
 const pool = new Pool({
-  connectionString: 'postgresql://isafarimasterorg_user:IuNv7yEfLRiDQL96cgmsxr2751MiBjsq@dpg-d5nhs5t6ubrc73asfksg-a.frankfurt-postgres.render.com/isafarimasterorg',
+  connectionString: 'postgresql://bouncestepsmasterorg_user:IuNv7yEfLRiDQL96cgmsxr2751MiBjsq@dpg-d5nhs5t6ubrc73asfksg-a.frankfurt-postgres.render.com/bouncestepsmasterorg',
   ssl: {
     rejectUnauthorized: false
   }

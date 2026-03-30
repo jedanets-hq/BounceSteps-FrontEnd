@@ -1,5 +1,5 @@
 // Test script to diagnose profile update issue
-const API_URL = 'https://isafarimasterorg.onrender.com/api';
+const API_URL = 'https://bouncestepsmasterorg.onrender.com/api';
 
 async function testProfileUpdate() {
   console.log('🧪 Testing Profile Update...\n');

@@ -1,7 +1,7 @@
 // Test script to debug profile update issue
 const fetch = require('node-fetch');
 
-const API_URL = 'https://isafarimasterorg.onrender.com/api';
+const API_URL = 'https://bouncestepsmasterorg.onrender.com/api';
 
 // Test user credentials - replace with actual test user
 const testUser = {

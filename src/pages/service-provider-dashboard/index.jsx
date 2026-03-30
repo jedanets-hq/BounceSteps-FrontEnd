@@ -17,8 +17,8 @@ import { API_URL } from '../../utils/api';
 const ServiceProviderDashboard = () => {
   const { theme, toggleTheme, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState(null); // NEW: Track service to edit
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [myServices, setMyServices] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
   const [myFollowers, setMyFollowers] = useState([]);
@@ -89,19 +89,8 @@ const ServiceProviderDashboard = () => {
     return () => clearTimeout(redirectTimer);
   }, [user, isLoading, navigate]);
 
-  // Close mobile menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showMobileMenu && !event.target.closest('header')) {
-        setShowMobileMenu(false);
-      }
-    };
+  // We are using horizontal scroll instead of mobile menu now, so no need for click outside listener
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showMobileMenu]);
 
   // Fetch real services and bookings
   useEffect(() => {
@@ -144,12 +133,12 @@ const ServiceProviderDashboard = () => {
     }
   };
 
-  // No longer redirect to main home - show provider's services instead
-  // useEffect(() => {
-  //   if (activeTab === 'home') {
-  //     navigate('/');
-  //   }
-  // }, [activeTab, navigate]);
+  // Redirect to main home when home tab is selected
+  useEffect(() => {
+    if (activeTab === 'home') {
+      navigate('/');
+    }
+  }, [activeTab, navigate]);
 
   // Read URL parameters for tab
   useEffect(() => {
@@ -415,7 +404,7 @@ const ServiceProviderDashboard = () => {
     { id: 'profile', name: 'My Profile', icon: 'User' },
     { id: 'promotion', name: 'Promote Services', icon: 'TrendingUp' },
     { id: 'analytics', name: 'Analytics', icon: 'BarChart' },
-    { id: 'about', name: 'About iSafari', icon: 'Info' }
+    { id: 'about', name: 'About BounceSteps', icon: 'Info' }
   ];
 
   const renderTabContent = () => {
@@ -445,7 +434,7 @@ const ServiceProviderDashboard = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-white/90">Manage your services and grow your business with iSafari Global</p>
+                  <p className="text-white/90">Manage your services and grow your business with BounceSteps</p>
                 </div>
               </div>
             </div>
@@ -505,14 +494,6 @@ const ServiceProviderDashboard = () => {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-display text-xl font-medium">Your Services</h3>
-                <Button variant="default" onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setActiveTab('services');
-                }}>
-                  <Icon name="Plus" size={16} />
-                  Add New Service
-                </Button>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {loadingServices ? (
@@ -804,8 +785,8 @@ const ServiceProviderDashboard = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3">
               <img 
-                src="/assets/images/isafari-logo.png" 
-                alt="iSafari Global" 
+                src="/bouncesteps-logo.png" 
+                alt="BounceSteps" 
                 className="h-10 w-auto"
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' }}
                 onError={(e) => {
@@ -814,9 +795,9 @@ const ServiceProviderDashboard = () => {
                 }}
               />
               <div className="flex items-center space-x-2" style={{display: 'none'}}>
-                <div className="text-2xl font-bold text-blue-500">i</div>
+                <div className="text-2xl font-bold text-primary">i</div>
                 <div className="text-xl font-light text-gray-400">Safari</div>
-                <div className="text-blue-500">
+                <div className="text-primary">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
                   </svg>
@@ -824,54 +805,9 @@ const ServiceProviderDashboard = () => {
               </div>
             </Link>
 
-            {/* Desktop Navigation Tabs - Aligned with Header */}
-            <nav className="hidden lg:flex items-center space-x-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setActiveTab(tab.id);
-                    setShowMobileMenu(false);
-                  }}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activeTab === tab.id && tab.id !== 'home'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                  }`}
-                >
-                  <Icon name={tab.icon} size={16} />
-                  <span className="whitespace-nowrap">{tab.name}</span>
-                </button>
-              ))}
-            </nav>
-
-            {/* Right Side - Theme Toggle & Mobile Menu Button */}
-            <div className="flex items-center space-x-2">
-              {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
-                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                <Icon name={isDark ? 'Sun' : 'Moon'} size={20} />
-              </button>
-              
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
-              >
-                <Icon name={showMobileMenu ? "X" : "Menu"} size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Navigation Menu */}
-          {showMobileMenu && (
-            <div className="lg:hidden border-t border-border bg-transparent backdrop-blur-md">
-              <div className="px-4 py-3 space-y-1">
+            {/* Desktop Navigation Tabs — hidden on mobile */}
+            <nav className="hidden md:flex flex-1 items-center mx-2 lg:mx-4 overflow-hidden">
+              <div className="flex items-center w-full gap-0.5">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
@@ -879,47 +815,126 @@ const ServiceProviderDashboard = () => {
                       e.preventDefault();
                       e.stopPropagation();
                       setActiveTab(tab.id);
-                      setShowMobileMenu(false);
                     }}
-                    className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center justify-center gap-1 flex-1 min-w-0 px-1 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
                       activeTab === tab.id && tab.id !== 'home'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        ? 'bg-primary text-primary-foreground shadow-md'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95'
                     }`}
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
-                    <Icon name={tab.icon} size={18} />
-                    <span>{tab.name}</span>
+                    <Icon name={tab.icon} size={13} className={`flex-shrink-0 ${activeTab === tab.id && tab.id !== 'home' ? 'text-primary-foreground' : 'text-primary/70'}`} />
+                    <span className="truncate">{tab.name}</span>
                   </button>
                 ))}
-                
-                {/* Mobile Theme Toggle */}
-                <button
-                  onClick={toggleTheme}
-                  className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-muted mt-2 border-t border-border pt-3"
-                >
-                  <Icon name={isDark ? 'Sun' : 'Moon'} size={18} />
-                  <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                </button>
-                
-                {/* Mobile Sign Out */}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (confirm('Are you sure you want to sign out?')) {
-                      logout();
-                    }
-                  }}
-                  className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Icon name="LogOut" size={18} />
-                  <span>Sign Out</span>
-                </button>
               </div>
+            </nav>
+
+            {/* Right controls */}
+            <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full text-foreground/80 hover:bg-muted transition-all duration-200"
+                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                <Icon name={isDark ? 'Sun' : 'Moon'} size={18} />
+              </button>
+              {/* Hamburger — mobile only */}
+              <button
+                onClick={() => setMobileNavOpen(true)}
+                className="md:hidden flex items-center justify-center w-10 h-10 rounded-full text-foreground/80 hover:bg-muted transition-all duration-200"
+                aria-label="Open navigation menu"
+              >
+                <Icon name="Menu" size={22} />
+              </button>
             </div>
-          )}
+          </div>
         </div>
       </header>
+
+      {/* Mobile Nav Drawer Overlay */}
+      {mobileNavOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
+      {/* Mobile Nav Drawer Panel */}
+      <div
+        className={`md:hidden fixed top-0 right-0 bottom-0 w-[280px] sm:w-[320px] bg-card border-l border-border z-50 transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl ${
+          mobileNavOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="font-display font-medium text-lg">Menu</h2>
+          <button 
+            onClick={() => setMobileNavOpen(false)}
+            className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+          >
+            <Icon name="X" size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-2">
+          {/* User Profile Summary */}
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20 mb-4">
+            <div className="w-10 h-10 rounded-full bg-primary flex flex-shrink-0 items-center justify-center text-primary-foreground font-bold">
+              {user?.firstName?.charAt(0) || 'P'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-foreground truncate">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-primary flex items-center gap-1 truncate">
+                <Icon name="Briefcase" size={12} /> Service Provider
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pb-1">Navigation</p>
+
+          <div className="flex flex-col gap-1">
+            {tabs.map((tab) => {
+              const active = activeTab === tab.id && tab.id !== 'home';
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (tab.id === 'home') { navigate('/'); }
+                    else { setActiveTab(tab.id); }
+                    setMobileNavOpen(false);
+                  }}
+                  className={`flex items-center gap-3 w-full p-3 rounded-lg text-left transition-colors ${
+                    active 
+                      ? 'bg-primary text-primary-foreground font-medium shadow-sm' 
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  <Icon name={tab.icon} size={20} className={active ? 'text-primary-foreground' : 'text-muted-foreground'} />
+                  <span className="flex-1">{tab.name}</span>
+                  {!active && <Icon name="ChevronRight" size={16} className="opacity-40" />}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Additional Actions at the bottom if needed */}
+          <div className="mt-auto pt-6 pb-2">
+            <div className="h-px bg-border my-2 w-full" />
+            <button
+              onClick={() => {
+                setMobileNavOpen(false);
+                logout();
+              }}
+              className="flex items-center gap-3 w-full p-3 rounded-lg text-left text-red-500 hover:bg-red-500/10 transition-colors"
+            >
+              <Icon name="LogOut" size={20} />
+              <span className="font-medium">Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+
 
       <div className="pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -938,14 +953,14 @@ const ServiceProviderDashboard = () => {
               <div className="md:col-span-2">
                 <div className="flex items-center space-x-2 mb-4">
                   <img 
-                    src="/iSafari Logo.png" 
-                    alt="iSafari Global" 
+                    src="/bouncesteps-logo.png" 
+                    alt="BounceSteps" 
                     className="h-10 w-auto"
                     style={{ filter: 'brightness(0) invert(1)' }}
                   />
                   <div className="flex flex-col">
                     <span className="font-display font-medium text-lg leading-none">
-                      iSafari Global
+                      BounceSteps
                     </span>
                     <span className="font-body text-xs text-background/70 leading-none">
                       Powered by JEDA NETWORKS
@@ -987,7 +1002,7 @@ const ServiceProviderDashboard = () => {
                       }} 
                       className="hover:text-background transition-colors text-left"
                     >
-                      About iSafari
+                      About BounceSteps
                     </button>
                   </li>
                 </ul>
@@ -1007,7 +1022,7 @@ const ServiceProviderDashboard = () => {
             <div className="border-t border-background/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
               <div className="text-center md:text-left">
                 <p className="text-background/60 text-sm">
-                  {new Date()?.getFullYear()} iSafari Global. All rights reserved.
+                  {new Date()?.getFullYear()} BounceSteps. All rights reserved.
                 </p>
                 <p className="text-sm text-background/60">
                   2024 Developed & Owned by JEDA NETWORKS. All rights reserved.

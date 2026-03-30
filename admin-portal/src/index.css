@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* iSafari Brand Colors - Light Mode */
+    /* BounceSteps Brand Colors - Light Mode */
     --color-background: #FEFEFE;
     --color-foreground: #1A1A1A;
     --color-border: #E5E7EB;
@@ -19,15 +19,15 @@
     --color-muted: #F8F9FA;
     --color-muted-foreground: #6B7280;
     
-    /* iSafari Primary Green */
+    /* BounceSteps Primary Green */
     --color-primary: #2C5F41;
     --color-primary-foreground: #FFFFFF;
     
-    /* iSafari Secondary Blue */
+    /* BounceSteps Secondary Blue */
     --color-secondary: #4A90A4;
     --color-secondary-foreground: #FFFFFF;
     
-    /* iSafari Accent Amber */
+    /* BounceSteps Accent Amber */
     --color-accent: #D4A574;
     --color-accent-foreground: #1A1A1A;
     
@@ -44,7 +44,7 @@
     --color-destructive-foreground: #FFFFFF;
   }
 
-  /* Dark Mode - iSafari Style with Perfect Contrast */
+  /* Dark Mode - BounceSteps Style with Perfect Contrast */
   .dark, [data-theme="dark"] {
     --color-background: #0f172a;
     --color-foreground: #ffffff;
@@ -112,7 +112,7 @@
   }
 }
 
-/* Custom scrollbar - iSafari Style */
+/* Custom scrollbar - BounceSteps Style */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

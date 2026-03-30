@@ -190,7 +190,7 @@ const CartPage = () => {
                         return (
                         <div key={item.id} className="flex items-start space-x-4 p-4 bg-muted/30 rounded-lg border border-border">
                           {/* Service Image */}
-                          <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+                          <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-purple-100 dark:from-blue-900 dark:to-purple-900">
                             {itemImage ? (
                               <img 
                                 src={itemImage} 

@@ -450,7 +450,7 @@ const ProviderProfile = () => {
                 {provider?.phone && (
                   <a 
                     href={`tel:${provider.phone}`}
-                    className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors"
                   >
                     <Icon name="Phone" size={18} className="mr-2" />
                     {provider.phone}
@@ -459,7 +459,7 @@ const ProviderProfile = () => {
                 {provider?.email && (
                   <a 
                     href={`mailto:${provider.email}`}
-                    className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors"
                   >
                     <Icon name="Mail" size={18} className="mr-2" />
                     Email
@@ -546,7 +546,7 @@ const ProviderProfile = () => {
                       {service?.payment_methods && Object.keys(service.payment_methods).some(key => service.payment_methods[key]?.enabled) && (
                         <div className="mb-3 flex flex-wrap gap-1">
                           {service.payment_methods.visa?.enabled && (
-                            <span className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                            <span className="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
                               <Icon name="CreditCard" size={10} className="mr-1" />
                               Card
                             </span>
@@ -724,7 +724,7 @@ const ProviderProfile = () => {
                   <h3 className="font-semibold text-foreground mb-2">Accepted Payments</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedService.payment_methods.visa?.enabled && (
-                      <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                      <span className="inline-flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                         <Icon name="CreditCard" size={14} className="mr-1" />
                         Visa/Card
                       </span>

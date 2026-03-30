@@ -20,6 +20,7 @@ const TravelerDashboard = () => {
   const { theme, toggleTheme, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [showTripDetails, setShowTripDetails] = useState(false);
   const [cartItems, setCartItems] = useState([]);
@@ -770,7 +771,7 @@ const TravelerDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="font-display text-2xl font-medium mb-2">Welcome back, {user?.firstName || 'Traveler'}!</h2>
-                  <p className="text-white/90">Start planning your next adventure with iSafari Global</p>
+                  <p className="text-white/90">Start planning your next adventure with BounceSteps</p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="text-right">
@@ -853,112 +854,7 @@ const TravelerDashboard = () => {
                 </div>
               )}
             </div>
-            {/* All Service Bookings */}
-            <div>
-              <h3 className="font-display text-xl font-medium mb-6">My Service Bookings</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {loadingBookings ? (
-                  <div className="col-span-3 flex justify-center py-12">
-                    <Icon name="Loader2" size={32} className="animate-spin text-primary" />
-                  </div>
-                ) : Array.isArray(myBookings) && myBookings.length > 0 ? (
-                  myBookings.map(booking => (
-                    <div key={booking.id} className="bg-card border rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="font-medium text-foreground">{booking.service_title || booking.service?.title || 'Service'}</h4>
-                          <p className="text-sm text-muted-foreground">{booking.business_name || booking.provider?.businessName || 'Provider'}</p>
-                        </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
-                          booking.status === 'confirmed' 
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200'
-                            : booking.status === 'pending'
-                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-200'
-                            : booking.status === 'completed'
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200'
-                        }`}>
-                          <Icon name={
-                            booking.status === 'confirmed' ? 'CheckCircle' : 
-                            booking.status === 'pending' ? 'Clock' : 
-                            booking.status === 'completed' ? 'CheckCircle2' :
-                            'XCircle'
-                          } size={12} />
-                          {booking.status === 'confirmed' ? 'Confirmed' : 
-                           booking.status === 'pending' ? 'Pending' : 
-                           booking.status === 'completed' ? 'Completed' :
-                           'Rejected'}
-                        </span>
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <p className="flex items-center text-muted-foreground">
-                          <Icon name="Calendar" size={14} className="mr-2" />
-                          {new Date(booking.booking_date || booking.bookingDate).toLocaleDateString()}
-                        </p>
-                        <p className="flex items-center text-muted-foreground">
-                          <Icon name="Users" size={14} className="mr-2" />
-                          {booking.participants} participant(s)
-                        </p>
-                        <p className="font-semibold text-primary">
-                          TZS {(booking.total_price || booking.totalAmount || 0).toLocaleString()}
-                        </p>
-                        
-                        {/* Rating Section for Completed Bookings */}
-                        {booking.status === 'completed' && (
-                          <div className="mt-3 pt-3 border-t border-border">
-                            {booking.rating ? (
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-xs text-muted-foreground mb-1">Your Rating</p>
-                                  <RatingStars rating={booking.rating} size={16} />
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedBookingForReview(booking);
-                                    setShowReviewForm(true);
-                                  }}
-                                  className="text-xs"
-                                >
-                                  Edit Review
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedBookingForReview(booking);
-                                  setShowReviewForm(true);
-                                }}
-                                className="w-full flex items-center justify-center gap-2"
-                              >
-                                <Icon name="Star" size={14} />
-                                Rate this service
-                              </Button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="col-span-3 text-center py-12">
-                    <Icon name="Calendar" size={48} className="mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">No bookings yet</p>
-                    <Button 
-                      className="mt-4"
-                      type="button"
-                      onClick={() => navigate('/journey-planner')}
-                    >
-                      <Icon name="Plus" size={16} />
-                      Create Your First Journey
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
+
           </div>
         );
 
@@ -995,10 +891,6 @@ const TravelerDashboard = () => {
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-medium">My Trips</h2>
-              <Button onClick={() => navigate('/journey-planner')}>
-                <Icon name="Plus" size={16} />
-                Plan New Trip
-              </Button>
             </div>
             
             {/* Your Trip Section */}
@@ -1059,7 +951,7 @@ const TravelerDashboard = () => {
                             } else if (startDate && startDate <= today && (!endDate || endDate >= today)) {
                               // Trip is ongoing
                               statusLabel = 'In Progress';
-                              statusClass = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200';
+                              statusClass = 'bg-primary/10 text-primary dark:bg-blue-900/30 dark:text-primary/80';
                               statusIcon = 'RefreshCw';
                             } else {
                               // Trip is upcoming
@@ -1298,10 +1190,6 @@ const TravelerDashboard = () => {
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-medium">My Favorites</h2>
-              <Button variant="outline" onClick={() => navigate('/destination-discovery')}>
-                <Icon name="Search" size={16} />
-                Discover More
-              </Button>
             </div>
             
             {favoriteProviders.length > 0 ? (
@@ -1515,44 +1403,6 @@ const TravelerDashboard = () => {
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-medium">Cart & Payment</h2>
-              <Button 
-                variant="outline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const paymentWindow = window.open('', '_blank', 'width=600,height=500');
-                  paymentWindow.document.write(`
-                    <html>
-                      <head><title>Payment Methods - iSafari Global</title></head>
-                      <body style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
-                        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: 0 auto;">
-                          <h1 style="color: #2563eb; margin-bottom: 20px;">Payment Methods</h1>
-                          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
-                            <h3>💳 Credit/Debit Cards</h3>
-                            <p>Visa, Mastercard, American Express accepted</p>
-                          </div>
-                          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
-                            <h3>📱 Mobile Money</h3>
-                            <p>M-Pesa, Tigo Pesa, Airtel Money</p>
-                          </div>
-                          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
-                            <h3>🏦 Bank Transfer</h3>
-                            <p>Direct bank transfers available</p>
-                          </div>
-                          <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h3>💰 PayPal</h3>
-                            <p>Secure PayPal payments</p>
-                          </div>
-                          <button onclick="window.close()" style="background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%;">Close</button>
-                        </div>
-                      </body>
-                    </html>
-                  `);
-                }}
-              >
-                <Icon name="CreditCard" size={16} />
-                Payment Methods
-              </Button>
             </div>
 
             {/* Pre-Orders Section */}
@@ -1612,7 +1462,7 @@ const TravelerDashboard = () => {
                     <div key={item.id || index} className="border border-border rounded-lg p-4 hover:border-primary/50 transition-colors">
                       <div className="flex gap-4 mb-3">
                         {/* Service Image */}
-                        <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+                        <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-purple-100 dark:from-blue-900 dark:to-purple-900">
                           {itemImage ? (
                             <img 
                               src={itemImage} 
@@ -1659,13 +1509,13 @@ const TravelerDashboard = () => {
                           <p className="text-xs font-medium text-muted-foreground mb-1.5">Accepted Payments:</p>
                           <div className="flex flex-wrap gap-1.5">
                             {item.payment_methods.visa?.enabled && (
-                              <span className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                              <span className="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
                                 <Icon name="CreditCard" size={10} className="mr-1" />
                                 Visa/Card
                               </span>
                             )}
                             {item.payment_methods.paypal?.enabled && (
-                              <span className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                              <span className="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
                                 PayPal
                               </span>
                             )}
@@ -1768,13 +1618,13 @@ const TravelerDashboard = () => {
                                 item.payment_methods && Object.keys(item.payment_methods).some(key => item.payment_methods[key]?.enabled) && (
                                   <div key={idx} className="flex flex-wrap gap-1.5">
                                     {item.payment_methods.visa?.enabled && (
-                                      <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                                      <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded text-xs">
                                         <Icon name="CreditCard" size={12} className="mr-1" />
                                         Visa/Card
                                       </span>
                                     )}
                                     {item.payment_methods.paypal?.enabled && (
-                                      <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                                      <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded text-xs">
                                         PayPal
                                       </span>
                                     )}
@@ -1968,10 +1818,6 @@ const TravelerDashboard = () => {
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-2xl font-medium">My Travel Stories</h2>
-              <Button onClick={() => setShowStoryForm(true)}>
-                <Icon name="Plus" size={16} />
-                Share Your Story
-              </Button>
             </div>
 
             {/* Story Submission Form Modal */}
@@ -2046,10 +1892,10 @@ const TravelerDashboard = () => {
                       />
                     </div>
 
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div className="bg-primary/5 dark:bg-primary/20 border border-primary/20 dark:border-blue-800 rounded-lg p-4">
                       <div className="flex items-start gap-3">
-                        <Icon name="Info" size={20} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                        <div className="text-sm text-blue-800 dark:text-blue-200">
+                        <Icon name="Info" size={20} className="text-primary dark:text-primary/60 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-primary dark:text-primary/80">
                           <p className="font-medium mb-1">Story Review Process</p>
                           <p>Your story will be reviewed by our admin team before appearing on the homepage. This helps maintain quality and appropriate content for all travelers.</p>
                         </div>
@@ -2245,7 +2091,7 @@ const TravelerDashboard = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    window.open('mailto:support@isafari.global?subject=Support Request', '_blank');
+                    window.open('mailto:support@bouncesteps.com?subject=Support Request', '_blank');
                   }}
                 >
                   <Icon name="Mail" size={16} />
@@ -2313,8 +2159,8 @@ const TravelerDashboard = () => {
                     <Icon name="Phone" size={18} className="text-red-600 dark:text-red-400" />
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">iSafari Emergency</p>
-                    <p className="text-sm text-muted-foreground">+255 800 ISAFARI</p>
+                    <p className="font-medium text-foreground">BounceSteps Emergency</p>
+                    <p className="text-sm text-muted-foreground">+255 800 BOUNCE</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -2357,14 +2203,17 @@ const TravelerDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Custom Header with Integrated Tabs */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md border-b border-border">
+      <header
+        className="fixed top-0 left-0 right-0 z-50 border-b border-border/30"
+        style={{ backgroundColor: isDark ? 'rgba(13,17,23,0.92)' : 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)' }}
+      >
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center h-14 px-3 sm:px-6 lg:px-8 gap-2">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3">
-              <img 
-                src="/assets/images/isafari-logo.png" 
-                alt="iSafari Global" 
+            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+              <img
+                src="/bouncesteps-logo.png"
+                alt="BounceSteps"
                 className="h-8 sm:h-10 w-auto"
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' }}
                 onError={(e) => {
@@ -2372,127 +2221,146 @@ const TravelerDashboard = () => {
                   e.target.nextElementSibling.style.display = 'flex';
                 }}
               />
-              <div className="flex items-center space-x-2" style={{display: 'none'}}>
-                <div className="text-2xl font-bold text-blue-500">i</div>
-                <div className="text-xl font-light text-gray-400">Safari</div>
-                <div className="text-blue-500">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                  </svg>
-                </div>
+              <div style={{ display: 'none' }}>
+                <span className="text-xl font-bold text-primary">B</span>
+                <span className="text-xl font-light text-muted-foreground">ounceSteps</span>
               </div>
             </Link>
 
-            {/* Desktop Navigation Tabs - Aligned with Header */}
-            <nav className="hidden lg:flex items-center space-x-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Special handling for Home tab - navigate to main home page
-                    if (tab.id === 'home') {
-                      navigate('/');
-                      return;
-                    }
-                    setActiveTab(tab.id);
-                    setShowMobileMenu(false);
-                  }}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    activeTab === tab.id && tab.id !== 'home'
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                  }`}
-                >
-                  <Icon name={tab.icon} size={16} />
-                  <span className="whitespace-nowrap">{tab.name}</span>
-                </button>
-              ))}
-            </nav>
-
-            {/* Right Side - Theme Toggle & Mobile Menu Button */}
-            <div className="flex items-center space-x-2">
-              {/* Theme Toggle Button */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200"
-                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                <Icon name={isDark ? 'Sun' : 'Moon'} size={20} />
-              </button>
-              
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
-              >
-                <Icon name={showMobileMenu ? "X" : "Menu"} size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Navigation Menu */}
-          {showMobileMenu && (
-            <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-sm">
-              <div className="px-4 py-3 space-y-1">
+            {/* Desktop Navigation Tabs — hidden on mobile */}
+            <nav className="hidden md:flex flex-1 items-center mx-2 lg:mx-4 overflow-hidden">
+              <div className="flex items-center w-full gap-0.5">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      // Special handling for Home tab - navigate to main home page
-                      if (tab.id === 'home') {
-                        navigate('/');
-                        return;
-                      }
+                      if (tab.id === 'home') { navigate('/'); return; }
                       setActiveTab(tab.id);
-                      setShowMobileMenu(false);
                     }}
-                    className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center justify-center gap-1 flex-1 min-w-0 px-1 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
                       activeTab === tab.id && tab.id !== 'home'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        ? 'bg-primary text-primary-foreground shadow-md'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95'
                     }`}
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
-                    <Icon name={tab.icon} size={18} />
-                    <span>{tab.name}</span>
+                    <Icon name={tab.icon} size={13} className={`flex-shrink-0 ${activeTab === tab.id && tab.id !== 'home' ? 'text-primary-foreground' : 'text-primary/70'}`} />
+                    <span className="truncate hidden lg:inline">{tab.name}</span>
                   </button>
                 ))}
-                
-                {/* Mobile Theme Toggle */}
-                <button
-                  onClick={toggleTheme}
-                  className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-muted mt-2 border-t border-border pt-3"
-                >
-                  <Icon name={isDark ? 'Sun' : 'Moon'} size={18} />
-                  <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                </button>
-                
-                {/* Mobile Sign Out */}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (confirm('Are you sure you want to sign out?')) {
-                      logout();
-                    }
-                  }}
-                  className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Icon name="LogOut" size={18} />
-                  <span>Sign Out</span>
-                </button>
               </div>
+            </nav>
+
+            {/* Right controls */}
+            <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full text-foreground/80 hover:bg-muted transition-all duration-200"
+                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                <Icon name={isDark ? 'Sun' : 'Moon'} size={18} />
+              </button>
+              {/* Hamburger — mobile only */}
+              <button
+                onClick={() => setMobileNavOpen(true)}
+                className="md:hidden flex items-center justify-center w-10 h-10 rounded-full text-foreground/80 hover:bg-muted transition-all duration-200"
+                aria-label="Open navigation menu"
+              >
+                <Icon name="Menu" size={22} />
+              </button>
             </div>
-          )}
+          </div>
         </div>
       </header>
 
-      <div className="pt-14 sm:pt-16">
+      {/* Mobile Nav Drawer Overlay */}
+      {mobileNavOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
+      {/* Mobile Nav Drawer Panel */}
+      <div
+        className={`md:hidden fixed top-0 right-0 bottom-0 w-[280px] sm:w-[320px] bg-card border-l border-border z-50 transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl ${
+          mobileNavOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="font-display font-medium text-lg">Menu</h2>
+          <button 
+            onClick={() => setMobileNavOpen(false)}
+            className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+          >
+            <Icon name="X" size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-2">
+          {/* User Profile Summary */}
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20 mb-4">
+            <div className="w-10 h-10 rounded-full bg-primary flex flex-shrink-0 items-center justify-center text-primary-foreground font-bold">
+              {user?.firstName?.charAt(0) || 'T'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-foreground truncate">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-primary flex items-center gap-1 truncate">
+                <Icon name="Plane" size={12} /> Traveler
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pb-1">Navigation</p>
+
+          <div className="flex flex-col gap-1">
+            {tabs.map((tab) => {
+              const active = activeTab === tab.id && tab.id !== 'home';
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (tab.id === 'home') { navigate('/'); }
+                    else { setActiveTab(tab.id); }
+                    setMobileNavOpen(false);
+                  }}
+                  className={`flex items-center gap-3 w-full p-3 rounded-lg text-left transition-colors ${
+                    active 
+                      ? 'bg-primary text-primary-foreground font-medium shadow-sm' 
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  <Icon name={tab.icon} size={20} className={active ? 'text-primary-foreground' : 'text-muted-foreground'} />
+                  <span className="flex-1">{tab.name}</span>
+                  {!active && <Icon name="ChevronRight" size={16} className="opacity-40" />}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Additional Actions at the bottom if needed */}
+          <div className="mt-auto pt-6 pb-2">
+            <div className="h-px bg-border my-2 w-full" />
+            <button
+              onClick={() => {
+                setMobileNavOpen(false);
+                logout();
+              }}
+              className="flex items-center gap-3 w-full p-3 rounded-lg text-left text-red-500 hover:bg-red-500/10 transition-colors"
+            >
+              <Icon name="LogOut" size={20} />
+              <span className="font-medium">Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div className="pt-14">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
-          {/* Tab Content */}
           {renderTabContent()}
         </div>
       </div>

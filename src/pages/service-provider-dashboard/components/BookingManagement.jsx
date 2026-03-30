@@ -124,7 +124,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
           onClick={() => setFilterStatus('all')}
           className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
             filterStatus === 'all'
-              ? 'bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg shadow-primary/30 scale-105'
+              ? 'bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/30 scale-105'
               : 'bg-card border-2 border-border text-muted-foreground hover:border-primary/50 hover:scale-105'
           }`}
         >
@@ -230,7 +230,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
             <div key={booking.id} className="bg-card border border-border rounded-lg p-6">
               <div className="flex items-start gap-4 mb-4">
                 {/* Service Image */}
-                <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+                <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-purple-100 dark:from-blue-900 dark:to-purple-900">
                   {serviceImage ? (
                     <img 
                       src={serviceImage} 

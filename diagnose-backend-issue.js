@@ -1,7 +1,7 @@
 // Comprehensive backend diagnostics
 const https = require('https');
 
-const BACKEND_URL = 'https://isafarimasterorg.onrender.com';
+const BACKEND_URL = 'https://bouncestepsmasterorg.onrender.com';
 
 function makeRequest(path, method = 'GET', data = null) {
   return new Promise((resolve, reject) => {
@@ -12,7 +12,7 @@ function makeRequest(path, method = 'GET', data = null) {
       method: method,
       headers: {
         'Content-Type': 'application/json',
-        'Origin': 'https://isafari-tz.netlify.app',
+        'Origin': 'https://bouncesteps-tz.netlify.app',
         'Accept': 'application/json'
       },
       timeout: 30000 // 30 second timeout
@@ -73,7 +73,7 @@ async function comprehensiveDiagnostics() {
   console.log('🔍 COMPREHENSIVE BACKEND DIAGNOSTICS');
   console.log('═══════════════════════════════════════════════════════════');
   console.log('Backend URL:', BACKEND_URL);
-  console.log('Frontend URL: https://isafari-tz.netlify.app');
+  console.log('Frontend URL: https://bouncesteps-tz.netlify.app');
   console.log('═══════════════════════════════════════════════════════════\n');
 
   const tests = [];
@@ -272,7 +272,7 @@ async function comprehensiveDiagnostics() {
     console.log('   5. Verify database connection is working');
     console.log('\n   Run on Render Dashboard:');
     console.log('   - Go to https://dashboard.render.com');
-    console.log('   - Select "isafarimasterorg" service');
+    console.log('   - Select "bouncestepsmasterorg" service');
     console.log('   - Click "Logs" tab');
     console.log('   - Look for error messages');
   }

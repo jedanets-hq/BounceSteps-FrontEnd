@@ -285,7 +285,7 @@ const NotificationSystem = ({ isOpen, onClose, userType = 'traveler' }) => {
                 <div
                   key={notification.id}
                   className={`p-4 hover:bg-muted/50 transition-colors ${
-                    !notification.read ? 'bg-blue-50/50' : ''
+                    !notification.read ? 'bg-primary/5/50' : ''
                   }`}
                 >
                   <div className="flex items-start space-x-3">

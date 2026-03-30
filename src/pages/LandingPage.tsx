@@ -44,7 +44,7 @@ const LandingPage = () => {
   };
 
   const stats = [
-    { icon: Building, label: "Schools/Faculties", value: "6", color: "text-blue-600" },
+    { icon: Building, label: "Schools/Faculties", value: "6", color: "text-primary" },
     { icon: BookOpen, label: "Departments", value: "24", color: "text-green-600" },
     { icon: GraduationCap, label: "Programs", value: "85+", color: "text-purple-600" },
     { icon: Users, label: "Students", value: "12,000+", color: "text-orange-600" }
@@ -56,7 +56,7 @@ const LandingPage = () => {
       departments: ["Civil Engineering", "Mechanical Engineering", "Electrical Engineering", "Mining Engineering"],
       programs: 18,
       icon: Calculator,
-      color: "bg-blue-100 text-blue-700"
+      color: "bg-primary/10 text-primary"
     },
     {
       name: "School of Medicine",
@@ -119,7 +119,7 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-white to-purple-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
@@ -143,7 +143,7 @@ const LandingPage = () => {
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              Welcome to <span className="text-blue-600">MUST</span> Learning Management System
+              Welcome to <span className="text-primary">MUST</span> Learning Management System
             </h1>
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
               Empowering excellence in science and technology education through innovative digital learning solutions. 
@@ -208,7 +208,7 @@ const LandingPage = () => {
                 </form>
                 <div className="mt-4 text-center">
                   <p className="text-sm text-gray-600">
-                    Forgot your password? <a href="#" className="text-blue-600 hover:underline">Reset here</a>
+                    Forgot your password? <a href="#" className="text-primary hover:underline">Reset here</a>
                   </p>
                 </div>
               </CardContent>
@@ -271,7 +271,7 @@ const LandingPage = () => {
             {features.map((feature, index) => (
               <div key={index} className="text-center">
                 <div className="bg-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <feature.icon className="h-8 w-8 text-blue-600" />
+                  <feature.icon className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>

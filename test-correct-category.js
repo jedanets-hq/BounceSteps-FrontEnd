@@ -2,7 +2,7 @@
  * Test with Correct Category
  */
 
-const API_URL = process.env.VITE_API_URL || 'https://isafarimasterorg.onrender.com/api';
+const API_URL = process.env.VITE_API_URL || 'https://bouncestepsmasterorg.onrender.com/api';
 
 async function testCorrectCategory() {
   console.log('🧪 TESTING WITH CORRECT CATEGORY\n');

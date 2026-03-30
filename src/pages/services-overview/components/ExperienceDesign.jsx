@@ -146,20 +146,20 @@ const ExperienceDesign = ({ title = "Tours & Activities", description = "Discove
                     <p className="text-xs font-medium text-muted-foreground mb-2">Accepted Payments:</p>
                     <div className="flex flex-wrap gap-2">
                       {service.payment_methods.visa?.enabled && (
-                        <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                        <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded text-xs">
                           <Icon name="CreditCard" size={12} className="mr-1" />
                           Visa/Card
                         </span>
                       )}
                       {service.payment_methods.paypal?.enabled && (
-                        <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                          <span className="w-3 h-3 mr-1 bg-blue-700 rounded text-white text-[8px] flex items-center justify-center font-bold">P</span>
+                        <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded text-xs">
+                          <span className="w-3 h-3 mr-1 bg-primary rounded text-white text-[8px] flex items-center justify-center font-bold">P</span>
                           PayPal
                         </span>
                       )}
                       {service.payment_methods.googlePay?.enabled && (
-                        <span className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-blue-100 to-red-100 text-gray-700 rounded text-xs">
-                          <span className="w-3 h-3 mr-1 bg-gradient-to-r from-blue-500 to-red-500 rounded text-white text-[8px] flex items-center justify-center font-bold">G</span>
+                        <span className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-primary/10 to-red-100 text-gray-700 rounded text-xs">
+                          <span className="w-3 h-3 mr-1 bg-gradient-to-r from-primary/50 to-red-500 rounded text-white text-[8px] flex items-center justify-center font-bold">G</span>
                           Google Pay
                         </span>
                       )}
@@ -190,7 +190,7 @@ const ExperienceDesign = ({ title = "Tours & Activities", description = "Discove
                     {service.contact_info.email?.enabled && service.contact_info.email?.address && (
                       <a 
                         href={`mailto:${service.contact_info.email.address}`}
-                        className="inline-flex items-center px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs hover:bg-blue-600 transition-colors"
+                        className="inline-flex items-center px-3 py-1.5 bg-primary text-white rounded-lg text-xs hover:bg-primary transition-colors"
                       >
                         <Icon name="Mail" size={14} className="mr-1" />
                         Email

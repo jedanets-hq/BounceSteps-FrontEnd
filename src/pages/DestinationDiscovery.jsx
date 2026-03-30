@@ -7,7 +7,9 @@ import Button from '../components/ui/Button';
 import Icon from '../components/AppIcon';
 import ProviderBadge from '../components/ui/ProviderBadge';
 import MessagingModal from '../components/MessagingModal';
+import ServiceCard from '../components/ServiceCard';
 import { API_URL } from '../utils/api';
+import { SERVICE_CATEGORIES } from '../data/serviceCategories';
 
 const DestinationDiscovery = () => {
   const { user } = useAuth();
@@ -124,16 +126,7 @@ const DestinationDiscovery = () => {
   };
 
   // Real service categories from database - ALL CATEGORIES
-  const categories = [
-    { id: 'all', name: 'All Services', icon: 'Globe' },
-    { id: 'Accommodation', name: 'Accommodation', icon: 'Home' },
-    { id: 'Transportation', name: 'Transportation', icon: 'Car' },
-    { id: 'Tours & Activities', name: 'Tours & Activities', icon: 'Compass' },
-    { id: 'Food & Dining', name: 'Food & Dining', icon: 'Utensils' },
-    { id: 'Shopping', name: 'Shopping', icon: 'ShoppingBag' },
-    { id: 'Health & Wellness', name: 'Health & Wellness', icon: 'Heart' },
-    { id: 'Entertainment', name: 'Entertainment', icon: 'Music' }
-  ];
+  const categories = SERVICE_CATEGORIES;
 
   // Services are already filtered by backend
   const filteredServices = services;
@@ -253,149 +246,18 @@ const DestinationDiscovery = () => {
           {!loading && !error && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredServices.map(service => (
-              <div key={service.id} className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                <div 
-                  className="relative h-48 cursor-pointer group"
-                  onClick={() => {
-                    if (service.images && service.images.length > 0) {
-                      setViewingService(service);
-                      setCurrentImageIndex(0);
-                    }
+                <ServiceCard 
+                  key={service.id}
+                  service={service}
+                  onViewImages={(s) => {
+                    setViewingService(s);
+                    setCurrentImageIndex(0);
                   }}
-                >
-                  {service.images && service.images.length > 0 ? (
-                    <>
-                      <img 
-                        src={service.images[0]} 
-                        alt={service.title}
-                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg flex items-center gap-2">
-                          <Icon name="Eye" size={16} />
-                          <span className="text-sm font-medium">View Images</span>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-                      <Icon name="Package" size={48} className="text-primary/40" />
-                    </div>
-                  )}
-                  {service.images && service.images.length > 1 && (
-                    <div className="absolute top-2 left-2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
-                      <Icon name="Image" size={12} />
-                      {service.images.length}
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                    <div className="flex items-center space-x-1">
-                      <Icon name="Star" size={14} className="text-yellow-500" />
-                      <span className="text-sm font-semibold">{service.average_rating || '5.0'}</span>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-2 left-2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium">
-                    {service.category}
-                  </div>
-                </div>
-                
-                <div className="p-5">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-1">{service.title}</h3>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Icon name="MapPin" size={14} className="mr-1" />
-                        {service.location}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {service.description}
-                  </p>
-                  
-                  {service.amenities && service.amenities.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {service.amenities.slice(0, 2).map((amenity, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                          {amenity}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Payment Methods Display */}
-                  {service?.payment_methods && Object.keys(service.payment_methods).some(key => service.payment_methods[key]?.enabled) && (
-                    <div className="mb-3 p-2 bg-muted/30 rounded-lg">
-                      <p className="text-xs font-medium text-muted-foreground mb-1.5">Accepted Payments:</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {service.payment_methods.visa?.enabled && (
-                          <span className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                            <Icon name="CreditCard" size={10} className="mr-1" />
-                            Visa/Card
-                          </span>
-                        )}
-                        {service.payment_methods.paypal?.enabled && (
-                          <span className="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                            PayPal
-                          </span>
-                        )}
-                        {service.payment_methods.mobileMoney?.enabled && (
-                          <span className="inline-flex items-center px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
-                            <Icon name="Smartphone" size={10} className="mr-1" />
-                            M-Money
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <div>
-                      <div className="text-2xl font-bold text-foreground">TZS {parseFloat(service.price || 0).toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        by {service.provider_name || service.business_name}
-                        {service.provider_badge_type && (
-                          <ProviderBadge badgeType={service.provider_badge_type} size="xs" showText={false} />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex flex-col gap-2 mt-4">
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => setSelectedServiceDetails(service)}
-                      >
-                        <Icon name="Eye" size={14} />
-                        View
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => handleAddToCart(service)}
-                      >
-                        <Icon name="ShoppingCart" size={14} />
-                        Add Cart
-                      </Button>
-                    </div>
-                    <Button 
-                      size="sm"
-                      className="w-full bg-primary hover:bg-primary/90"
-                      onClick={() => handleBookNow(service)}
-                    >
-                      <Icon name="CreditCard" size={16} />
-                      Book Now
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                  onViewDetails={(s) => setSelectedServiceDetails(s)}
+                  onAddToCart={handleAddToCart}
+                  onBookNow={handleBookNow}
+                />
+              ))}
             </div>
           )}
 
@@ -502,13 +364,13 @@ const DestinationDiscovery = () => {
                   <h3 className="font-semibold text-foreground mb-2">Accepted Payments</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedServiceDetails.payment_methods.visa?.enabled && (
-                      <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                      <span className="inline-flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                         <Icon name="CreditCard" size={14} className="mr-1" />
                         Visa/Card
                       </span>
                     )}
                     {selectedServiceDetails.payment_methods.paypal?.enabled && (
-                      <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                      <span className="inline-flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                         PayPal
                       </span>
                     )}
@@ -541,7 +403,7 @@ const DestinationDiscovery = () => {
                     {selectedServiceDetails.contact_info.email?.enabled && selectedServiceDetails.contact_info.email?.address && (
                       <a 
                         href={`mailto:${selectedServiceDetails.contact_info.email.address}`}
-                        className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors"
                       >
                         <Icon name="Mail" size={16} className="mr-2" />
                         Email

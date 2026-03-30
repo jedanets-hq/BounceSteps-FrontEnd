@@ -100,7 +100,7 @@ const Login = () => {
               <p className="text-muted-foreground">
                 {suggestedRole === 'traveler' 
                   ? 'Sign in to start planning your journey' 
-                  : 'Sign in to continue your journey with iSafari Global'
+                  : 'Sign in to continue your journey with BounceSteps'
                 }
               </p>
               {suggestedRole === 'traveler' && (
@@ -150,34 +150,34 @@ const Login = () => {
                 (error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') 
                   ? 'bg-orange-100 border border-orange-300' 
                   : (error || authError)?.includes('not registered')
-                    ? 'bg-blue-50 border border-blue-200'
+                    ? 'bg-primary/5 border border-primary/20'
                     : 'bg-destructive/10 border border-destructive/20'
               }`}>
                 <div className="flex items-start space-x-3">
                   <Icon 
                     name={(error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') ? 'ShieldX' : (error || authError)?.includes('not registered') ? 'Info' : 'AlertCircle'} 
                     size={20} 
-                    className={(error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') ? 'text-orange-600 mt-0.5' : (error || authError)?.includes('not registered') ? 'text-blue-600 mt-0.5' : 'text-destructive mt-0.5'} 
+                    className={(error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') ? 'text-orange-600 mt-0.5' : (error || authError)?.includes('not registered') ? 'text-primary mt-0.5' : 'text-destructive mt-0.5'} 
                   />
                   <div>
                     <p className={`text-sm font-medium ${
                       (error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked') 
                         ? 'text-orange-800' 
                         : (error || authError)?.includes('not registered')
-                          ? 'text-blue-800'
+                          ? 'text-primary'
                           : 'text-destructive'
                     }`}>
                       {error || authError}
                     </p>
                     {((error || authError)?.includes('imefungiwa') || (error || authError)?.includes('blocked')) && (
                       <p className="text-xs text-orange-600 mt-1">
-                        Wasiliana na: support@isafari.co.tz
+                        Wasiliana na: support@bouncesteps.co.tz
                       </p>
                     )}
                     {(error || authError)?.includes('not registered') && (
                       <Link 
                         to="/register" 
-                        className="inline-flex items-center mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        className="inline-flex items-center mt-2 text-sm text-primary hover:text-primary font-medium"
                       >
                         <Icon name="UserPlus" size={14} className="mr-1" />
                         Click here to register

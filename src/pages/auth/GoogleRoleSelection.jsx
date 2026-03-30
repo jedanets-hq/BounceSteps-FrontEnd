@@ -16,8 +16,8 @@ const SimpleHeader = () => (
       <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
         <a href="/" className="flex items-center space-x-3">
           <img 
-            src="/assets/images/isafari-logo.png" 
-            alt="iSafari Global" 
+            src="/bouncesteps-logo.png" 
+            alt="BounceSteps" 
             className="h-10 w-auto"
             onError={(e) => {
               e.target.style.display = 'none';
@@ -753,7 +753,7 @@ const GoogleRoleSelection = () => {
     
     // Validate role selection is mandatory
     if (!selectedRole) {
-      setError('Please select how you want to use iSafari Global');
+      setError('Please select how you want to use BounceSteps');
       return;
     }
 
@@ -830,7 +830,7 @@ const GoogleRoleSelection = () => {
     
     // Validate role selection is mandatory
     if (!selectedRole) {
-      setError('Please select how you want to use iSafari Global');
+      setError('Please select how you want to use BounceSteps');
       return;
     }
 
@@ -998,7 +998,7 @@ const GoogleRoleSelection = () => {
               setIsInitialized(true);
               setIsLoading(false);
             }}
-            className="mt-6 text-sm text-blue-600 hover:text-blue-800 underline"
+            className="mt-6 text-sm text-primary hover:text-primary underline"
           >
             Taking too long? Click here to continue
           </button>
@@ -1067,7 +1067,7 @@ const GoogleRoleSelection = () => {
                     Welcome, {googleData?.firstName}!
                   </h1>
                   <p className="text-muted-foreground">
-                    Complete your registration to start using iSafari Global
+                    Complete your registration to start using BounceSteps
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
                     Signed in as: {googleData?.email}
@@ -1090,7 +1090,7 @@ const GoogleRoleSelection = () => {
               {/* Role Selection */}
               <div>
                 <h2 className="text-lg font-semibold text-foreground mb-4">
-                  How would you like to use iSafari Global?
+                  How would you like to use BounceSteps?
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

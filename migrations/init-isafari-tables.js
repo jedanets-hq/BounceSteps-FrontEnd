@@ -1,5 +1,5 @@
  /**
- * Initialize database tables for iSafari application
+ * Initialize database tables for BounceSteps application
  */
 
 const { pool } = require('../config/postgresql');
@@ -8,7 +8,7 @@ async function initializeISafariTables() {
   const client = await pool.connect();
   
   try {
-    console.log('🔧 Initializing iSafari database tables...');
+    console.log('🔧 Initializing BounceSteps database tables...');
     
     // Create users table
     await client.query(`
@@ -87,10 +87,10 @@ async function initializeISafariTables() {
     `);
     console.log('✅ Database indexes created');
     
-    console.log('✅ iSafari database initialization completed!');
+    console.log('✅ BounceSteps database initialization completed!');
     
   } catch (error) {
-    console.error('❌ iSafari database initialization error:', error.message);
+    console.error('❌ BounceSteps database initialization error:', error.message);
     // Don't throw - let server continue
   } finally {
     client.release();

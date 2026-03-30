@@ -6,7 +6,7 @@
 const { Pool } = require('pg');
 
 // Production DATABASE_URL from Render
-const DATABASE_URL = 'postgresql://isafarimasterorg_user:IuNv7yEfLRiDQL96cgmsxr2751MiBjsq@dpg-d5nhs5t6ubrc73asfksg-a.frankfurt-postgres.render.com/isafarimasterorg';
+const DATABASE_URL = 'postgresql://bouncestepsmasterorg_user:IuNv7yEfLRiDQL96cgmsxr2751MiBjsq@dpg-d5nhs5t6ubrc73asfksg-a.frankfurt-postgres.render.com/bouncestepsmasterorg';
 
 const pool = new Pool({
   connectionString: DATABASE_URL,

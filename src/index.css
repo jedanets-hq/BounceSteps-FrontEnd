@@ -8,51 +8,51 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* MUST University Brand Colors */
+    /* BounceSteps Brand Colors */
     --background: 0 0% 100%;
-    --foreground: 223 84% 12%;
+    --foreground: 143 36% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 223 84% 12%;
+    --card-foreground: 143 36% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 223 84% 12%;
+    --popover-foreground: 143 36% 12%;
 
-    /* Navy Blue - Primary University Color */
-    --primary: 223 84% 12%;
+    /* BounceSteps Green - Primary Brand Color (#2C5F41) */
+    --primary: 143 36% 27%;
     --primary-foreground: 0 0% 100%;
     
-    /* University Red - Secondary Brand Color */
-    --secondary: 0 65% 45%;
+    /* Emerald Green - Secondary Brand Color (#10B981) */
+    --secondary: 161 84% 39%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Light Blue - Accent Color */
-    --accent: 207 89% 86%;
-    --accent-foreground: 223 84% 12%;
+    /* Light Green - Accent Color */
+    --accent: 143 36% 90%;
+    --accent-foreground: 143 36% 20%;
 
     /* Academic Neutrals */
-    --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 143 10% 96%;
+    --muted-foreground: 143 10% 45%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 223 84% 12%;
+    --border: 143 20% 90%;
+    --input: 143 20% 90%;
+    --ring: 143 36% 27%;
 
-    /* Educational Success Colors */
+    /* Success Colors */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     
-    /* Learning Progress Colors */
-    --progress: 207 89% 54%;
+    /* Progress Colors */
+    --progress: 142 76% 50%;
     --progress-foreground: 0 0% 100%;
 
-    /* University Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(223 84% 12%), hsl(223 84% 20%));
-    --gradient-accent: linear-gradient(135deg, hsl(207 89% 86%), hsl(207 89% 76%));
-    --gradient-hero: linear-gradient(135deg, hsl(223 84% 12%), hsl(0 65% 45%));
+    /* Brand Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(143 36% 27%), hsl(143 36% 35%));
+    --gradient-accent: linear-gradient(135deg, hsl(161 84% 39%), hsl(161 84% 45%));
+    --gradient-hero: linear-gradient(135deg, hsl(143 36% 27%), hsl(161 84% 39%));
     
     /* Educational Shadows */
     --shadow-elegant: 0 10px 30px -10px hsl(223 84% 12% / 0.2);
@@ -82,38 +82,38 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 223 84% 4%;
+    --background: 143 36% 4%;
     --foreground: 0 0% 98%;
 
-    --card: 223 84% 6%;
+    --card: 143 36% 6%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 223 84% 6%;
+    --popover: 143 36% 6%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 207 89% 86%;
-    --primary-foreground: 223 84% 12%;
+    --primary: 143 80% 60%;
+    --primary-foreground: 143 36% 4%;
 
-    --secondary: 0 65% 55%;
+    --secondary: 161 84% 55%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 223 47% 11%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 143 20% 11%;
+    --muted-foreground: 143 10% 65%;
 
-    --accent: 223 47% 11%;
-    --accent-foreground: 207 89% 86%;
+    --accent: 143 20% 11%;
+    --accent-foreground: 143 80% 60%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 223 47% 11%;
-    --input: 223 47% 11%;
-    --ring: 207 89% 86%;
+    --border: 143 20% 11%;
+    --input: 143 20% 11%;
+    --ring: 143 80% 60%;
 
     /* Dark mode gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(223 84% 4%), hsl(223 84% 8%));
-    --gradient-accent: linear-gradient(135deg, hsl(223 47% 11%), hsl(207 89% 20%));
-    --gradient-hero: linear-gradient(135deg, hsl(223 84% 4%), hsl(0 65% 25%));
+    --gradient-primary: linear-gradient(135deg, hsl(143 36% 4%), hsl(143 36% 8%));
+    --gradient-accent: linear-gradient(135deg, hsl(143 20% 11%), hsl(161 84% 20%));
+    --gradient-hero: linear-gradient(135deg, hsl(143 36% 4%), hsl(161 84% 25%));
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

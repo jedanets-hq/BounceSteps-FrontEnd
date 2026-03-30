@@ -109,7 +109,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
       <div className={`bg-white dark:bg-gray-800 rounded-lg overflow-hidden border-2 ${statusConfig.borderColor} shadow-sm hover:shadow-md transition-all duration-200`}>
         {/* Service Image & Header */}
         <div className="flex gap-4 p-4">
-          <div className="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+          <div className="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-purple-100 dark:from-blue-900 dark:to-purple-900">
             {serviceImage ? (
               <img 
                 src={serviceImage} 
@@ -397,14 +397,14 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
     },
     completed: {
       badge: 'Completed',
-      badgeColor: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
+      badgeColor: 'bg-primary/10 text-primary dark:bg-blue-900/30 dark:text-primary/80',
       borderColor: 'border-blue-300',
-      messageBg: 'bg-blue-50 dark:bg-blue-900/10',
-      messageTitle: 'text-blue-800 dark:text-blue-200',
-      messageText: 'text-blue-700 dark:text-blue-300',
+      messageBg: 'bg-primary/5 dark:bg-blue-900/10',
+      messageTitle: 'text-primary dark:text-primary/80',
+      messageText: 'text-primary dark:text-primary/70',
       icon: 'CheckCircle2',
-      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
-      iconColor: 'text-blue-700 dark:text-blue-300',
+      iconBg: 'bg-primary/10 dark:bg-blue-900/30',
+      iconColor: 'text-primary dark:text-primary/70',
       ringColor: 'ring-blue-200',
       message: (booking) => `Your trip with ${booking.business_name || 'the service provider'} has been completed! We hope you had an amazing experience. Please consider leaving a review to help other travelers.`
     }
@@ -489,7 +489,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
         {completedBookings.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-blue-800 dark:text-blue-200 flex items-center">
+              <h4 className="font-semibold text-primary dark:text-primary/80 flex items-center">
                 <Icon name="CheckCircle2" size={18} className="mr-2" />
                 Trip Completed
               </h4>

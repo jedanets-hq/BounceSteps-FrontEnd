@@ -6,11 +6,11 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- Create database
-DROP DATABASE IF EXISTS isafari_db;
-CREATE DATABASE isafari_db;
+DROP DATABASE IF EXISTS "bouncesteps-db";
+CREATE DATABASE "bouncesteps-db";
 
 -- Connect to the database
-\c isafari_db;
+\c "bouncesteps-db";
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

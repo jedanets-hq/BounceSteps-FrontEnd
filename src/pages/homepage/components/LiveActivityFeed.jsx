@@ -88,14 +88,14 @@ const LiveActivityFeed = () => {
   const getColorForCategory = (category) => {
     const colorMap = {
       'accommodation': 'text-purple-600',
-      'tour': 'text-blue-600',
+      'tour': 'text-primary',
       'transport': 'text-orange-600',
       'food': 'text-red-600',
       'adventure': 'text-green-600',
       'culture': 'text-indigo-600',
       'wildlife': 'text-yellow-600'
     };
-    return colorMap[category] || 'text-blue-600';
+    return colorMap[category] || 'text-primary';
   };
 
   const getVisibleActivities = () => {
@@ -120,7 +120,7 @@ const LiveActivityFeed = () => {
               Live Activity Feed
             </h3>
             <p className="text-sm sm:text-base text-muted-foreground">
-              See what's happening in the iSafari community right now
+              See what's happening in the BounceSteps community right now
             </p>
           </div>
           

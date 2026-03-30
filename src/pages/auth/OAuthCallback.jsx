@@ -216,11 +216,11 @@ const OAuthCallback = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-indigo-100 flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
         {status === 'processing' && (
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <h2 className="text-xl font-semibold mb-2">Completing Authentication</h2>
             <p className="text-gray-600">Please wait while we verify your account...</p>
           </div>
@@ -250,7 +250,7 @@ const OAuthCallback = () => {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={handleRetry}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
               >
                 Try Again
               </button>

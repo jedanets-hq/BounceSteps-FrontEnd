@@ -16,7 +16,7 @@
 const https = require('https');
 
 // Production backend URL
-const BACKEND_URL = 'https://isafarinetworkglobal-2.onrender.com';
+const BACKEND_URL = 'https://bouncestepsnetworkglobal-2.onrender.com';
 const API_BASE = `${BACKEND_URL}/api`;
 
 // Test credentials (use your actual test user)

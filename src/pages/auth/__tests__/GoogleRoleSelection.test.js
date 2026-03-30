@@ -88,7 +88,7 @@ const clearRoleSelection = (storage) => {
 // Validation function (matching GoogleRoleSelection.jsx)
 const validateRoleSelection = (selectedRole, phone, companyName) => {
   if (!selectedRole) {
-    return { valid: false, error: 'Please select how you want to use iSafari Global' };
+    return { valid: false, error: 'Please select how you want to use BounceSteps' };
   }
   if (!phone) {
     return { valid: false, error: 'Phone number is required' };
@@ -124,7 +124,7 @@ describe('Property 1: Role Selection State Management', () => {
             
             // OAuth should be blocked (validation fails)
             return validation.valid === false && 
-                   validation.error === 'Please select how you want to use iSafari Global';
+                   validation.error === 'Please select how you want to use BounceSteps';
           }
         ),
         { numRuns: MIN_ITERATIONS }

@@ -20,7 +20,7 @@ const Settings = () => {
               </div>
               <div>
                 <h3 className="font-bold text-gray-900 dark:text-white">Admin User</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">admin@isafari.com</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">admin@bouncesteps.com</p>
               </div>
             </div>
 
@@ -52,7 +52,7 @@ const Settings = () => {
               
               <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                 <p className="text-sm font-medium text-purple-900 dark:text-purple-300 mb-1">Platform</p>
-                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">iSafari Management System</p>
+                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">BounceSteps Management System</p>
               </div>
             </div>
           </div>

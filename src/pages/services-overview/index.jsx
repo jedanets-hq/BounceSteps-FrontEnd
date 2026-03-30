@@ -60,8 +60,8 @@ const ServicesOverview = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Services Overview - iSafari Global | Premium Travel Services</title>
-        <meta name="description" content="Discover iSafari's comprehensive travel ecosystem featuring transportation, accommodation, experiences, exclusive events, and 24/7 support services." />
+        <title>Services Overview - BounceSteps | Premium Travel Services</title>
+        <meta name="description" content="Discover BounceSteps's comprehensive travel ecosystem featuring transportation, accommodation, experiences, exclusive events, and 24/7 support services." />
         <meta name="keywords" content="travel services, luxury transportation, unique accommodations, cultural experiences, exclusive events, travel support" />
       </Helmet>
       <Header />
@@ -77,10 +77,10 @@ const ServicesOverview = () => {
       <div className="bg-gradient-to-r from-primary to-secondary py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
           <h2 className="text-3xl lg:text-4xl font-display font-medium mb-6">
-            Ready to Experience iSafari Services?
+            Ready to Experience BounceSteps Services?
           </h2>
           <p className="text-xl opacity-90 mb-8 leading-relaxed">
-            Join thousands of travelers who trust iSafari for their most important journeys. 
+            Join thousands of travelers who trust BounceSteps for their most important journeys. 
             Our comprehensive service ecosystem ensures every detail is perfectly orchestrated.
           </p>
           
@@ -135,7 +135,7 @@ const ServicesOverview = () => {
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                   <Icon name="Globe" size={16} className="text-white" />
                 </div>
-                <span className="font-display font-medium text-lg">iSafari Global</span>
+                <span className="font-display font-medium text-lg">BounceSteps</span>
               </div>
               <p className="text-background/70 text-sm leading-relaxed">
                 Your gateway to authentic global travel experiences with premium service and local expertise.
@@ -167,11 +167,11 @@ const ServicesOverview = () => {
               <div className="space-y-2 text-sm text-background/70">
                 <p className="flex items-center">
                   <Icon name="Phone" size={14} className="mr-2" />
-                  +1-800-ISAFARI
+                  +1-800-BOUNCESTEPS
                 </p>
                 <p className="flex items-center">
                   <Icon name="Mail" size={14} className="mr-2" />
-                  hello@isafari.global
+                  hello@bouncesteps.com
                 </p>
                 <p className="flex items-center">
                   <Icon name="MapPin" size={14} className="mr-2" />
@@ -182,7 +182,7 @@ const ServicesOverview = () => {
           </div>
           
           <div className="border-t border-background/20 mt-8 pt-8 text-center text-sm text-background/70">
-            <p>&copy; {new Date()?.getFullYear()} iSafari Global. All rights reserved.</p>
+            <p>&copy; {new Date()?.getFullYear()} BounceSteps. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -8,7 +8,7 @@ const LoyaltyProgram = ({ loyaltyData }) => {
       case 'platinum': return 'text-purple-600 bg-purple-100';
       case 'gold': return 'text-yellow-600 bg-yellow-100';
       case 'silver': return 'text-gray-600 bg-gray-100';
-      default: return 'text-blue-600 bg-blue-100';
+      default: return 'text-primary bg-primary/10';
     }
   };
 
@@ -29,7 +29,7 @@ const LoyaltyProgram = ({ loyaltyData }) => {
             <Icon name="Gift" size={20} className="text-accent" />
           </div>
           <div>
-            <h3 className="font-display text-lg font-medium">iSafari Rewards</h3>
+            <h3 className="font-display text-lg font-medium">BounceSteps Rewards</h3>
             <p className="text-sm text-muted-foreground">Your loyalty program status</p>
           </div>
         </div>

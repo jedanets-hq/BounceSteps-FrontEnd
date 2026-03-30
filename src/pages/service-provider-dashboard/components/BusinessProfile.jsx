@@ -380,155 +380,159 @@ const BusinessProfile = () => {
             </div>
           </div>
 
-          {/* Section 1: Registration Information (Core Details) */}
+          {/* Section 1: USER INFORMATION */}
           <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-6 pb-2 border-b border-border">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
                 <Icon name="User" size={20} className="text-primary" />
               </div>
-              <h4 className="font-semibold text-foreground text-lg">Registration Information</h4>
+              <h4 className="font-display text-lg font-bold tracking-tight uppercase">USER INFORMATION</h4>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Full Name</label>
-                <p className="text-foreground font-medium">{profileData.firstName} {profileData.lastName}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6">
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Jina</label>
+                <p className="text-foreground font-semibold text-base">{profileData.firstName} {profileData.lastName}</p>
               </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Company/Business Name</label>
-                <p className="text-foreground font-medium">{profileData.companyName || 'Not provided'}</p>
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Biashara</label>
+                <p className="text-foreground font-semibold text-base">{profileData.companyName || 'Not provided'}</p>
               </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Email Address</label>
-                <p className="text-foreground font-medium flex items-center">
-                  <Icon name="Mail" size={14} className="mr-2 text-primary" />
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Email</label>
+                <p className="text-foreground font-semibold text-base flex items-center truncate">
+                  <Icon name="Mail" size={14} className="mr-2 text-primary shrink-0" />
                   {user?.email}
                 </p>
               </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Phone Number</label>
-                <p className="text-foreground font-medium flex items-center">
-                  <Icon name="Phone" size={14} className="mr-2 text-primary" />
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Simu</label>
+                <p className="text-foreground font-semibold text-base flex items-center">
+                  <Icon name="Phone" size={14} className="mr-2 text-primary shrink-0" />
                   {profileData.phone || user?.phone || 'Not provided'}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Section 2: Service Location & Categories */}
+          {/* Section 2: SERVICE LOCATION & Categories */}
           <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-6 pb-2 border-b border-border">
               <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center mr-3">
                 <Icon name="MapPin" size={20} className="text-accent" />
               </div>
-              <h4 className="font-semibold text-foreground text-lg">Service Location & Categories</h4>
+              <h4 className="font-display text-lg font-bold tracking-tight uppercase">SERVICE LOCATION & Categories</h4>
             </div>
-            <div className="space-y-6">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-2">Service Location</label>
-                {profileData.serviceLocation ? (
-                  <div className="flex items-start space-x-2">
-                    <Icon name="MapPin" size={16} className="text-accent mt-1" />
-                    <p className="text-foreground font-medium leading-relaxed">{profileData.serviceLocation}</p>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No service location specified</p>
-                )}
-                {profileData.locationData && Object.keys(profileData.locationData).length > 0 && (
-                  <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {profileData.locationData.region && (
-                      <div className="bg-muted/30 rounded-lg p-2">
-                        <p className="text-xs text-muted-foreground">Region</p>
-                        <p className="text-sm font-medium text-foreground">{profileData.locationData.region}</p>
-                      </div>
-                    )}
-                    {profileData.locationData.district && (
-                      <div className="bg-muted/30 rounded-lg p-2">
-                        <p className="text-xs text-muted-foreground">District</p>
-                        <p className="text-sm font-medium text-foreground">{profileData.locationData.district}</p>
-                      </div>
-                    )}
-                    {profileData.locationData.ward && (
-                      <div className="bg-muted/30 rounded-lg p-2">
-                        <p className="text-xs text-muted-foreground">Ward</p>
-                        <p className="text-sm font-medium text-foreground">{profileData.locationData.ward}</p>
-                      </div>
-                    )}
-                    {profileData.locationData.street && (
-                      <div className="bg-muted/30 rounded-lg p-2">
-                        <p className="text-xs text-muted-foreground">Street</p>
-                        <p className="text-sm font-medium text-foreground">{profileData.locationData.street}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+            
+            <div className="space-y-8">
+              {/* Location Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Region</label>
+                  <p className="text-foreground font-semibold text-base">{profileData.locationData?.region || 'Not provided'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">District</label>
+                  <p className="text-foreground font-semibold text-base">{profileData.locationData?.district || 'Not provided'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Ward</label>
+                  <p className="text-foreground font-semibold text-base">{profileData.locationData?.ward || 'Not provided'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Street</label>
+                  <p className="text-foreground font-semibold text-base">{profileData.locationData?.street || 'Not provided'}</p>
+                </div>
               </div>
-              
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-2">Service Categories</label>
+
+              {/* Full Location Summary */}
+              {profileData.serviceLocation && (
+                <div className="p-3 bg-muted/30 rounded-lg border border-border inline-flex items-center">
+                  <Icon name="MapPin" size={14} className="text-accent mr-2" />
+                  <span className="text-sm text-foreground italic">{profileData.serviceLocation}</span>
+                </div>
+              )}
+
+              {/* Categories */}
+              <div className="space-y-4 pt-4 border-t border-dashed border-border">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block">SERVICE CATEGORIES</label>
                 {profileData.serviceCategories && profileData.serviceCategories.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {profileData.serviceCategories.map((category, index) => (
-                      <span key={index} className="px-3 py-1.5 bg-secondary/10 text-secondary rounded-lg text-sm font-medium flex items-center">
+                      <span key={index} className="px-3 py-1.5 bg-secondary/10 text-secondary border border-secondary/20 rounded-lg text-sm font-bold flex items-center">
                         <Icon name="Briefcase" size={14} className="mr-1" />
                         {category}
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">No service categories selected</p>
+                  <p className="text-sm text-muted-foreground italic">No categories selected</p>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Section 3: Business Information */}
+          {/* Section 3: BUSINESS DETAILS */}
           <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-6 pb-2 border-b border-border">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
                 <Icon name="Building" size={20} className="text-primary" />
               </div>
-              <h4 className="font-semibold text-foreground text-lg">Business Details</h4>
+              <h4 className="font-display text-lg font-bold tracking-tight uppercase">BUSINESS DETAILS</h4>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Business Type</label>
-                <p className="text-foreground font-medium">{profileData.businessType || 'General Services'}</p>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Business Type</label>
+                  <p className="text-foreground font-semibold text-base">{profileData.businessType || 'General Services'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">Account Status</label>
+                  <p className="text-foreground font-semibold text-base flex items-center">
+                    <span className={`w-2.5 h-2.5 rounded-full mr-2 ${user?.isVerified ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]'}`}></span>
+                    {user?.isVerified ? 'Verified' : 'Pending Verification'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Account Status</label>
-                <p className="text-foreground font-medium flex items-center">
-                  <span className={`w-2 h-2 rounded-full mr-2 ${user?.isVerified ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-                  {user?.isVerified ? 'Verified' : 'Pending Verification'}
-                </p>
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Business Description</label>
-                <p className="text-foreground leading-relaxed">{profileData.description || 'No description provided. Add a description to help travelers understand your services better.'}</p>
+              
+              <div className="space-y-2 pt-4 border-t border-dashed border-border">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest block">Business Description</label>
+                <div className="bg-muted/30 p-4 rounded-xl border border-border/50">
+                  <p className="text-foreground leading-relaxed italic text-sm">
+                    {profileData.description || 'No description provided. Add a description to help travelers understand your services better.'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Section 4: Additional Contact (WhatsApp & Website) */}
+          {/* Section 4: ADDITIONAL CONTACT */}
           <div className="bg-card border border-border rounded-lg p-6">
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-6 pb-2 border-b border-border">
               <div className="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center mr-3">
                 <Icon name="MessageCircle" size={20} className="text-secondary" />
               </div>
-              <h4 className="font-semibold text-foreground text-lg">Additional Contact</h4>
+              <h4 className="font-display text-lg font-bold tracking-tight uppercase">ADDITIONAL CONTACT</h4>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-start space-x-3">
-                <Icon name="MessageCircle" size={18} className="text-green-500 mt-1" />
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">WhatsApp Number</label>
-                  <p className="text-foreground font-medium">{profileData.whatsapp || profileData.phone || 'Not provided'}</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-x-8 gap-y-6">
+              <div className="flex items-center space-x-4 p-3 bg-muted/20 rounded-xl border border-border/40">
+                <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center shrink-0">
+                  <Icon name="MessageCircle" size={20} className="text-green-500" />
+                </div>
+                <div className="space-y-0.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">WhatsApp Number</label>
+                  <p className="text-foreground font-bold text-base">{profileData.whatsapp || profileData.phone || 'Not provided'}</p>
                 </div>
               </div>
-              <div className="flex items-start space-x-3">
-                <Icon name="Globe" size={18} className="text-primary mt-1" />
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Website/Social Media</label>
-                  <p className="text-foreground font-medium">{profileData.website || 'Not provided'}</p>
+              
+              <div className="flex items-center space-x-4 p-3 bg-muted/20 rounded-xl border border-border/40">
+                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                  <Icon name="Globe" size={20} className="text-primary" />
+                </div>
+                <div className="space-y-0.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Website/Social Media</label>
+                  <p className="text-foreground font-bold text-base">{profileData.website || 'Not provided'}</p>
                 </div>
               </div>
             </div>

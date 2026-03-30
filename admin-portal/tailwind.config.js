@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        /* iSafari Brand Colors */
+        /* BounceSteps Brand Colors */
         background: 'var(--color-background)',
         foreground: 'var(--color-foreground)',
         border: 'var(--color-border)',
