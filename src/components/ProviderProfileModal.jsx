@@ -58,32 +58,32 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
   if (!provider) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-card rounded-lg max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+        {/* Header - Mobile optimized */}
+        <div className="sticky top-0 bg-card border-b border-border p-4 sm:p-6 flex items-center justify-between">
+          <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
             {provider.avatar_url ? (
               <img
                 src={provider.avatar_url}
                 alt={provider.business_name}
-                className="w-16 h-16 rounded-full object-cover"
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Icon name="Briefcase" size={24} className="text-primary" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Icon name="Briefcase" size={20} className="text-primary sm:w-6 sm:h-6" />
               </div>
             )}
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">{provider.business_name}</h2>
-              <p className="text-muted-foreground">{provider.business_type}</p>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg sm:text-2xl font-bold text-foreground truncate">{provider.business_name}</h2>
+              <p className="text-muted-foreground text-sm sm:text-base truncate">{provider.business_type}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-lg transition-colors flex-shrink-0"
           >
-            <Icon name="X" size={24} />
+            <Icon name="X" size={20} className="sm:w-6 sm:h-6" />
           </button>
         </div>
 
@@ -93,27 +93,27 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
             <p className="mt-4 text-muted-foreground">Loading provider details...</p>
           </div>
         ) : providerDetails ? (
-          <div className="p-6 space-y-6">
-            {/* Provider Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+            {/* Provider Info - Mobile optimized grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <h3 className="font-semibold text-foreground mb-3 flex items-center">
-                  <Icon name="MapPin" size={18} className="mr-2 text-primary" />
+                <h3 className="font-semibold text-foreground mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
+                  <Icon name="MapPin" size={16} className="mr-2 text-primary flex-shrink-0" />
                   Location
                 </h3>
-                <p className="text-muted-foreground">{providerDetails.location}</p>
+                <p className="text-muted-foreground text-sm sm:text-base">{providerDetails.location}</p>
               </div>
 
               <div>
-                <h3 className="font-semibold text-foreground mb-3 flex items-center">
-                  <Icon name="Briefcase" size={18} className="mr-2 text-primary" />
+                <h3 className="font-semibold text-foreground mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
+                  <Icon name="Briefcase" size={16} className="mr-2 text-primary flex-shrink-0" />
                   Service Categories
                 </h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {providerDetails.service_categories?.map((category, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1 bg-secondary/10 text-secondary text-sm rounded-full"
+                      className="px-2 py-1 bg-secondary/10 text-secondary text-xs sm:text-sm rounded-full"
                     >
                       {category}
                     </span>
@@ -122,52 +122,52 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
               </div>
 
               <div>
-                <h3 className="font-semibold text-foreground mb-3 flex items-center">
-                  <Icon name="Star" size={18} className="mr-2 text-primary" />
+                <h3 className="font-semibold text-foreground mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
+                  <Icon name="Star" size={16} className="mr-2 text-primary flex-shrink-0" />
                   Rating
                 </h3>
                 <div className="flex items-center">
-                  <span className="text-2xl font-bold text-foreground">{providerDetails.rating || 0}</span>
-                  <span className="text-muted-foreground ml-2">({providerDetails.total_reviews || 0} reviews)</span>
+                  <span className="text-xl sm:text-2xl font-bold text-foreground">{providerDetails.rating || 0}</span>
+                  <span className="text-muted-foreground ml-2 text-sm">({providerDetails.total_reviews || 0} reviews)</span>
                 </div>
               </div>
 
               <div>
-                <h3 className="font-semibold text-foreground mb-3 flex items-center">
-                  <Icon name="Phone" size={18} className="mr-2 text-primary" />
+                <h3 className="font-semibold text-foreground mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
+                  <Icon name="Phone" size={16} className="mr-2 text-primary flex-shrink-0" />
                   Contact
                 </h3>
-                <p className="text-muted-foreground">{providerDetails.phone || 'Not provided'}</p>
-                <p className="text-muted-foreground text-sm">{providerDetails.email}</p>
+                <p className="text-muted-foreground text-sm sm:text-base">{providerDetails.phone || 'Not provided'}</p>
+                <p className="text-muted-foreground text-xs sm:text-sm truncate">{providerDetails.email}</p>
               </div>
             </div>
 
             {/* Description */}
             {providerDetails.description && (
               <div>
-                <h3 className="font-semibold text-foreground mb-3 flex items-center">
-                  <Icon name="FileText" size={18} className="mr-2 text-primary" />
+                <h3 className="font-semibold text-foreground mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
+                  <Icon name="FileText" size={16} className="mr-2 text-primary flex-shrink-0" />
                   About
                 </h3>
-                <p className="text-muted-foreground">{providerDetails.description}</p>
+                <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">{providerDetails.description}</p>
               </div>
             )}
 
             {/* Services */}
             <div>
-              <h3 className="font-semibold text-foreground mb-4 flex items-center">
-                <Icon name="Package" size={18} className="mr-2 text-primary" />
+              <h3 className="font-semibold text-foreground mb-3 sm:mb-4 flex items-center text-sm sm:text-base">
+                <Icon name="Package" size={16} className="mr-2 text-primary flex-shrink-0" />
                 Available Services ({providerDetails.services?.length || 0})
               </h3>
               
               {providerDetails.services && providerDetails.services.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3 sm:space-y-4">
                   {providerDetails.services.map((service) => {
                     const isSelected = selectedServices.find(s => s.id === service.id);
                     return (
                       <div
                         key={service.id}
-                        className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        className={`border rounded-lg p-3 sm:p-4 cursor-pointer transition-all ${
                           isSelected
                             ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                             : 'border-border hover:border-primary/50'
@@ -195,7 +195,7 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
                             <img
                               src={validImages[0]}
                               alt={service.title}
-                              className="w-full h-32 object-cover rounded-lg mb-3"
+                              className="w-full h-24 sm:h-32 object-cover rounded-lg mb-3"
                               onError={(e) => {
                                 e.target.style.display = 'none';
                               }}
@@ -204,38 +204,38 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
                         })()}
                         
                         <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-semibold text-foreground">{service.title}</h4>
+                          <h4 className="font-semibold text-foreground text-sm sm:text-base flex-1 pr-2">{service.title}</h4>
                           {isSelected && (
-                            <Icon name="Check" size={20} className="text-primary" />
+                            <Icon name="Check" size={18} className="text-primary flex-shrink-0" />
                           )}
                         </div>
                         
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
                           {service.description}
                         </p>
                         
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-primary">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-base sm:text-lg font-bold text-primary">
                             TZS {parseFloat(service.price || 0).toLocaleString()}
                           </span>
                           {service.duration_days && (
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-xs sm:text-sm text-muted-foreground">
                               {service.duration_days} days
                             </span>
                           )}
                         </div>
                         
-                        {/* SELECT SERVICE Button */}
+                        {/* SELECT SERVICE Button - Mobile optimized */}
                         <Button
                           variant={isSelected ? "default" : "outline"}
                           size="sm"
-                          className="w-full mt-3"
+                          className="w-full h-9 text-sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleServiceSelection(service);
                           }}
                         >
-                          <Icon name={isSelected ? "CheckCircle" : "Plus"} size={14} />
+                          <Icon name={isSelected ? "CheckCircle" : "Plus"} size={14} className="mr-1" />
                           {isSelected ? 'Selected ✓' : 'Select Service'}
                         </Button>
                       </div>
@@ -250,20 +250,27 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
               )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="sticky bottom-0 bg-card border-t border-border pt-4 flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
+            {/* Action Buttons - Mobile optimized */}
+            <div className="sticky bottom-0 bg-card border-t border-border pt-3 sm:pt-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0">
+              <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                 {selectedServices.length > 0 && (
                   <span>{selectedServices.length} service(s) selected</span>
                 )}
               </div>
-              <div className="flex space-x-3">
-                <Button variant="outline" onClick={onClose}>
+              <div className="flex flex-col sm:flex-row gap-2 sm:space-x-3">
+                <Button 
+                  variant="outline" 
+                  onClick={onClose}
+                  className="w-full sm:w-auto h-9 text-sm"
+                >
                   Close
                 </Button>
                 {selectedServices.length > 0 && (
-                  <Button onClick={handleAddServices}>
-                    <Icon name="Plus" size={16} />
+                  <Button 
+                    onClick={handleAddServices}
+                    className="w-full sm:w-auto h-9 text-sm"
+                  >
+                    <Icon name="Plus" size={14} className="mr-1" />
                     Add Selected Services
                   </Button>
                 )}
