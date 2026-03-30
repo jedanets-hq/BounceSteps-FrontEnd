@@ -903,13 +903,13 @@ const TravelerDashboard = () => {
                 {savedJourneyPlans.map((plan, index) => (
                   <div key={plan.id || index} className="bg-card border border-border rounded-lg overflow-hidden">
                     <div className={`p-4 ${plan.status === 'pending_payment' ? 'bg-yellow-50 dark:bg-yellow-900/20' : 'bg-primary/5'}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                        <div className="flex items-start space-x-4">
                           <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${plan.status === 'pending_payment' ? 'bg-yellow-500' : 'bg-primary'}`}>
                             <Icon name="MapPin" size={24} className="text-white" />
                           </div>
-                          <div>
-                            <h3 className="font-semibold text-foreground text-lg">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-foreground text-lg truncate">
                               {plan.area || plan.district}, {plan.region}
                             </h3>
                             <p className="text-sm text-muted-foreground">
@@ -921,17 +921,19 @@ const TravelerDashboard = () => {
                             {/* Show location - handle multiple destinations */}
                             <p className="text-xs text-muted-foreground mt-1 flex items-center">
                               <Icon name="MapPin" size={12} className="mr-1" />
-                              {plan.isMultiTrip && plan.destinations && plan.destinations.length > 0
-                                ? plan.destinations
-                                    .filter(dest => dest.region)
-                                    .map(dest => `${dest.ward || dest.district || ''}, ${dest.region}`.replace(/^, /, ''))
-                                    .join(' → ')
-                                : plan.locationString || `${plan.area || plan.district || ''}, ${plan.region || ''}`.replace(/^, /, '') || 'Location not set'
-                              }
+                              <span className="truncate">
+                                {plan.isMultiTrip && plan.destinations && plan.destinations.length > 0
+                                  ? plan.destinations
+                                      .filter(dest => dest.region)
+                                      .map(dest => `${dest.ward || dest.district || ''}, ${dest.region}`.replace(/^, /, ''))
+                                      .join(' → ')
+                                  : plan.locationString || `${plan.area || plan.district || ''}, ${plan.region || ''}`.replace(/^, /, '') || 'Location not set'
+                                }
+                              </span>
                             </p>
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                           {(() => {
                             // Determine trip status based on dates
                             const today = new Date();
@@ -961,7 +963,7 @@ const TravelerDashboard = () => {
                             }
                             
                             return (
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${statusClass}`}>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${statusClass} w-fit`}>
                                 <Icon name={statusIcon} size={14} />
                                 {statusLabel}
                               </span>
@@ -970,6 +972,7 @@ const TravelerDashboard = () => {
                           <Button 
                             variant="outline" 
                             size="sm"
+                            className="w-full sm:w-auto text-xs px-2 py-1"
                             onClick={() => {
                               setSelectedTrip({
                                 ...plan,
@@ -978,8 +981,8 @@ const TravelerDashboard = () => {
                               setShowTripDetails(true);
                             }}
                           >
-                            <Icon name="Eye" size={16} />
-                            View Details
+                            <Icon name="Eye" size={14} />
+                            <span className="ml-1">View</span>
                           </Button>
                           {(() => {
                             // Only show Continue to Cart button for upcoming trips
@@ -995,6 +998,7 @@ const TravelerDashboard = () => {
                             return (
                               <Button 
                                 size="sm"
+                                className="w-full sm:w-auto text-xs px-2 py-1"
                                 onClick={async () => {
                                   // Add services to cart
                                   for (const service of plan.services || []) {
