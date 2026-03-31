@@ -90,9 +90,8 @@ const MessagesTab = () => {
         return;
       }
 
-      const url = selectedConversation.service_id 
-        ? `${API_URL}/messages/conversation/${selectedConversation.provider_id}/${selectedConversation.service_id}`
-        : `${API_URL}/messages/conversation/${selectedConversation.provider_id}`;
+      // Backend expects: /messages/conversation/:otherUserId
+      const url = `${API_URL}/messages/conversation/${selectedConversation.provider_id}`;
 
       const response = await fetch(url, {
         headers: {

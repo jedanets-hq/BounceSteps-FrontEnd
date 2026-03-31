@@ -57,9 +57,8 @@ const MessagingModal = ({ isOpen, onClose, providerId, providerName, serviceId, 
         return;
       }
 
-      const url = serviceId 
-        ? `${API_URL}/messages/conversation/${providerId}/${serviceId}`
-        : `${API_URL}/messages/conversation/${providerId}`;
+      // Backend expects: /messages/conversation/:otherUserId
+      const url = `${API_URL}/messages/conversation/${providerId}`;
 
       const response = await fetch(url, {
         headers: {

@@ -35,9 +35,8 @@ const ChatModal = ({ isOpen, onClose, providerId, serviceId, serviceName, provid
         return;
       }
 
-      const url = serviceId 
-        ? `${API_URL}/messages/conversation/${providerId}/${serviceId}`
-        : `${API_URL}/messages/conversation/${providerId}`;
+      // Backend expects: /messages/conversation/:otherUserId
+      const url = `${API_URL}/messages/conversation/${providerId}`;
 
       const response = await fetch(url, {
         headers: {
