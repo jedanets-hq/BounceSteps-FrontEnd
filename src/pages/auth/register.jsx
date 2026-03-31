@@ -134,8 +134,13 @@ const Register = () => {
     
     if (result.success) {
       alert(`Registration successful! Welcome to BounceSteps!`);
-      // Redirect to main home page after successful registration
-      navigate('/');
+      // Redirect to appropriate dashboard after successful registration
+      const dbUserType = userType === 'provider' ? 'service_provider' : userType;
+      if (dbUserType === 'service_provider') {
+        navigate('/service-provider-dashboard');
+      } else {
+        navigate('/traveler-dashboard');
+      }
     } else {
       // Show specific error message with better handling for duplicate email
       let errorMessage = result.error || 'Registration failed. Please try again.';
@@ -333,13 +338,28 @@ const Register = () => {
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Phone Number *
                   </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    required
-                  />
+                  <div className="flex gap-2">
+                    <select 
+                      className="px-3 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-muted"
+                      disabled
+                    >
+                      <option value="+255">+255 (Tanzania)</option>
+                    </select>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        // Only allow numbers
+                        const value = e.target.value.replace(/\D/g, '');
+                        handleInputChange('phone', value);
+                      }}
+                      placeholder="712345678"
+                      className="flex-1 px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      maxLength="9"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Enter 9 digits without country code</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -375,14 +395,41 @@ const Register = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">
-                          Date of Birth
+                          Date of Birth *
                         </label>
                         <input
                           type="date"
                           value={formData.dateOfBirth}
-                          onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                          onChange={(e) => {
+                            const selectedDate = new Date(e.target.value);
+                            const today = new Date();
+                            const age = today.getFullYear() - selectedDate.getFullYear();
+                            const monthDiff = today.getMonth() - selectedDate.getMonth();
+                            const dayDiff = today.getDate() - selectedDate.getDate();
+                            
+                            // Calculate exact age
+                            let exactAge = age;
+                            if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                              exactAge--;
+                            }
+                            
+                            if (exactAge < 18) {
+                              alert('You must be at least 18 years old to register as a traveler.');
+                              return;
+                            }
+                            
+                            handleInputChange('dateOfBirth', e.target.value);
+                          }}
+                          max={(() => {
+                            // Set max date to 18 years ago
+                            const date = new Date();
+                            date.setFullYear(date.getFullYear() - 18);
+                            return date.toISOString().split('T')[0];
+                          })()}
                           className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                          required
                         />
+                        <p className="text-xs text-muted-foreground mt-1">Must be 18 years or older</p>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">

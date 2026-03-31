@@ -65,13 +65,13 @@ const Login = () => {
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
-      // Redirect based on user type
+      // Redirect based on user type - ALWAYS go to dashboard, not home
       const user = result.user;
       if (user.userType === 'service_provider') {
         navigate('/service-provider-dashboard');
       } else {
-        const finalRedirect = redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`;
-        navigate(finalRedirect);
+        // Travelers go to traveler dashboard, not home
+        navigate('/traveler-dashboard');
       }
     } else {
       setError(result.error || 'Login failed. Please check your credentials.');

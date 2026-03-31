@@ -775,9 +775,11 @@ const JourneyPlannerEnhanced = () => {
             type="date"
             value={journeyData.checkInDate}
             onChange={(e) => setJourneyData({...journeyData, checkInDate: e.target.value})}
+            min={new Date().toISOString().split('T')[0]}
             className="w-full px-4 py-2 border rounded-lg"
             required
           />
+          <p className="text-xs text-muted-foreground mt-1">Today or future dates only</p>
         </div>
 
         <div>
@@ -786,9 +788,11 @@ const JourneyPlannerEnhanced = () => {
             type="date"
             value={journeyData.checkOutDate}
             onChange={(e) => setJourneyData({...journeyData, checkOutDate: e.target.value})}
+            min={journeyData.checkInDate || new Date().toISOString().split('T')[0]}
             className="w-full px-4 py-2 border rounded-lg"
             required
           />
+          <p className="text-xs text-muted-foreground mt-1">Must be after check-in date</p>
         </div>
 
         <div>

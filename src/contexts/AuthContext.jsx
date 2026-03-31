@@ -19,6 +19,10 @@ export const AuthProvider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState(null);
   
+  // Auto-logout timer refs
+  const logoutTimerRef = useRef(null);
+  const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
+  
   // Get navigate hook safely
   let navigate;
   try {
@@ -112,6 +116,53 @@ export const AuthProvider = ({ children }) => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // Auto-logout after 5 minutes of inactivity
+  useEffect(() => {
+    if (!user) {
+      // Clear timer if user is logged out
+      if (logoutTimerRef.current) {
+        clearTimeout(logoutTimerRef.current);
+        logoutTimerRef.current = null;
+      }
+      return;
+    }
+
+    // Reset timer function
+    const resetLogoutTimer = () => {
+      // Clear existing timer
+      if (logoutTimerRef.current) {
+        clearTimeout(logoutTimerRef.current);
+      }
+
+      // Set new timer
+      logoutTimerRef.current = setTimeout(() => {
+        console.log('⏰ [AuthContext] Auto-logout due to inactivity');
+        logout();
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    // Activity events to track
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+
+    // Reset timer on any activity
+    activityEvents.forEach(event => {
+      window.addEventListener(event, resetLogoutTimer);
+    });
+
+    // Initialize timer
+    resetLogoutTimer();
+
+    // Cleanup
+    return () => {
+      if (logoutTimerRef.current) {
+        clearTimeout(logoutTimerRef.current);
+      }
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, resetLogoutTimer);
+      });
+    };
+  }, [user]);
 
   // Set error message and clear it after 5 seconds
   const setErrorWithTimeout = (message) => {
