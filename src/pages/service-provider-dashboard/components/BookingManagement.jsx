@@ -227,10 +227,11 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
             const serviceImage = getServiceImage(booking);
             
             return (
-            <div key={booking.id} className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-start gap-4 mb-4">
-                {/* Service Image */}
-                <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+            <div key={booking.id} className="bg-card border border-border rounded-lg p-3 sm:p-6">
+              {/* Mobile-optimized layout */}
+              <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 mb-4">
+                {/* Service Image - Mobile optimized */}
+                <div className="w-full h-32 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-primary/10 to-purple-100 dark:from-blue-900 dark:to-purple-900">
                   {serviceImage ? (
                     <img 
                       src={serviceImage} 
@@ -248,38 +249,44 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                   </div>
                 </div>
                 
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-3">
-                      <h4 className="font-medium text-foreground">
-                        {`${booking.traveler_first_name || ''} ${booking.traveler_last_name || ''}`.trim() || booking.traveler?.name || 'Unknown Traveler'}
-                      </h4>
-                      {getStatusBadge(booking.status)}
-                    </div>
+                {/* Content - Mobile optimized */}
+                <div className="flex-1 min-w-0">
+                  {/* Header with status - Mobile stacked */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <h4 className="font-semibold text-foreground text-sm sm:text-base truncate">
+                      {`${booking.traveler_first_name || ''} ${booking.traveler_last_name || ''}`.trim() || booking.traveler?.name || 'Unknown Traveler'}
+                    </h4>
+                    {getStatusBadge(booking.status)}
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">{booking.service_title || 'Service'}</p>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
+                  
+                  {/* Service title */}
+                  <p className="text-sm text-muted-foreground mb-3 font-medium">{booking.service_title || 'Service'}</p>
+                  
+                  {/* Details grid - Mobile optimized */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="flex justify-between sm:block">
                       <span className="text-muted-foreground">Travel Date:</span>
-                      <p className="font-medium text-foreground">
+                      <p className="font-medium text-foreground sm:mt-0">
                         {booking.travel_date ? new Date(booking.travel_date).toLocaleDateString() : 'Not specified'}
                       </p>
                     </div>
-                    <div>
+                    <div className="flex justify-between sm:block">
                       <span className="text-muted-foreground">Total Amount:</span>
-                      <p className="font-medium text-foreground">TZS {parseFloat(booking.total_amount || 0).toLocaleString()}</p>
+                      <p className="font-medium text-foreground sm:mt-0">TZS {parseFloat(booking.total_amount || 0).toLocaleString()}</p>
                     </div>
-                    <div>
+                    <div className="flex justify-between sm:block">
                       <span className="text-muted-foreground">Guests:</span>
-                      <p className="font-medium text-foreground">{booking.number_of_guests || booking.participants || 1}</p>
+                      <p className="font-medium text-foreground sm:mt-0">{booking.number_of_guests || booking.participants || 1}</p>
                     </div>
-                    <div>
+                    <div className="flex justify-between sm:block">
                       <span className="text-muted-foreground">Pre-Ordered:</span>
-                      <p className="font-medium text-foreground">
+                      <p className="font-medium text-foreground sm:mt-0">
                         {booking.created_at ? new Date(booking.created_at).toLocaleDateString() : 'Unknown'}
                       </p>
                     </div>
                   </div>
+                  
+                  {/* Special requests */}
                   {booking.special_requests && (
                     <div className="mt-3 p-3 bg-muted rounded-lg">
                       <span className="text-xs text-muted-foreground">Special Requests:</span>
@@ -289,13 +296,14 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 pt-4 border-t border-border">
+              {/* Action buttons - Mobile optimized to fit within card */}
+              <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-border">
                 {booking.status === 'pending' && (
                   <>
                     <Button 
                       variant="default" 
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700 flex-1"
+                      className="bg-green-600 hover:bg-green-700 flex-1 h-9 text-sm"
                       onClick={() => handleBookingAction(booking.id, 'confirmed')}
                       disabled={processingId === booking.id}
                     >
@@ -304,12 +312,12 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                       ) : (
                         <Icon name="Check" size={14} />
                       )}
-                      Approve Pre-Order
+                      <span className="ml-1">Approve Pre-Order</span>
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="border-red-300 text-red-600 hover:bg-red-50 flex-1"
+                      className="border-red-300 text-red-600 hover:bg-red-50 flex-1 h-9 text-sm"
                       onClick={() => handleBookingAction(booking.id, 'cancelled')}
                       disabled={processingId === booking.id}
                     >
@@ -318,7 +326,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                       ) : (
                         <Icon name="X" size={14} />
                       )}
-                      Reject
+                      <span className="ml-1">Reject</span>
                     </Button>
                   </>
                 )}
@@ -326,6 +334,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                   <Button 
                     variant="default" 
                     size="sm"
+                    className="flex-1 h-9 text-sm"
                     onClick={() => handleBookingAction(booking.id, 'completed')}
                     disabled={processingId === booking.id}
                   >
@@ -334,22 +343,22 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
                     ) : (
                       <Icon name="CheckCircle" size={14} />
                     )}
-                    Mark as Completed
+                    <span className="ml-1">Mark as Completed</span>
                   </Button>
                 )}
                 <Button 
                   variant="ghost" 
                   size="sm"
+                  className="text-error hover:text-error hover:bg-error/10 h-9 text-sm px-3"
                   onClick={() => handleDeleteBooking(booking.id)}
                   disabled={processingId === booking.id}
-                  className="text-error hover:text-error hover:bg-error/10"
                 >
                   {processingId === booking.id ? (
                     <Icon name="Loader2" size={14} className="animate-spin" />
                   ) : (
                     <Icon name="Trash2" size={14} />
                   )}
-                  Delete Permanently
+                  <span className="ml-1 hidden sm:inline">Delete</span>
                 </Button>
               </div>
             </div>
