@@ -1435,11 +1435,11 @@ const JourneyPlannerEnhanced = () => {
         
         {isMultiTripEnabled && multiTripDestinations.length > 0 ? renderMultiTripSummary() : renderSingleTripSummary()}
 
-        <div className="flex justify-between pt-6">
-          <Button variant="outline" onClick={prevStep}>
+        <div className="flex flex-col sm:flex-row justify-between pt-6 gap-4 sm:gap-0">
+          <Button variant="outline" onClick={prevStep} className="w-full sm:w-auto">
             <Icon name="ArrowLeft" size={16} /> Back
           </Button>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button variant="outline" onClick={async () => {
               // Save journey plan - use API for multi-trip
               if (isMultiTripEnabled) {
@@ -1500,8 +1500,8 @@ const JourneyPlannerEnhanced = () => {
               
               alert('✅ Trip plan saved! View it in Dashboard > My Trips');
               navigate('/traveler-dashboard?tab=trips');
-            }}>
-              <Icon name="Save" size={16} /> Save Plan
+            }} className="w-full sm:w-auto text-sm px-3 py-2 h-9">
+              <Icon name="Save" size={14} className="mr-1" /> Save Plan
             </Button>
             <Button variant="secondary" onClick={async () => {
               // Pre-Order: Create booking requests for all selected services
@@ -1564,8 +1564,8 @@ const JourneyPlannerEnhanced = () => {
                 console.error('Pre-order error:', error);
                 alert('Error creating pre-orders. Please try again.');
               }
-            }}>
-              <Icon name="Clock" size={16} /> Pre-Order
+            }} className="w-full sm:w-auto text-sm px-3 py-2 h-9">
+              <Icon name="Clock" size={14} className="mr-1" /> Pre-Order
             </Button>
             <Button onClick={async () => {
               // Check if services are selected
@@ -1636,8 +1636,8 @@ const JourneyPlannerEnhanced = () => {
                 console.error('❌ [Journey Planner] Critical error:', error);
                 alert('Error adding services to cart. Please try again.');
               }
-            }}>
-              <Icon name="ShoppingCart" size={16} /> Continue to Cart & Payment
+            }} className="w-full sm:w-auto text-sm px-3 py-2 h-9 bg-primary text-primary-foreground hover:bg-primary/90">
+              <Icon name="ShoppingCart" size={14} className="mr-1" /> Continue to Cart & Payment
             </Button>
           </div>
         </div>
