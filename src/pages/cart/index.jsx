@@ -133,7 +133,9 @@ const CartPage = () => {
             // Empty Cart State
             <div className="text-center py-16">
               <div className="max-w-md mx-auto">
-                <Icon name="ShoppingBag" size={64} className="text-muted-foreground mx-auto mb-6" />
+                <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Icon name="ShoppingBag" size={20} className="text-muted-foreground" />
+                </div>
                 <h2 className="text-2xl font-semibold text-foreground mb-4">Your cart is empty</h2>
                 <p className="text-muted-foreground mb-8">
                   Start planning your journey and add some amazing services to your cart.

@@ -1422,7 +1422,9 @@ const TravelerDashboard = () => {
               
               {cartItems.length === 0 ? (
                 <div className="text-center py-8 sm:py-12">
-                  <Icon name="ShoppingCart" size={40} className="text-muted-foreground mx-auto mb-4 sm:size-48" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Icon name="ShoppingCart" size={20} className="text-muted-foreground" />
+                  </div>
                   <p className="text-muted-foreground mb-2">Your cart is empty</p>
                   <p className="text-sm text-muted-foreground mb-4">Services you add will appear here for booking</p>
                   <Button
