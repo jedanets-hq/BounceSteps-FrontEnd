@@ -476,18 +476,22 @@ const TrendingServices = () => {
                     console.log('🔍 [Chat Button - TrendingServices] Service data:', {
                       provider_user_id: selectedService?.provider_user_id,
                       provider_id: selectedService?.provider_id,
+                      service_provider_id: selectedService?.service_provider_id,
                       business_name: selectedService?.business_name,
                       service_id: selectedService?.id
                     });
                     
-                    if (!selectedService?.provider_user_id) {
-                      console.error('❌ [Chat Button] provider_user_id is missing!');
+                    // Try provider_user_id first, fallback to provider_id
+                    const providerId = selectedService?.provider_user_id || selectedService?.provider_id;
+                    
+                    if (!providerId) {
+                      console.error('❌ [Chat Button] No provider ID found!', selectedService);
                       alert('Error: Unable to start chat. Provider information is incomplete.');
                       return;
                     }
                     
                     setMessagingProvider({
-                      id: selectedService.provider_user_id, // Always use provider_user_id
+                      id: providerId,
                       name: selectedService.business_name || selectedService.provider_name,
                       serviceId: selectedService.id,
                       serviceName: selectedService.title

@@ -456,18 +456,22 @@ const DestinationDiscovery = () => {
                     console.log('🔍 [Chat Button - DestinationDiscovery] Service data:', {
                       provider_user_id: selectedServiceDetails?.provider_user_id,
                       provider_id: selectedServiceDetails?.provider_id,
+                      service_provider_id: selectedServiceDetails?.service_provider_id,
                       business_name: selectedServiceDetails?.business_name,
                       service_id: selectedServiceDetails?.id
                     });
                     
-                    if (!selectedServiceDetails?.provider_user_id) {
-                      console.error('❌ [Chat Button] provider_user_id is missing!');
+                    // Try provider_user_id first, fallback to provider_id
+                    const providerId = selectedServiceDetails?.provider_user_id || selectedServiceDetails?.provider_id;
+                    
+                    if (!providerId) {
+                      console.error('❌ [Chat Button] No provider ID found!', selectedServiceDetails);
                       alert('Error: Unable to start chat. Provider information is incomplete.');
                       return;
                     }
                     
                     setMessagingProvider({
-                      id: selectedServiceDetails.provider_user_id, // Always use provider_user_id
+                      id: providerId,
                       name: selectedServiceDetails.business_name || selectedServiceDetails.provider_name,
                       serviceId: selectedServiceDetails.id,
                       serviceName: selectedServiceDetails.title
