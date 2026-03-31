@@ -134,3 +134,36 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile-specific optimizations for hero slider */
+@layer components {
+  .hero-mobile-optimized {
+    /* Mobile: 60vh with 16:9 aspect ratio */
+    @apply h-[60vh] aspect-[16/9];
+    
+    /* Small screens: 70vh with 4:3 aspect ratio */
+    @screen sm {
+      @apply h-[70vh] aspect-[4/3];
+    }
+    
+    /* Medium screens and up: full height, no aspect ratio constraint */
+    @screen md {
+      @apply h-screen aspect-auto;
+    }
+  }
+  
+  .hero-content-mobile {
+    /* Mobile: 16px padding */
+    @apply px-4 py-4;
+    
+    /* Small screens: 20px padding */
+    @screen sm {
+      @apply px-6 py-6;
+    }
+    
+    /* Medium screens and up: default padding */
+    @screen md {
+      @apply px-6 py-0;
+    }
+  }
+}
