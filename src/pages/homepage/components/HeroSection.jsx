@@ -75,34 +75,32 @@ const HeroSection = () => {
 
   if (heroSlides.length === 0) {
     return (
-      <section className="relative h-[60vh] md:h-screen overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center w-full max-w-none px-0">
-        <div className="w-full px-3 md:px-4 md:max-w-7xl md:mx-auto md:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl md:text-5xl lg:text-7xl font-display font-medium text-foreground mb-4 md:mb-6">
+      <section className="relative h-screen overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center w-full max-w-none px-0">
+        <div className="w-full px-4 md:max-w-7xl md:mx-auto md:px-6 lg:px-8 text-center">
+          <h1 className="text-5xl lg:text-7xl font-display font-medium text-foreground mb-6">
             Welcome to BounceSteps
           </h1>
-          <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
+          <p className="text-xl text-muted-foreground mb-8">
             Discover authentic travel experiences from verified local providers
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {isServiceProvider ? (
               <>
                 {/* Service Provider Buttons */}
                 <Button 
                   variant="default" 
-                  size="md"
-                  className="text-sm md:text-base"
+                  size="lg"
                   onClick={() => navigate('/service-provider-dashboard?tab=services')}
                 >
-                  <Icon name="Package" size={18} />
+                  <Icon name="Package" size={20} />
                   My Services
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="md"
-                  className="text-sm md:text-base"
+                  size="lg"
                   onClick={() => navigate('/service-provider-dashboard?tab=bookings')}
                 >
-                  <Icon name="Calendar" size={18} />
+                  <Icon name="Calendar" size={20} />
                   Bookings
                 </Button>
               </>
@@ -110,14 +108,14 @@ const HeroSection = () => {
               <>
                 {/* Traveler Buttons */}
                 <Link to="/journey-planner">
-                  <Button variant="default" size="md" className="text-sm md:text-base">
-                    <Icon name="Map" size={18} />
+                  <Button variant="default" size="lg">
+                    <Icon name="Map" size={20} />
                     Start Your Journey
                   </Button>
                 </Link>
                 <Link to="/destination-discovery">
-                  <Button variant="outline" size="md" className="text-sm md:text-base">
-                    <Icon name="Compass" size={18} />
+                  <Button variant="outline" size="lg">
+                    <Icon name="Compass" size={20} />
                     Explore Services
                   </Button>
                 </Link>
@@ -132,7 +130,7 @@ const HeroSection = () => {
   const currentService = heroSlides[currentSlide];
 
   return (
-    <section className="relative h-[60vh] md:h-screen w-full max-w-none px-0 overflow-hidden bg-gray-900 border-b border-border shadow-sm">
+    <section className="relative min-h-[70vh] md:h-screen w-full max-w-none px-0 overflow-hidden bg-gray-900 border-b border-border shadow-sm">
       {/* Background Images */}
       <div className="absolute inset-0">
         {heroSlides?.map((slide, index) => (
@@ -157,75 +155,71 @@ const HeroSection = () => {
       </div>
       {/* Content Overlay */}
       <div className="relative z-10 h-full flex items-center justify-center md:justify-start">
-        <div className="w-full px-3 md:max-w-7xl md:mx-auto md:px-6 lg:px-8">
+        <div className="w-full px-4 md:max-w-7xl md:mx-auto md:px-6 lg:px-8">
           <div className="max-w-3xl flex flex-col items-center text-center md:items-start md:text-left">
-            {/* Mobile: Compact badges layout */}
-            <div className="mb-3 md:mb-6 flex flex-wrap items-center justify-center md:justify-start gap-2">
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs md:text-sm font-medium bg-accent/20 text-accent border border-accent/30">
-                <Icon name="MapPin" size={14} className="mr-1" />
-                <span className="truncate max-w-[120px] md:max-w-none">{currentService?.location}</span>
+            <div className="mb-4 md:mb-6 flex items-center gap-3">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-accent/20 text-accent border border-accent/30">
+                <Icon name="MapPin" size={16} className="mr-2" />
+                {currentService?.location}
               </span>
               {currentService?.is_featured && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs md:text-sm font-medium bg-primary/20 text-primary border border-primary/30">
-                  <Icon name="Star" size={14} className="mr-1" />
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/20 text-primary border border-primary/30">
+                  <Icon name="Star" size={16} className="mr-2" />
                   Featured
                 </span>
               )}
             </div>
             
-            {/* Mobile: Smaller title */}
-            <h1 className="text-2xl sm:text-3xl md:text-6xl lg:text-7xl font-display font-medium text-white mb-2 md:mb-4 leading-tight tracking-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-medium text-white mb-4 leading-tight tracking-tight">
               {currentService?.title}
             </h1>
             
-            {/* Mobile: Shorter description */}
-            <p className="text-sm sm:text-base md:text-xl lg:text-2xl text-white/90 mb-3 md:mb-2 font-light max-h-12 md:max-h-none overflow-hidden">
+            <p className="text-lg sm:text-xl lg:text-2xl text-white/90 mb-2 font-light">
               {currentService?.description || `Discover ${currentService?.category} services`}
             </p>
             
-            {/* Mobile: Compact info layout */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 md:gap-6 mb-4 md:mb-8 text-white/80">
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-6 mb-8 text-white/80">
               <div className="flex items-center">
-                <Icon name="Tag" size={16} className="mr-1" />
-                <span className="text-sm md:text-base lg:text-lg">{currentService?.category}</span>
+                <Icon name="Tag" size={18} className="mr-2" />
+                <span className="text-base sm:text-lg">{currentService?.category}</span>
               </div>
               <div className="flex items-center">
-                <Icon name="DollarSign" size={16} className="mr-1" />
-                <span className="text-sm md:text-base lg:text-lg font-medium">Tshs {parseFloat(currentService?.price || 0).toLocaleString()}/day</span>
+                <Icon name="DollarSign" size={18} className="mr-2" />
+                <span className="text-base sm:text-lg font-medium">Tshs {parseFloat(currentService?.price || 0).toLocaleString()}/day</span>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 md:gap-4 mt-2 md:mt-8 w-full sm:w-auto px-2 sm:px-0">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 md:mt-8 w-full sm:w-auto px-4 sm:px-0">
               {/* Show different buttons based on user type */}
               {isServiceProvider ? (
                 <>
-                  {/* Service Provider Buttons - Mobile optimized */}
+                  {/* Service Provider Buttons - FIXED: Changed button text and navigation */}
                   <Button 
                     variant="default" 
-                    size="md" 
-                    className="w-full sm:w-auto text-sm md:text-base"
+                    size="lg" 
+                    className="w-full sm:w-auto"
                     onClick={() => navigate('/service-provider-dashboard?tab=services')}
                   >
-                    <Icon name="Package" size={18} />
+                    <Icon name="Package" size={20} />
                     My Services
                   </Button>
                   <Button 
                     variant="outline" 
-                    size="md" 
-                    className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20 text-sm md:text-base"
+                    size="lg" 
+                    className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20"
                     onClick={() => navigate('/service-provider-dashboard?tab=bookings')}
                   >
-                    <Icon name="Calendar" size={18} />
+                    <Icon name="Calendar" size={20} />
                     Bookings
                   </Button>
                 </>
               ) : (
                 <>
-                  {/* Traveler Buttons - Mobile optimized */}
+                  {/* Traveler Buttons */}
                   <Button 
                     variant="default" 
-                    size="md" 
-                    className="w-full sm:w-auto text-sm md:text-base"
+                    size="lg" 
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       // Check if user is logged in before booking - check isafari_user not token
                       const savedUser = localStorage.getItem('isafari_user');
@@ -251,24 +245,21 @@ const HeroSection = () => {
                       }
                     }}
                   >
-                    <Icon name="Calendar" size={18} />
+                    <Icon name="Calendar" size={20} />
                     Book Now
                   </Button>
-                  {/* Mobile: Show only essential buttons, hide extra ones on small screens */}
-                  <div className="hidden sm:flex gap-2 md:gap-4">
-                    <Link to="/journey-planner">
-                      <Button variant="outline" size="md" className="bg-white/10 border-white/30 text-white hover:bg-white/20 text-sm md:text-base">
-                        <Icon name="Map" size={18} />
-                        Plan Journey
-                      </Button>
-                    </Link>
-                    <Link to="/destination-discovery">
-                      <Button variant="outline" size="md" className="bg-white/10 border-white/30 text-white hover:bg-white/20 text-sm md:text-base">
-                        <Icon name="Compass" size={18} />
-                        Explore
-                      </Button>
-                    </Link>
-                  </div>
+                  <Link to="/journey-planner">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
+                      <Icon name="Map" size={20} />
+                      Plan Your Journey
+                    </Button>
+                  </Link>
+                  <Link to="/destination-discovery">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto bg-white/10 border-white/30 text-white hover:bg-white/20">
+                      <Icon name="Compass" size={20} />
+                      Explore Destinations
+                    </Button>
+                  </Link>
                 </>
               )}
             </div>
@@ -288,14 +279,14 @@ const HeroSection = () => {
       >
         <Icon name="ChevronRight" size={24} />
       </button>
-      {/* Slide Indicators - Mobile optimized */}
-      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex space-x-2">
+      {/* Slide Indicators */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex space-x-2.5">
         {heroSlides?.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`h-2 md:h-2.5 rounded-full transition-all duration-300 ${
-              index === currentSlide ? 'w-6 md:w-8 bg-white' : 'w-2 md:w-2.5 bg-white/40 hover:bg-white/60'
+            className={`h-2.5 rounded-full transition-all duration-300 ${
+              index === currentSlide ? 'w-8 bg-white' : 'w-2.5 bg-white/40 hover:bg-white/60'
             }`}
             aria-label={`Go to slide ${index + 1}`}
           />
