@@ -148,9 +148,8 @@ const OAuthCallback = () => {
             
             setStatus('success');
             
-            // Get the correct dashboard path based on user role
-            const dashboardPath = getDashboardPath(data.user.userType);
-            console.log('🚀 Redirecting to:', dashboardPath);
+            // Redirect to home page after successful Google login
+            console.log('🚀 Redirecting to home page');
             
             // Use longer delay to ensure localStorage is fully committed before navigation
             // This prevents race condition where page loads before data is available
@@ -164,7 +163,7 @@ const OAuthCallback = () => {
                 return;
               }
               
-              window.location.href = dashboardPath;
+              window.location.href = '/';
             }, 500);
           } else {
             throw new Error('Invalid user data received');

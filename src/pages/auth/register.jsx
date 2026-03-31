@@ -134,13 +134,8 @@ const Register = () => {
     
     if (result.success) {
       alert(`Registration successful! Welcome to BounceSteps!`);
-      // Redirect to appropriate dashboard after successful registration
-      const dbUserType = userType === 'provider' ? 'service_provider' : userType;
-      if (dbUserType === 'service_provider') {
-        navigate('/service-provider-dashboard');
-      } else {
-        navigate('/traveler-dashboard');
-      }
+      // Redirect to home page after successful registration
+      navigate('/');
     } else {
       // Show specific error message with better handling for duplicate email
       let errorMessage = result.error || 'Registration failed. Please try again.';
