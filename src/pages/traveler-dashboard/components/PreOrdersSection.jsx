@@ -168,7 +168,9 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Travel Date</p>
-                  <p className="font-medium text-sm break-words">{new Date(booking.booking_date).toLocaleDateString()}</p>
+                  <p className="font-medium text-sm break-words">
+                    {booking.booking_date ? new Date(booking.booking_date).toLocaleDateString() : 'Date not set'}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
