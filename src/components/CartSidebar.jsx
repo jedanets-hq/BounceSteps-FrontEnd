@@ -26,10 +26,13 @@ const CartSidebar = ({ onCheckout }) => {
 
           {cartItems.length === 0 ? (
             <div className="text-center py-12">
-              <Icon name="ShoppingBag" size={48} className="text-muted-foreground mx-auto mb-4" />
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Icon name="ShoppingCart" size={24} className="text-primary" />
+              </div>
               <h3 className="font-medium text-foreground mb-2">Your cart is empty</h3>
               <p className="text-muted-foreground mb-4">Add some services to get started</p>
               <Button variant="outline" onClick={() => setIsCartOpen(false)}>
+                <Icon name="Search" size={16} />
                 Continue Shopping
               </Button>
             </div>
@@ -51,7 +54,7 @@ const CartSidebar = ({ onCheckout }) => {
                         onClick={() => removeFromCart(item.id)}
                         className="text-red-600 hover:text-red-700"
                       >
-                        <Icon name="Trash2" size={16} />
+                        <Icon name="X" size={16} />
                       </button>
                     </div>
                     
@@ -75,10 +78,10 @@ const CartSidebar = ({ onCheckout }) => {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium text-foreground">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          TZS {(item.price * item.quantity).toLocaleString()}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          ${item.price} each
+                          TZS {item.price.toLocaleString()} each
                         </p>
                       </div>
                     </div>
@@ -90,7 +93,7 @@ const CartSidebar = ({ onCheckout }) => {
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold text-foreground">Total</span>
                   <span className="text-lg font-bold text-foreground">
-                    ${getCartTotal().toFixed(2)}
+                    TZS {getCartTotal().toLocaleString()}
                   </span>
                 </div>
               </div>

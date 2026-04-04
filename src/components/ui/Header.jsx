@@ -16,14 +16,14 @@ const Header = () => {
   const { toggleTheme, isDark } = useTheme();
 
   const travelerNavItems = [
-    { name: 'Home',         href: '/',                      icon: 'Home',            id: 'tv-home',         requiresAuth: false },
+    { name: 'Index',        href: '/',                      icon: 'Home',            id: 'tv-home',         requiresAuth: false },
     { name: 'Destinations', href: '/destination-discovery', icon: 'MapPin',          id: 'tv-destinations', requiresAuth: true  },
     { name: 'Plan Journey', href: '/journey-planner',       icon: 'Map',             id: 'tv-journey',      requiresAuth: true  },
     { name: 'Dashboard',    href: '/traveler-dashboard',    icon: 'LayoutDashboard', id: 'tv-dashboard',    requiresAuth: true  },
   ];
 
   const providerNavItems = [
-    { name: 'Home',              path: '/',                                          icon: 'Home',            id: 'sp-home',      requiresAuth: false },
+    { name: 'Index',             path: '/',                                          icon: 'Home',            id: 'sp-home',      requiresAuth: false },
     { name: 'Overview',          path: '/service-provider-dashboard?tab=overview',  icon: 'LayoutDashboard', id: 'sp-overview',  requiresAuth: true  },
     { name: 'My Services',       path: '/service-provider-dashboard?tab=services',  icon: 'Package',         id: 'sp-services',  requiresAuth: true  },
     { name: 'Bookings',          path: '/service-provider-dashboard?tab=bookings',  icon: 'Calendar',        id: 'sp-bookings',  requiresAuth: true  },
@@ -74,8 +74,8 @@ const Header = () => {
     <>
       {/* ══ HEADER BAR ═══════════════════════════════════════════════════════ */}
       <header
-        className="fixed top-0 left-0 right-0 z-50 border-b border-border/30"
-        style={{ backgroundColor: isDark ? 'rgba(13,17,23,0.92)' : 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)' }}
+        className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200/50 shadow-sm"
+        style={{ backgroundColor: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)' }}
       >
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8">
           <div className="flex items-center h-14 gap-2">
@@ -83,11 +83,17 @@ const Header = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 flex-shrink-0">
               <img
-                src="/bouncesteps-logo.png"
+                src="/LOGO.png"
                 alt="BounceSteps"
                 className="h-8 sm:h-9 w-auto"
                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' }}
-                onError={(e) => { e.target.style.display = 'none'; e.target.nextElementSibling.style.display = 'flex'; }}
+                onError={(e) => { 
+                  e.target.src = '/bouncesteps-logo.png'; // Fallback to old logo
+                  if (e.target.src.includes('bouncesteps-logo.png')) {
+                    e.target.style.display = 'none'; 
+                    e.target.nextElementSibling.style.display = 'flex'; 
+                  }
+                }}
               />
               <div style={{ display: 'none' }}>
                 <span className="text-xl font-bold text-primary">B</span>

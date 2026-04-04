@@ -1068,6 +1068,10 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
 
       <div className="flex items-center justify-between">
         <h3 className="font-display text-xl font-medium">My Services ({myServices.length})</h3>
+        <Button variant="default" onClick={() => setShowAddService(true)}>
+          <Icon name="Plus" size={16} />
+          Add Service
+        </Button>
       </div>
 
       {/* Services Grid */}

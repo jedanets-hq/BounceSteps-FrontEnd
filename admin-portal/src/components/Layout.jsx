@@ -82,9 +82,13 @@ const Layout = () => {
           {sidebarOpen && (
             <div className="flex items-center space-x-3">
               <img 
-                src="/bouncesteps-logo.png" 
+                src="/LOGO.png" 
                 alt="BounceSteps" 
                 className="h-8 w-auto"
+                onError={(e) => {
+                  e.target.src = '/bouncesteps-logo.png'; // Fallback
+                }}
+              />
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextElementSibling.style.display = 'flex';

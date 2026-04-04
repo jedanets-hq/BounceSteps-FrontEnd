@@ -7,7 +7,12 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // Use environment variable - MUST be set in production
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'https://bouncesteps-backend-gvnqzuauoa-ew.a.run.app/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+
+if (!API_BASE_URL) {
+  throw new Error('🚨 API URL not configured. Please set VITE_API_BASE_URL or VITE_API_URL in environment variables.');
+}
+
 const API_URL = API_BASE_URL;
 
 // 🚨 FORCE FAIL IF LOCALHOST IN PRODUCTION

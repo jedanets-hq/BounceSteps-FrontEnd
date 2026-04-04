@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Header from '../../components/ui/Header';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import Image from '../../components/AppImage';
@@ -9,6 +10,7 @@ import CartSidebar from '../../components/CartSidebar';
 import { PaymentModal, BookingConfirmation } from '../../components/PaymentSystem';
 import ServiceDetailsModal from '../../components/ServiceDetailsModal';
 import { useCart } from '../../contexts/CartContext';
+import { useFavorites } from '../../contexts/FavoritesContext';
 import { bookingsAPI, API_BASE_URL } from '../../utils/api';
 import MessagingModal from '../../components/MessagingModal';
 
@@ -16,6 +18,7 @@ const ProviderProfile = () => {
   const { providerId } = useParams();
   const navigate = useNavigate();
   const { addToCart, cartItems, getCartTotal } = useCart();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const [provider, setProvider] = useState(null);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,9 +68,13 @@ const ProviderProfile = () => {
       const data = await response.json();
       if (data.success) {
         setFollowerCount(data.count);
+      } else {
+        console.warn('⚠️ Failed to fetch follower count:', data.message);
+        setFollowerCount(0); // Default to 0 if failed
       }
     } catch (error) {
-      console.error('Error fetching follower count:', error);
+      console.error('❌ Error fetching follower count:', error);
+      setFollowerCount(0); // Default to 0 on error
     }
   };
 
@@ -150,6 +157,14 @@ const ProviderProfile = () => {
       
       console.log('📊 Response status:', providerResponse.status);
       
+      if (!providerResponse.ok) {
+        console.error('❌ Provider API response not OK:', providerResponse.status);
+        setProvider(null);
+        setServices([]);
+        setLoading(false);
+        return;
+      }
+      
       const providerData = await providerResponse.json();
       
       console.log('📦 Provider data:', providerData);
@@ -167,7 +182,7 @@ const ProviderProfile = () => {
           console.log('✅ Provider found but has no services yet');
         }
       } else {
-        console.error('❌ Provider not found or error:', providerData);
+        console.warn('⚠️ Provider not found or error:', providerData.message || 'Unknown error');
         setProvider(null);
         setServices([]);
       }
@@ -240,7 +255,7 @@ const ProviderProfile = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <Navbar />
         <main className="pt-20 pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center py-12">
@@ -256,7 +271,7 @@ const ProviderProfile = () => {
   if (!provider && !loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Header />
+        <Navbar />
         <main className="pt-20 pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <button 
@@ -283,7 +298,7 @@ const ProviderProfile = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Navbar />
       <main className="pt-20 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back Button */}
@@ -395,9 +410,9 @@ const ProviderProfile = () => {
                   )}
                 </Button>
                 
-                {/* Add to Favorite Button - USE API */}
+                {/* Add to Favorite Button - USE CONTEXT */}
                 <Button
-                  variant="outline"
+                  variant={isFavorite('provider', parseInt(providerId)) ? 'default' : 'outline'}
                   onClick={async () => {
                     const savedUser = localStorage.getItem('isafari_user');
                     if (!savedUser) {
@@ -405,26 +420,23 @@ const ProviderProfile = () => {
                       return;
                     }
                     
-                    const userData = JSON.parse(savedUser);
-                    const token = userData.token;
-                    
                     try {
-                      // Use /add endpoint with correct providerId
-                      const response = await fetch(`${API_BASE_URL}/favorites/add`, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ providerId: parseInt(providerId) })
-                      });
+                      const isCurrentlyFavorite = isFavorite('provider', parseInt(providerId));
                       
-                      const data = await response.json();
-                      
-                      if (data.success) {
-                        alert('✅ Added to favorites!');
+                      if (isCurrentlyFavorite) {
+                        const success = await removeFromFavorites('provider', parseInt(providerId));
+                        if (success) {
+                          alert('✅ Removed from favorites!');
+                        } else {
+                          alert('❌ Failed to remove from favorites');
+                        }
                       } else {
-                        alert('❌ ' + (data.message || 'Failed to add to favorites'));
+                        const success = await addToFavorites('provider', parseInt(providerId));
+                        if (success) {
+                          alert('✅ Added to favorites!');
+                        } else {
+                          alert('❌ Failed to add to favorites');
+                        }
                       }
                     } catch (error) {
                       console.error('Error managing favorites:', error);
@@ -432,8 +444,12 @@ const ProviderProfile = () => {
                     }
                   }}
                 >
-                  <Icon name="Heart" size={18} className="mr-2" />
-                  Add to Favorite
+                  <Icon 
+                    name="Heart" 
+                    size={18} 
+                    className={`mr-2 ${isFavorite('provider', parseInt(providerId)) ? 'fill-current' : ''}`} 
+                  />
+                  {isFavorite('provider', parseInt(providerId)) ? 'Remove from Favorites' : 'Add to Favorites'}
                 </Button>
                 
                 {provider?.whatsapp && (
@@ -457,13 +473,51 @@ const ProviderProfile = () => {
                   </a>
                 )}
                 {provider?.email && (
-                  <a 
-                    href={`mailto:${provider.email}`}
+                  <Button
+                    variant="default"
+                    onClick={async () => {
+                      const savedUser = localStorage.getItem('isafari_user');
+                      if (!savedUser) {
+                        navigate('/login?redirect=/provider/' + providerId);
+                        return;
+                      }
+                      
+                      const subject = prompt('Enter email subject:');
+                      if (!subject) return;
+                      
+                      const message = prompt('Enter your message:');
+                      if (!message) return;
+                      
+                      try {
+                        const userData = JSON.parse(savedUser);
+                        const token = userData.token;
+                        
+                        const response = await fetch(`${API_BASE_URL}/providers/${providerId}/contact`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                          },
+                          body: JSON.stringify({ subject, message })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                          alert('✅ ' + data.message);
+                        } else {
+                          alert('❌ ' + (data.message || 'Failed to send message'));
+                        }
+                      } catch (error) {
+                        console.error('Error sending contact message:', error);
+                        alert('❌ Error sending message. Please try again.');
+                      }
+                    }}
                     className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors"
                   >
                     <Icon name="Mail" size={18} className="mr-2" />
-                    Email
-                  </a>
+                    Contact Provider
+                  </Button>
                 )}
               </div>
             </div>
@@ -500,7 +554,7 @@ const ProviderProfile = () => {
                 <p className="text-muted-foreground">No services available</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredServices.map((service) => (
                   <div key={service.id} className="bg-card rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow border border-border">
                     <div className="relative h-48">
@@ -671,7 +725,9 @@ const ProviderProfile = () => {
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-                  <Icon name="Package" size={64} className="text-primary/40" />
+                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                    <Icon name="Package" size={24} className="text-primary" />
+                  </div>
                 </div>
               )}
               <button 
@@ -789,6 +845,8 @@ const ProviderProfile = () => {
         service={selectedServiceForDetails}
         providerInfo={provider}
       />
+      
+      <Footer />
     </div>
   );
 };

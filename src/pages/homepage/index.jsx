@@ -1,28 +1,19 @@
-import React from 'react';
-import Header from '../../components/ui/Header';
-import HeroSection from './components/HeroSection';
-import StartJourneySection from './components/StartJourneySection';
-import HowItWorksSection from './components/HowItWorksSection';
-import TravelerStoriesSection from './components/TravelerStoriesSection';
-import LiveActivityFeed from './components/LiveActivityFeed';
-import TrustIndicators from './components/TrustIndicators';
-import TrendingServices from './components/TrendingServices';
-import { Footer2 } from '../../components/ui/footer-2';
+import Navbar from "@/components/Navbar";
+import HeroSection from "@/components/HeroSection";
+import ServicesSection from "@/components/ServicesSection";
+import DestinationsSection from "@/components/DestinationsSection";
+import WhyChooseUs from "@/components/WhyChooseUs";
+import Footer from "@/components/Footer";
 
 const Homepage = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-16">
-        <HeroSection />
-        <StartJourneySection />
-        <TrendingServices />
-        <HowItWorksSection />
-        <TravelerStoriesSection />
-        <LiveActivityFeed />
-        <TrustIndicators />
-      </main>
-      <Footer2 />
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
+      <Navbar />
+      <HeroSection />
+      <ServicesSection />
+      <DestinationsSection />
+      <WhyChooseUs />
+      <Footer />
     </div>
   );
 };

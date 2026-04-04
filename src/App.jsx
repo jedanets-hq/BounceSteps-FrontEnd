@@ -17,6 +17,8 @@ import TravelerDashboard from './pages/traveler-dashboard';
 import ServiceProviderDashboard from './pages/service-provider-dashboard';
 // ProviderPartnershipPortal is DEPRECATED - removed to prevent old version from loading
 import AboutPage from './pages/about';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import TestDashboard from './pages/TestDashboard';
 import DestinationDiscovery from './pages/DestinationDiscovery';
 import ServiceBooking from './pages/ServiceBooking';
@@ -49,6 +51,8 @@ function App() {
                   {/* OLD PROVIDER PORTAL - DEPRECATED - Redirect to new dashboard */}
                   <Route path="/provider-partnership-portal" element={<Navigate to="/service-provider-dashboard" replace />} />
                   <Route path="/about" element={<AboutPage />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
                   <Route path="/destination-discovery" element={<DestinationDiscovery />} />
                   <Route path="/service-booking" element={<ServiceBooking />} />
                   <Route path="/journey-planner" element={<JourneyPlannerEnhanced />} />

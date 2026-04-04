@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CreditCard, Smartphone, DollarSign } from 'lucide-react';
+import Icon from './AppIcon';
 import { paymentsAPI } from '../utils/api';
 
 const PaymentModal = ({ isOpen, onClose, paymentType, serviceData, onSuccess }) => {
@@ -107,7 +107,7 @@ const PaymentModal = ({ isOpen, onClose, paymentType, serviceData, onSuccess }) 
             {paymentType === 'premium' ? 'Premium Membership' : 'Featured Service'}
           </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X size={24} />
+            <Icon name="X" size={24} />
           </button>
         </div>
 
@@ -149,7 +149,9 @@ const PaymentModal = ({ isOpen, onClose, paymentType, serviceData, onSuccess }) 
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="mr-3"
               />
-              <CreditCard className="mr-2" size={20} />
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                <Icon name="CreditCard" size={16} className="text-primary" />
+              </div>
               <span>Credit/Debit Card</span>
             </label>
             
@@ -162,7 +164,9 @@ const PaymentModal = ({ isOpen, onClose, paymentType, serviceData, onSuccess }) 
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="mr-3"
               />
-              <Smartphone className="mr-2" size={20} />
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                <Icon name="Smartphone" size={16} className="text-green-600" />
+              </div>
               <span>M-Pesa</span>
             </label>
           </div>
@@ -200,7 +204,7 @@ const PaymentModal = ({ isOpen, onClose, paymentType, serviceData, onSuccess }) 
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
               <>
-                <DollarSign size={16} className="mr-1" />
+                <Icon name="CreditCard" size={16} className="mr-1" />
                 Pay Now
               </>
             )}

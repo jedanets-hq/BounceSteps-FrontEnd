@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import Header from '../components/ui/Header';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import Button from '../components/ui/Button';
 import Icon from '../components/AppIcon';
 import LocationSelector from '../components/LocationSelector';
@@ -1650,19 +1651,10 @@ const JourneyPlannerEnhanced = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
+      <Navbar />
       <div className="pt-20 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <h1 className="text-4xl font-display font-bold text-foreground mb-2">
-              Plan Your Journey
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Create your perfect travel plan step by step
-            </p>
-          </div>
-
           {renderStepIndicator()}
 
           <div className="max-w-4xl mx-auto">
@@ -1883,6 +1875,9 @@ const JourneyPlannerEnhanced = () => {
         onClose={() => setShowMultiTripModal(false)}
         onConfirm={handleEnableMultiTrip}
       />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };

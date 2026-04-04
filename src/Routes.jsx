@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
+import { BrowserRouter, Routes as RouterRoutes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "components/ScrollToTop";
 import ErrorBoundary from "components/ErrorBoundary";
 import ProtectedRoute from "components/ProtectedRoute";
@@ -18,7 +18,6 @@ import OAuthCallback from './pages/auth/OAuthCallback';
 import Profile from './pages/profile';
 import About from './pages/about';
 import Dashboard from './pages/dashboard';
-import CartPage from './pages/cart';
 import ProviderProfile from './pages/provider-profile';
 
 const Routes = () => {
@@ -47,11 +46,8 @@ const Routes = () => {
             <Profile />
           </ProtectedRoute>
         } />
-        <Route path="/cart" element={
-          <ProtectedRoute requireAuth={true}>
-            <CartPage />
-          </ProtectedRoute>
-        } />
+        {/* Cart redirect - redirect to dashboard cart tab */}
+        <Route path="/cart" element={<Navigate to="/traveler-dashboard?tab=cart" replace />} />
         
         {/* Role-specific dashboard routes */}
         <Route path="/traveler-dashboard" element={

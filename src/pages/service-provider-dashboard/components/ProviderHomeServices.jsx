@@ -130,7 +130,9 @@ const ProviderHomeServices = ({ onTabChange, onEditService }) => {
         {featuredServices.length === 0 ? (
           <div className="h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20">
             <div className="text-center text-white px-4">
-              <Icon name="Package" size={64} className="mx-auto mb-4 opacity-50" />
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Icon name="Package" size={24} className="text-white" />
+              </div>
               <h3 className="text-2xl font-semibold mb-2">No Featured Services</h3>
               <p className="text-white/80 mb-4">Your services will appear here once admin approves them for featured display</p>
               <Button 
@@ -399,7 +401,9 @@ const ProviderHomeServices = ({ onTabChange, onEditService }) => {
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-                  <Icon name="Package" size={64} className="text-primary/40" />
+                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                    <Icon name="Package" size={24} className="text-primary" />
+                  </div>
                 </div>
               )}
               <button 

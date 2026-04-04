@@ -161,7 +161,7 @@ export const CartProvider = ({ children }) => {
       console.log('   Service ID:', serviceId);
       console.log('   Service Title:', service.title || service.name);
       console.log('   Quantity:', quantity);
-      console.log('   Backend: https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api');
+      console.log('   Backend:', import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL);
       console.log('   Database: Production PostgreSQL on Google Cloud SQL');
 
       // ALWAYS save to PRODUCTION database - never use localStorage fallback

@@ -90,8 +90,17 @@ const MessagesTab = () => {
         return;
       }
 
+      // Fix: Use otherUserId from selectedConversation
+      const otherUserId = selectedConversation.otherUserId;
+      
+      if (!otherUserId || otherUserId === 'undefined') {
+        console.error('Invalid otherUserId:', otherUserId);
+        return;
+      }
+
       // Backend expects: /messages/conversation/:otherUserId
-      const url = `${API_URL}/messages/conversation/${selectedConversation.provider_id}`;
+      const url = `${API_URL}/messages/conversation/${otherUserId}`;
+      console.log('📡 Fetching messages from:', url);
 
       const response = await fetch(url, {
         headers: {
@@ -104,6 +113,8 @@ const MessagesTab = () => {
       
       if (data.success) {
         setMessages(data.messages || []);
+      } else {
+        console.error('Failed to fetch messages:', data.message);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -119,6 +130,16 @@ const MessagesTab = () => {
       setSending(true);
       const token = user?.token;
 
+      // Fix: Use otherUserId from selectedConversation
+      const otherUserId = selectedConversation.otherUserId;
+      
+      if (!otherUserId || otherUserId === 'undefined') {
+        alert('Invalid recipient. Please refresh and try again.');
+        return;
+      }
+
+      console.log('📤 Sending message to otherUserId:', otherUserId);
+
       const response = await fetch(`${API_URL}/messages/send`, {
         method: 'POST',
         headers: {
@@ -126,7 +147,7 @@ const MessagesTab = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          otherUserId: selectedConversation.provider_id,
+          otherUserId: otherUserId,
           serviceId: selectedConversation.service_id || null,
           messageText: newMessage.trim()
         })
@@ -193,10 +214,10 @@ const MessagesTab = () => {
           ) : (
             conversations.map((conv) => (
               <button
-                key={`${conv.provider_id}-${conv.service_id || 'general'}`}
+                key={`${conv.otherUserId}-${conv.service_id || 'general'}`}
                 onClick={() => setSelectedConversation(conv)}
                 className={`w-full p-3 text-left transition-all duration-200 hover:bg-gray-50 border-b border-gray-100 ${
-                  selectedConversation?.provider_id === conv.provider_id && 
+                  selectedConversation?.otherUserId === conv.otherUserId && 
                   selectedConversation?.service_id === conv.service_id
                     ? 'bg-primary/5 border-l-4 border-l-primary'
                     : ''
@@ -207,7 +228,7 @@ const MessagesTab = () => {
                   <div className="relative">
                     <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm">
                       <span className="text-white font-semibold text-sm">
-                        {(conv.business_name || conv.provider_name || 'S').charAt(0).toUpperCase()}
+                        {(conv.business_name || `${conv.first_name} ${conv.last_name}` || 'S').charAt(0).toUpperCase()}
                       </span>
                     </div>
                     {/* Online status indicator */}
@@ -217,13 +238,16 @@ const MessagesTab = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-medium text-gray-900 truncate text-sm">
-                        {conv.business_name || conv.provider_name || 'Service Provider'}
+                        {conv.business_name || `${conv.first_name} ${conv.last_name}` || 'Service Provider'}
                       </p>
                       <span className="text-xs text-gray-500">
-                        {new Date(conv.last_message_time).toLocaleTimeString('en-US', { 
-                          hour: 'numeric',
-                          minute: '2-digit'
-                        })}
+                        {conv.last_message_time && !isNaN(new Date(conv.last_message_time).getTime())
+                          ? new Date(conv.last_message_time).toLocaleTimeString('en-US', { 
+                              hour: 'numeric',
+                              minute: '2-digit'
+                            })
+                          : 'Now'
+                        }
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
@@ -266,12 +290,12 @@ const MessagesTab = () => {
                 {/* User avatar and info */}
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                   <span className="text-white font-semibold text-sm">
-                    {(selectedConversation.business_name || selectedConversation.provider_name || 'S').charAt(0).toUpperCase()}
+                    {(selectedConversation.business_name || `${selectedConversation.first_name} ${selectedConversation.last_name}` || 'S').charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-white text-sm">
-                    {selectedConversation.business_name || selectedConversation.provider_name || 'Service Provider'}
+                    {selectedConversation.business_name || `${selectedConversation.first_name} ${selectedConversation.last_name}` || 'Service Provider'}
                   </h3>
                   <p className="text-xs text-white/80">
                     {selectedConversation.service_title ? selectedConversation.service_title : 'Online'}
@@ -306,21 +330,26 @@ const MessagesTab = () => {
               ) : (
                 <div className="space-y-2">
                   {messages.map((message, index) => {
-                    const isMyMessage = message.sender_type === 'traveller';
+                    // Use the isMe field from backend response
+                    const isMyMessage = message.isMe;
+                    
                     const showDate = index === 0 || 
-                      new Date(messages[index - 1].created_at).toDateString() !== new Date(message.created_at).toDateString();
+                      new Date(messages[index - 1].timestamp).toDateString() !== new Date(message.timestamp).toDateString();
                     
                     return (
                       <React.Fragment key={message.id}>
                         {showDate && (
                           <div className="flex justify-center my-4">
                             <span className="text-[10px] text-gray-500 bg-white/80 px-3 py-1 rounded-full shadow-sm">
-                              {new Date(message.created_at).toLocaleDateString('en-US', { 
-                                weekday: 'short',
-                                month: 'short', 
-                                day: 'numeric',
-                                year: new Date(message.created_at).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-                              })}
+                              {message.timestamp && !isNaN(new Date(message.timestamp).getTime())
+                                ? new Date(message.timestamp).toLocaleDateString('en-US', { 
+                                    weekday: 'short',
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    year: new Date(message.timestamp).getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+                                  })
+                                : 'Today'
+                              }
                             </span>
                           </div>
                         )}
@@ -336,16 +365,19 @@ const MessagesTab = () => {
                               }`}
                             >
                               <p className={`${isMobileView ? 'text-xs' : 'text-sm'} leading-relaxed break-words`}>
-                                {message.message_text}
+                                {message.text}
                               </p>
                             </div>
                             {/* Timestamp */}
                             <p className="text-[10px] text-gray-400 mt-1 px-1">
-                              {new Date(message.created_at).toLocaleTimeString('en-US', { 
-                                hour: 'numeric', 
-                                minute: '2-digit',
-                                hour12: true
-                              })}
+                              {message.timestamp && !isNaN(new Date(message.timestamp).getTime()) 
+                                ? new Date(message.timestamp).toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    minute: '2-digit',
+                                    hour12: true
+                                  })
+                                : 'Just now'
+                              }
                             </p>
                           </div>
                         </div>

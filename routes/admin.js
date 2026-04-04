@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/postgresql');
 
-// Get trusted partners (public endpoint for homepage)
+// Get trusted partners (public endpoint for indexpage)
 router.get('/trusted-partners', async (req, res) => {
   try {
     // Return empty array for now - can be populated later
@@ -21,7 +21,7 @@ router.get('/trusted-partners', async (req, res) => {
   }
 });
 
-// Get public trust statistics (for homepage)
+// Get public trust statistics (for indexpage)
 router.get('/public/trust-stats', async (req, res) => {
   try {
     // Get total travelers

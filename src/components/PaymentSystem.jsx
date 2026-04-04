@@ -16,10 +16,10 @@ export const PaymentModal = ({ isOpen, onClose, cartItems, total, onPaymentSucce
   const [isProcessing, setIsProcessing] = useState(false);
 
   const paymentMethods = [
-    { id: 'card', name: 'Credit/Debit Card', icon: 'CreditCard' },
-    { id: 'mpesa', name: 'M-Pesa', icon: 'Phone' },
-    { id: 'tigopesa', name: 'Tigo Pesa', icon: 'Phone' },
-    { id: 'airtel', name: 'Airtel Money', icon: 'Phone' }
+    { id: 'card', name: 'Credit/Debit Card', icon: 'CreditCard', color: 'bg-primary/10 text-primary' },
+    { id: 'mpesa', name: 'M-Pesa', icon: 'Smartphone', color: 'bg-green-100 text-green-600' },
+    { id: 'tigopesa', name: 'Tigo Pesa', icon: 'Smartphone', color: 'bg-blue-100 text-blue-600' },
+    { id: 'airtel', name: 'Airtel Money', icon: 'Smartphone', color: 'bg-red-100 text-red-600' }
   ];
 
   const handlePayment = async () => {
@@ -40,8 +40,11 @@ export const PaymentModal = ({ isOpen, onClose, cartItems, total, onPaymentSucce
       }
       
       // Create bookings for each cart item
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 
-        (import.meta.env.MODE === 'development' ? 'http://localhost:5000/api' : 'https://bouncesteps-backend-git-392429231515.europe-west1.run.app/api');
+      const API_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+      
+      if (!API_URL) {
+        throw new Error('API URL not configured. Please check environment variables.');
+      }
       
       console.log('💳 [PAYMENT] Processing payment for', cartItems.length, 'items');
       
@@ -122,12 +125,12 @@ export const PaymentModal = ({ isOpen, onClose, cartItems, total, onPaymentSucce
                   <span className="text-muted-foreground">
                     {item.title} x{item.quantity}
                   </span>
-                  <span className="text-foreground">${(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="text-foreground">TZS {(item.price * item.quantity).toLocaleString()}</span>
                 </div>
               ))}
               <div className="border-t border-border pt-2 flex justify-between font-medium">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>TZS {total.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -146,8 +149,10 @@ export const PaymentModal = ({ isOpen, onClose, cartItems, total, onPaymentSucce
                       : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <div className="flex items-center space-x-2">
-                    <Icon name={method.icon} size={16} />
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${method.color}`}>
+                      <Icon name={method.icon} size={16} />
+                    </div>
                     <span className="text-sm font-medium">{method.name}</span>
                   </div>
                 </button>
@@ -261,14 +266,14 @@ export const PaymentModal = ({ isOpen, onClose, cartItems, total, onPaymentSucce
             disabled={isProcessing}
           >
             {isProcessing ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <div className="flex items-center justify-center">
+                <Icon name="Loader2" size={16} className="animate-spin mr-2" />
                 Processing Payment...
-              </>
+              </div>
             ) : (
               <>
                 <Icon name="CreditCard" size={16} />
-                Pay ${total.toFixed(2)}
+                Pay TZS {total.toLocaleString()}
               </>
             )}
           </Button>
@@ -299,7 +304,7 @@ export const BookingConfirmation = ({ booking, onClose }) => {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Total Amount</span>
-            <span className="font-medium text-foreground">${booking.total.toFixed(2)}</span>
+            <span className="font-medium text-foreground">TZS {booking.total.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Payment Method</span>

@@ -144,15 +144,15 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
                 <h5 className="font-semibold text-foreground text-base sm:text-lg leading-tight break-words">
                   {booking.service_title || booking.service?.title || 'Service Booking'}
                 </h5>
-                <p className="text-sm text-muted-foreground flex items-center mt-1 break-words">
+                <div className="text-sm text-muted-foreground flex items-center mt-1 break-words">
                   <Icon name="Building2" size={14} className="mr-1 flex-shrink-0" />
                   <span className="truncate">{booking.business_name || booking.provider?.businessName || 'Service Provider'}</span>
-                </p>
+                </div>
                 {(booking.service_location || booking.service?.location) && (
-                  <p className="text-xs text-muted-foreground flex items-center mt-1 break-words">
+                  <div className="text-xs text-muted-foreground flex items-center mt-1 break-words">
                     <Icon name="MapPin" size={12} className="mr-1 flex-shrink-0" />
                     <span className="truncate">{booking.service_location || booking.service?.location}</span>
-                  </p>
+                  </div>
                 )}
               </div>
               <span className={`px-2 sm:px-3 py-1 ${statusConfig.badgeColor} rounded-full text-xs font-medium whitespace-nowrap self-start sm:ml-2`}>
@@ -168,9 +168,7 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Travel Date</p>
-                  <p className="font-medium text-sm break-words">
-                    {booking.booking_date ? new Date(booking.booking_date).toLocaleDateString() : 'Date not set'}
-                  </p>
+                  <p className="font-medium text-sm break-words">{new Date(booking.booking_date).toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -200,10 +198,10 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
             </button>
             {isExpanded && (
               <div className="mt-3 p-4 bg-muted/40 rounded-lg border border-muted">
-                <p className="font-semibold text-foreground mb-2 flex items-center">
+                <div className="font-semibold text-foreground mb-2 flex items-center">
                   <Icon name="Info" size={16} className="mr-2 text-primary" />
                   Service Description
-                </p>
+                </div>
                 <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
                   {booking.service_description || booking.service?.description}
                 </p>
@@ -235,10 +233,10 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
               <Icon name={statusConfig.icon} size={16} className={`sm:size-18 ${statusConfig.iconColor}`} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-semibold ${statusConfig.messageTitle} mb-1 flex items-center break-words`}>
+              <div className={`text-sm font-semibold ${statusConfig.messageTitle} mb-1 flex items-center break-words`}>
                 <Icon name="MessageSquare" size={14} className="mr-1 flex-shrink-0" />
                 <span className="break-words">Provider Message</span>
-              </p>
+              </div>
               <p className={`text-sm ${statusConfig.messageText} leading-relaxed break-words`}>
                 {statusConfig.message(booking)}
               </p>
@@ -246,10 +244,10 @@ const PreOrdersSection = ({ bookings, loading, onRefresh }) => {
               {/* Contact Info for Confirmed Orders - MOBILE RESPONSIVE */}
               {status === 'confirmed' && (
                 <div className="mt-3 p-2 sm:p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg border border-green-200">
-                  <p className="text-xs font-semibold text-green-800 dark:text-green-200 mb-2 flex items-center break-words">
+                  <div className="text-xs font-semibold text-green-800 dark:text-green-200 mb-2 flex items-center break-words">
                     <Icon name="Phone" size={14} className="mr-1 flex-shrink-0" />
                     <span className="break-words">Contact Provider:</span>
-                  </p>
+                  </div>
                   <div className="flex flex-col gap-2 text-sm">
                     {(booking.provider_phone || booking.provider?.phone) && (
                       <a 

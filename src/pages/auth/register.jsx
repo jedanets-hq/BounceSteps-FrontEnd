@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import Header from '../../components/ui/Header';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import LocationSelector from '../../components/LocationSelector';
@@ -159,11 +158,47 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-20 pb-12">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-card rounded-lg shadow-lg p-8">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background image - same as hero section */}
+      <div className="absolute inset-0">
+        <img
+          src="/hero-beach.jpg"
+          alt="Tropical beach paradise"
+          className="w-full h-full object-cover opacity-30"
+          width={1920}
+          height={1080}
+        />
+        {/* Gradient fade overlay with additional opacity */}
+        <div className="absolute inset-0 gradient-fade-white opacity-80" />
+        <div className="absolute inset-0 bg-background/40" />
+      </div>
+
+      {/* Content */}
+      <main className="relative z-20 min-h-screen flex items-center justify-center py-12 px-4">
+        <div className="w-full max-w-2xl">
+          {/* Logo and Brand */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <img
+                src="/LOGO.png"
+                alt="BounceSteps"
+                className="h-12 w-auto"
+                onError={(e) => {
+                  // Fallback to text logo if image fails
+                  e.target.style.display = 'none';
+                  const fallback = e.target.nextElementSibling;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+              <div className="w-12 h-12 rounded-full border-2 border-primary items-center justify-center bg-background/90 backdrop-blur-lg hidden">
+                <span className="text-primary font-bold text-xl">B</span>
+              </div>
+              <span className="font-bold text-2xl text-foreground">BounceSteps</span>
+            </div>
+            <p className="text-muted-foreground text-sm">Your gateway to extraordinary journeys</p>
+          </div>
+
+          <div className="bg-background/90 backdrop-blur-lg rounded-2xl shadow-xl p-8 border border-border">
             {/* Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-display font-medium text-foreground mb-2">

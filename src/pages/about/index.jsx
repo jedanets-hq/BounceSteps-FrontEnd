@@ -1,5 +1,6 @@
 import React from 'react';
-import Header from '../../components/ui/Header';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
 import Image from '../../components/AppImage';
@@ -31,8 +32,8 @@ const About = () => {
   // Page title is now "About BounceSteps"
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
+      <Navbar />
       <main className="pt-20 pb-12">
         {/* Hero Section */}
         <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
@@ -248,24 +249,7 @@ const About = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-foreground text-background py-12 border-t border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2">JEDA NETWORKS</h3>
-            <p className="text-background/80 text-sm">
-              Innovating the future of travel technology
-            </p>
-          </div>
-          <div className="border-t border-background/20 pt-6">
-            <p className="text-background/60 text-sm">
-              © {new Date().getFullYear()} JEDA NETWORKS. All rights reserved.
-            </p>
-            <p className="text-background/50 text-xs mt-1">
-              Innovative Travel Technology Solutions
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

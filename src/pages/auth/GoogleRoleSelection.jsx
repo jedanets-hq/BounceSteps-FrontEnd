@@ -16,9 +16,13 @@ const SimpleHeader = () => (
       <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
         <a href="/" className="flex items-center space-x-3">
           <img 
-            src="/bouncesteps-logo.png" 
+            src="/LOGO.png" 
             alt="BounceSteps" 
             className="h-10 w-auto"
+            onError={(e) => {
+              e.target.src = '/bouncesteps-logo.png'; // Fallback
+            }}
+          />
             onError={(e) => {
               e.target.style.display = 'none';
             }}

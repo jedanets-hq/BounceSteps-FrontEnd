@@ -5,7 +5,7 @@ import React from 'react';
  * Instagram-style verified badge - Blue starburst/seal/rosette shape with white checkmark
  * Design: Scalloped star (starburst) background like Instagram verified badge
  */
-const VerifiedBadge = ({ size = 'md', showText = false, className = '' }) => {
+const VerifiedBadge = ({ size = 'md', showText = false, className = '', inline = false }) => {
   // Size configurations - Increased for better visibility
   const sizes = {
     xs: { badge: 24, text: 'text-xs' },
@@ -17,37 +17,48 @@ const VerifiedBadge = ({ size = 'md', showText = false, className = '' }) => {
 
   const currentSize = sizes[size] || sizes.md;
 
+  // SVG component for inline usage
+  const BadgeSVG = () => (
+    <svg 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ width: currentSize.badge, height: currentSize.badge }}
+      title="Verified Provider"
+      className="inline-block"
+    >
+      {/* Instagram Blue Starburst/Seal Shape - 12 points scalloped */}
+      <path 
+        d="M12 1.5L13.5 4.5L16.5 3L16.5 6.5L20 6L18.5 9L21.5 11L18.5 13L20 16L16.5 15.5L16.5 19L13.5 17.5L12 20.5L10.5 17.5L7.5 19L7.5 15.5L4 16L5.5 13L2.5 11L5.5 9L4 6L7.5 6.5L7.5 3L10.5 4.5L12 1.5Z" 
+        fill="#10B981"
+      />
+      
+      {/* White checkmark inside - centered */}
+      <path 
+        d="M8.5 12L10.5 14L15.5 10" 
+        stroke="white" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+
+  // If inline prop is true, return only the SVG (for use inside p, h1-h6 tags)
+  if (inline) {
+    return <BadgeSVG />;
+  }
+
   return (
-    <div className={`inline-flex items-center gap-1.5 ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
       {/* Instagram-style Starburst/Seal Badge */}
-      <div 
+      <span 
         className="relative flex items-center justify-center"
         style={{ width: currentSize.badge, height: currentSize.badge }}
-        title="Verified Provider"
       >
-        <svg 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ width: currentSize.badge, height: currentSize.badge }}
-        >
-          {/* Instagram Blue Starburst/Seal Shape - 12 points scalloped */}
-          <path 
-            d="M12 1.5L13.5 4.5L16.5 3L16.5 6.5L20 6L18.5 9L21.5 11L18.5 13L20 16L16.5 15.5L16.5 19L13.5 17.5L12 20.5L10.5 17.5L7.5 19L7.5 15.5L4 16L5.5 13L2.5 11L5.5 9L4 6L7.5 6.5L7.5 3L10.5 4.5L12 1.5Z" 
-            fill="#10B981"
-          />
-          
-          {/* White checkmark inside - centered */}
-          <path 
-            d="M8.5 12L10.5 14L15.5 10" 
-            stroke="white" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-            fill="none"
-          />
-        </svg>
-      </div>
+        <BadgeSVG />
+      </span>
       
       {/* Optional text */}
       {showText && (
@@ -55,7 +66,7 @@ const VerifiedBadge = ({ size = 'md', showText = false, className = '' }) => {
           Verified
         </span>
       )}
-    </div>
+    </span>
   );
 };
 

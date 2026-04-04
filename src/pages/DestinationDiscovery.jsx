@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import Header from '../components/ui/Header';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import Button from '../components/ui/Button';
 import Icon from '../components/AppIcon';
 import ProviderBadge from '../components/ui/ProviderBadge';
+import VerifiedBadge from '../components/ui/VerifiedBadge';
 import MessagingModal from '../components/MessagingModal';
 import ServiceCard from '../components/ServiceCard';
 import { API_URL } from '../utils/api';
@@ -15,6 +17,7 @@ const DestinationDiscovery = () => {
   const { user } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [services, setServices] = useState([]);
@@ -90,11 +93,26 @@ const DestinationDiscovery = () => {
     }
   }, [user, navigate]);
 
+  // Handle URL parameters for category, search, and region
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    const searchParam = searchParams.get('search');
+    
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+    // Don't automatically set region as search query - let it work as a filter only
+    // This prevents auto-typing in the search bar
+  }, [searchParams]);
+
   useEffect(() => {
     if (user) {
       fetchServices();
     }
-  }, [selectedCategory, searchQuery, user]);
+  }, [selectedCategory, searchQuery, searchParams, user]); // Added searchParams dependency
 
   const fetchServices = async () => {
     setLoading(true);
@@ -107,6 +125,12 @@ const DestinationDiscovery = () => {
       }
       if (searchQuery) {
         params.append('search', searchQuery);
+      }
+      
+      // Add region parameter only if it exists in URL and there's no search query
+      const regionParam = searchParams.get('region');
+      if (regionParam && !searchQuery) {
+        params.append('region', regionParam);
       }
       
       const response = await fetch(`${API_URL}/services?${params}`);
@@ -132,8 +156,8 @@ const DestinationDiscovery = () => {
   const filteredServices = services;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
+      <Navbar />
       
       {/* Image Viewer Modal */}
       {viewingService && viewingService.images && viewingService.images.length > 0 && (
@@ -181,45 +205,86 @@ const DestinationDiscovery = () => {
       <div className="pt-20 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Page Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-display font-bold text-foreground mb-2">
-              Discover Your Next Adventure
+          <div className="mb-8 text-center">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-4">
+              {searchParams.get('region') && !searchQuery
+                ? `Discover Services in ${searchParams.get('region')}`
+                : searchQuery
+                ? `Search Results for "${searchQuery}"`
+                : 'Discover Your Next Adventure'
+              }
             </h1>
-            <p className="text-lg text-muted-foreground">
-              Explore amazing destinations across Tanzania and East Africa
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
+              {searchParams.get('region') && !searchQuery
+                ? `Explore amazing services and experiences in ${searchParams.get('region')} from verified providers`
+                : searchQuery
+                ? `Found services matching "${searchQuery}" from verified providers`
+                : 'Explore amazing destinations across Tanzania and East Africa with curated experiences from verified providers'
+              }
             </p>
           </div>
 
           {/* Search Bar */}
-          <div className="mb-8">
-            <div className="relative max-w-2xl">
+          <div className="mb-8 flex justify-center">
+            <div className="relative max-w-2xl w-full">
               <Icon name="Search" size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search destinations..."
+                placeholder={searchParams.get('region') ? `Search in ${searchParams.get('region')}...` : "Search destinations, activities, accommodations..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full pl-12 pr-16 py-3 border border-border rounded-xl bg-background/50 backdrop-blur-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                  }}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-muted hover:bg-muted-foreground/20 rounded-full flex items-center justify-center transition-colors"
+                  title="Clear search"
+                >
+                  <Icon name="X" size={14} className="text-muted-foreground" />
+                </button>
+              )}
+              {searchParams.get('region') && !searchQuery && (
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                  <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
+                    📍 {searchParams.get('region')}
+                    <button
+                      onClick={() => {
+                        const newSearchParams = new URLSearchParams(searchParams);
+                        newSearchParams.delete('region');
+                        navigate(`/destination-discovery?${newSearchParams.toString()}`, { replace: true });
+                      }}
+                      className="w-4 h-4 bg-primary/20 hover:bg-primary/30 rounded-full flex items-center justify-center transition-colors"
+                      title="Remove location filter"
+                    >
+                      <Icon name="X" size={10} className="text-primary" />
+                    </button>
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Category Filters */}
-          <div className="mb-8 flex flex-wrap gap-3">
-            {categories.map(category => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  selectedCategory === category.id
-                    ? 'bg-primary text-primary-foreground shadow-md'
-                    : 'bg-card border border-border text-foreground hover:bg-muted'
-                }`}
-              >
-                <Icon name={category.icon} size={16} />
-                <span>{category.name}</span>
-              </button>
-            ))}
+          <div className="mb-8 flex justify-center">
+            <div className="flex flex-wrap gap-3 justify-center max-w-4xl">
+              {categories.map(category => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    selectedCategory === category.id
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-background/90 backdrop-blur-lg border border-border text-foreground hover:bg-muted shadow-sm'
+                  }`}
+                >
+                  <Icon name={category.icon} size={16} />
+                  <span>{category.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Loading State */}
@@ -244,7 +309,7 @@ const DestinationDiscovery = () => {
 
           {/* Services Grid */}
           {!loading && !error && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredServices.map(service => (
                 <ServiceCard 
                   key={service.id}
@@ -285,7 +350,9 @@ const DestinationDiscovery = () => {
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
-                  <Icon name="Package" size={64} className="text-primary/40" />
+                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
+                    <Icon name="Package" size={24} className="text-primary" />
+                  </div>
                 </div>
               )}
               <button 
@@ -304,6 +371,9 @@ const DestinationDiscovery = () => {
                     Verified
                   </span>
                 )}
+                {selectedServiceDetails.provider_badge_type && (
+                  <ProviderBadge badgeType={selectedServiceDetails.provider_badge_type} size="sm" showText={true} />
+                )}
               </div>
             </div>
 
@@ -312,7 +382,7 @@ const DestinationDiscovery = () => {
               <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
                 {selectedServiceDetails.title}
                 {(selectedServiceDetails.provider_verified || selectedServiceDetails.is_verified) && (
-                  <VerifiedBadge size="sm" showText={false} />
+                  <VerifiedBadge size="sm" showText={false} inline={true} />
                 )}
               </h2>
               
@@ -429,12 +499,18 @@ const DestinationDiscovery = () => {
                       <Icon name="User" size={24} className="text-primary" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-foreground flex items-center gap-1">
-                        {selectedServiceDetails.business_name || selectedServiceDetails.provider_name}
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-foreground">
+                          {selectedServiceDetails.business_name || selectedServiceDetails.provider_name}
+                        </p>
                         {(selectedServiceDetails.provider_verified || selectedServiceDetails.is_verified) && (
-                          <VerifiedBadge size="sm" showText={false} />
+                          <VerifiedBadge size="sm" showText={false} inline={true} />
                         )}
-                      </p>
+                        {/* Provider Badge - next to provider name */}
+                        {selectedServiceDetails.provider_badge_type && (
+                          <ProviderBadge badgeType={selectedServiceDetails.provider_badge_type} size="sm" showText={false} />
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">Tap to view all services from this provider</p>
                     </div>
                     <Icon name="ChevronRight" size={20} className="text-muted-foreground" />
@@ -501,6 +577,8 @@ const DestinationDiscovery = () => {
         serviceId={messagingProvider?.serviceId}
         serviceName={messagingProvider?.serviceName}
       />
+      
+      <Footer />
     </div>
   );
 };

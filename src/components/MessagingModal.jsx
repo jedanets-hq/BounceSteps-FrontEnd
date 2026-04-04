@@ -25,11 +25,12 @@ const MessagingModal = ({ isOpen, onClose, providerId, providerName, serviceId, 
         providerName,
         serviceId,
         serviceName,
-        userId: user?.id
+        userId: user?.id,
+        userToken: user?.token ? 'present' : 'missing'
       });
       
-      if (!providerId) {
-        console.error('❌ [MessagingModal] providerId is missing!');
+      if (!providerId || providerId === 'undefined') {
+        console.error('❌ [MessagingModal] providerId is missing or invalid!');
         alert('Error: Cannot open chat. Provider ID is missing.');
         onClose();
         return;
@@ -53,12 +54,20 @@ const MessagingModal = ({ isOpen, onClose, providerId, providerName, serviceId, 
       const token = user?.token;
       
       if (!token) {
-        console.error('No token found');
+        console.error('❌ [MessagingModal] No token found');
+        alert('Authentication error. Please login again.');
+        return;
+      }
+
+      if (!providerId || providerId === 'undefined') {
+        console.error('❌ [MessagingModal] Invalid providerId:', providerId);
+        alert('Error: Invalid provider ID');
         return;
       }
 
       // Backend expects: /messages/conversation/:otherUserId
       const url = `${API_URL}/messages/conversation/${providerId}`;
+      console.log('📡 [MessagingModal] Fetching from:', url);
 
       const response = await fetch(url, {
         headers: {
@@ -67,15 +76,31 @@ const MessagingModal = ({ isOpen, onClose, providerId, providerName, serviceId, 
         }
       });
 
+      console.log('📡 [MessagingModal] Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [MessagingModal] HTTP Error:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
       const data = await response.json();
       
-      console.log('📥 [MessagingModal] Fetched messages:', data.messages?.length || 0);
+      console.log('📥 [MessagingModal] Fetched data:', {
+        success: data.success,
+        messageCount: data.messages?.length || 0,
+        messages: data.messages?.slice(0, 2) // Log first 2 messages for debugging
+      });
       
       if (data.success) {
         setMessages(data.messages || []);
+      } else {
+        console.error('❌ [MessagingModal] API returned error:', data.message);
+        alert('Failed to load messages: ' + (data.message || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error('❌ [MessagingModal] Error fetching messages:', error);
+      alert('Error loading messages. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -89,6 +114,18 @@ const MessagingModal = ({ isOpen, onClose, providerId, providerName, serviceId, 
     try {
       setSending(true);
       const token = user?.token;
+      
+      if (!token) {
+        console.error('❌ [MessagingModal] No token for sending');
+        alert('Authentication error. Please login again.');
+        return;
+      }
+
+      if (!providerId || providerId === 'undefined') {
+        console.error('❌ [MessagingModal] Invalid providerId for sending:', providerId);
+        alert('Error: Invalid provider ID');
+        return;
+      }
       
       const payload = {
         otherUserId: providerId,
@@ -113,6 +150,14 @@ const MessagingModal = ({ isOpen, onClose, providerId, providerName, serviceId, 
         body: JSON.stringify(payload)
       });
 
+      console.log('📨 [MessagingModal] Send response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [MessagingModal] Send HTTP Error:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
       const data = await response.json();
       
       console.log('📨 [MessagingModal] Send response:', data);
@@ -123,7 +168,7 @@ const MessagingModal = ({ isOpen, onClose, providerId, providerName, serviceId, 
         console.log('✅ [MessagingModal] Messages refreshed');
       } else {
         console.error('❌ [MessagingModal] Send failed:', data.message);
-        alert('Failed to send message: ' + data.message);
+        alert('Failed to send message: ' + (data.message || 'Unknown error'));
       }
     } catch (error) {
       console.error('❌ [MessagingModal] Error sending message:', error);
@@ -176,7 +221,7 @@ const MessagingModal = ({ isOpen, onClose, providerId, providerName, serviceId, 
             </div>
           ) : (
             messages.map((message) => {
-              const isMyMessage = message.sender_type === 'traveller';
+              const isMyMessage = message.isMe || message.senderType === 'traveller';
               return (
                 <div
                   key={message.id}
@@ -189,11 +234,11 @@ const MessagingModal = ({ isOpen, onClose, providerId, providerName, serviceId, 
                         : 'bg-muted text-foreground'
                     }`}
                   >
-                    <p className="text-sm">{message.message_text}</p>
+                    <p className="text-sm">{message.text || message.message_text || 'Invalid Data'}</p>
                     <p className={`text-xs mt-1 ${
                       isMyMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'
                     }`}>
-                      {new Date(message.created_at).toLocaleTimeString([], { 
+                      {new Date(message.timestamp || message.created_at).toLocaleTimeString([], { 
                         hour: '2-digit', 
                         minute: '2-digit' 
                       })}

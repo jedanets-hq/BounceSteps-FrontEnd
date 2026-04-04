@@ -59,38 +59,76 @@ const ProviderMessagesTab = () => {
       const data = await messagesAPI.getConversations();
       
       if (data.success) {
-        setConversations(data.conversations || []);
+        console.log('📦 [PROVIDER MESSAGES] Conversations received:', data.conversations);
+        // Map the conversations to match expected format
+        const mappedConversations = (data.conversations || []).map(conv => ({
+          traveller_id: conv.otherUserId || conv.other_user_id,
+          traveller_name: `${conv.first_name || ''} ${conv.last_name || ''}`.trim() || 'Traveler',
+          service_id: conv.service_id || null,
+          service_title: conv.service_title || null,
+          last_message: conv.last_message || 'No messages yet',
+          last_message_time: conv.last_message_time || new Date().toISOString(),
+          unread_count: conv.unread_count || 0
+        }));
+        
+        console.log('📋 [PROVIDER MESSAGES] Mapped conversations:', mappedConversations);
+        setConversations(mappedConversations);
       } else {
         console.error('Failed to fetch conversations:', data.message);
+        setConversations([]);
       }
     } catch (error) {
       console.error('Error fetching conversations:', error);
+      setConversations([]);
     } finally {
       setLoading(false);
     }
   };
 
   const fetchMessages = async () => {
+    if (!selectedConversation || !selectedConversation.traveller_id) {
+      console.log('❌ [PROVIDER MESSAGES] No valid conversation selected');
+      setMessages([]);
+      return;
+    }
+    
     try {
+      console.log('📥 [PROVIDER MESSAGES] Fetching messages for:', selectedConversation);
+      
       const data = await messagesAPI.getMessages(
         selectedConversation.traveller_id,
         selectedConversation.service_id || null
       );
       
       if (data.success) {
-        setMessages(data.messages || []);
+        console.log('📦 [PROVIDER MESSAGES] Messages received:', data.messages);
+        // Map messages to expected format
+        const mappedMessages = (data.messages || []).map(msg => ({
+          id: msg.id,
+          message_text: msg.text || msg.message_text,
+          sender_type: msg.senderType || msg.sender_type,
+          created_at: msg.timestamp || msg.created_at
+        }));
+        
+        console.log('📋 [PROVIDER MESSAGES] Mapped messages:', mappedMessages);
+        setMessages(mappedMessages);
       } else {
         console.error('Failed to fetch messages:', data.message);
+        setMessages([]);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
+      setMessages([]);
     }
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !selectedConversation || !selectedConversation.traveller_id) {
+      console.log('❌ [PROVIDER MESSAGES] Cannot send message - missing data');
+      return;
+    }
 
     try {
       setSending(true);

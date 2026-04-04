@@ -1,5 +1,6 @@
  import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Navbar from '../../components/Navbar';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../contexts/AuthContext';
@@ -17,7 +18,6 @@ import { API_URL } from '../../utils/api';
 const ServiceProviderDashboard = () => {
   const { theme, toggleTheme, isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState(null); // NEW: Track service to edit
   const [myServices, setMyServices] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
@@ -777,37 +777,40 @@ const ServiceProviderDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Custom Header with Integrated Tabs */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-            {/* Logo */}
-            <Link to="/" className="flex items-center space-x-3">
-              <img 
-                src="/bouncesteps-logo.png" 
-                alt="BounceSteps" 
-                className="h-10 w-auto"
-                style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextElementSibling.style.display = 'flex';
-                }}
-              />
-              <div className="flex items-center space-x-2" style={{display: 'none'}}>
-                <div className="text-2xl font-bold text-primary">i</div>
-                <div className="text-xl font-light text-gray-400">Safari</div>
-                <div className="text-primary">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                  </svg>
-                </div>
-              </div>
-            </Link>
+    <div className="min-h-screen bg-background w-full overflow-x-hidden">
+      {/* Use consistent Navbar */}
+      <Navbar />
 
-            {/* Desktop Navigation Tabs — hidden on mobile */}
-            <nav className="hidden md:flex flex-1 items-center mx-2 lg:mx-4 overflow-hidden">
-              <div className="flex items-center w-full gap-0.5">
+      {/* Dashboard Content with Background Image and Glass Morphism */}
+      <div className="relative min-h-screen">
+        {/* Background Image */}
+        <div 
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-30"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80')"
+          }}
+        />
+        
+        {/* Gradient Overlay */}
+        <div className="fixed inset-0 bg-gradient-to-br from-background/90 via-background/80 to-background/90" />
+        <div className="fixed inset-0 bg-background/40" />
+
+        {/* Dashboard Navigation Tabs */}
+        <div className="relative z-10 pt-20 pb-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Dashboard Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+                Service Provider Dashboard
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Manage your services, bookings, and grow your business with BounceSteps
+              </p>
+            </div>
+
+            {/* Tab Navigation with Glass Morphism */}
+            <div className="bg-background/90 backdrop-blur-lg rounded-2xl border border-border/50 p-2 mb-8 shadow-lg">
+              <div className="flex flex-wrap gap-2 justify-center">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
@@ -816,227 +819,26 @@ const ServiceProviderDashboard = () => {
                       e.stopPropagation();
                       setActiveTab(tab.id);
                     }}
-                    className={`flex items-center justify-center gap-1 flex-1 min-w-0 px-1 py-1.5 rounded-full text-xs font-medium transition-all duration-300 ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                       activeTab === tab.id && tab.id !== 'home'
                         ? 'bg-primary text-primary-foreground shadow-md'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted active:scale-95'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                     }`}
-                    style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
-                    <Icon name={tab.icon} size={13} className={`flex-shrink-0 ${activeTab === tab.id && tab.id !== 'home' ? 'text-primary-foreground' : 'text-primary/70'}`} />
-                    <span className="truncate">{tab.name}</span>
+                    <Icon name={tab.icon} size={16} className={`${activeTab === tab.id && tab.id !== 'home' ? 'text-primary-foreground' : 'text-primary'}`} />
+                    <span>{tab.name}</span>
                   </button>
                 ))}
               </div>
-            </nav>
-
-            {/* Right controls */}
-            <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-full text-foreground/80 hover:bg-muted transition-all duration-200"
-                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                <Icon name={isDark ? 'Sun' : 'Moon'} size={18} />
-              </button>
-              {/* Hamburger — mobile only */}
-              <button
-                onClick={() => setMobileNavOpen(true)}
-                className="md:hidden flex items-center justify-center w-10 h-10 rounded-full text-foreground/80 hover:bg-muted transition-all duration-200"
-                aria-label="Open navigation menu"
-              >
-                <Icon name="Menu" size={22} />
-              </button>
             </div>
-          </div>
-        </div>
-      </header>
 
-      {/* Mobile Nav Drawer Overlay */}
-      {mobileNavOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-40 transition-opacity"
-          onClick={() => setMobileNavOpen(false)}
-        />
-      )}
-
-      {/* Mobile Nav Drawer Panel */}
-      <div
-        className={`md:hidden fixed top-0 right-0 bottom-0 w-[280px] sm:w-[320px] bg-card border-l border-border z-50 transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl ${
-          mobileNavOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="font-display font-medium text-lg">Menu</h2>
-          <button 
-            onClick={() => setMobileNavOpen(false)}
-            className="p-2 rounded-full text-muted-foreground hover:bg-muted transition-colors"
-          >
-            <Icon name="X" size={20} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-2">
-          {/* User Profile Summary */}
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/10 border border-primary/20 mb-4">
-            <div className="w-10 h-10 rounded-full bg-primary flex flex-shrink-0 items-center justify-center text-primary-foreground font-bold">
-              {user?.firstName?.charAt(0) || 'P'}
+            {/* Main Content with Glass Morphism */}
+            <div className="bg-background/90 backdrop-blur-lg rounded-2xl border border-border/50 p-6 shadow-lg">
+              {renderTabContent()}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="font-medium text-foreground truncate">{user?.firstName} {user?.lastName}</p>
-              <p className="text-xs text-primary flex items-center gap-1 truncate">
-                <Icon name="Briefcase" size={12} /> Service Provider
-              </p>
-            </div>
-          </div>
-
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pb-1">Navigation</p>
-
-          <div className="flex flex-col gap-1">
-            {tabs.map((tab) => {
-              const active = activeTab === tab.id && tab.id !== 'home';
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    if (tab.id === 'home') { navigate('/'); }
-                    else { setActiveTab(tab.id); }
-                    setMobileNavOpen(false);
-                  }}
-                  className={`flex items-center gap-3 w-full p-3 rounded-lg text-left transition-colors ${
-                    active 
-                      ? 'bg-primary text-primary-foreground font-medium shadow-sm' 
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  <Icon name={tab.icon} size={20} className={active ? 'text-primary-foreground' : 'text-muted-foreground'} />
-                  <span className="flex-1">{tab.name}</span>
-                  {!active && <Icon name="ChevronRight" size={16} className="opacity-40" />}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Additional Actions at the bottom if needed */}
-          <div className="mt-auto pt-6 pb-2">
-            <div className="h-px bg-border my-2 w-full" />
-            <button
-              onClick={() => {
-                setMobileNavOpen(false);
-                logout();
-              }}
-              className="flex items-center gap-3 w-full p-3 rounded-lg text-left text-red-500 hover:bg-red-500/10 transition-colors"
-            >
-              <Icon name="LogOut" size={20} />
-              <span className="font-medium">Sign Out</span>
-            </button>
           </div>
         </div>
       </div>
-
-
-
-      <div className="pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Main Content - Full Width */}
-          <div>
-            {renderTabContent()}
-          </div>
-        </div>
-      </div>
-
-      {/* Footer - Only on Home Tab */}
-      {activeTab === 'home' && (
-        <footer className="bg-foreground text-background py-12 border-t border-border">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div className="md:col-span-2">
-                <div className="flex items-center space-x-2 mb-4">
-                  <img 
-                    src="/bouncesteps-logo.png" 
-                    alt="BounceSteps" 
-                    className="h-10 w-auto"
-                    style={{ filter: 'brightness(0) invert(1)' }}
-                  />
-                  <div className="flex flex-col">
-                    <span className="font-display font-medium text-lg leading-none">
-                      BounceSteps
-                    </span>
-                    <span className="font-body text-xs text-background/70 leading-none">
-                      Powered by JEDA NETWORKS
-                    </span>
-                  </div>
-                </div>
-                <p className="text-background/80 text-sm leading-relaxed max-w-md mb-4">
-                  Transforming travel through authentic cultural experiences, 
-                  intelligent planning, and personalized service that connects 
-                  you with the world's most extraordinary destinations.
-                </p>
-                
-                {/* JEDA NETWORKS Attribution */}
-                <div className="bg-background/10 rounded-lg p-4 mb-4">
-                  <h4 className="font-semibold text-background mb-2">Developed & Owned by JEDA NETWORKS</h4>
-                  <div className="text-xs text-background/80 space-y-1">
-                    <p><strong>Partners:</strong></p>
-                    <ul className="list-disc list-inside ml-2 space-y-0.5">
-                      <li>JOCTAN MFUNGO</li>
-                      <li>ELIZABETH ERNEST</li>
-                      <li>DANFORD MWANKENJA</li>
-                      <li>ASTERIA MOMBO</li>
-                    </ul>
-                    <p className="mt-2"><strong>Technology:</strong> Advanced Travel Solutions & Innovation</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-background mb-4">Quick Links</h4>
-                <ul className="space-y-2 text-sm text-background/80">
-                  <li><a href="/destination-discovery" className="hover:text-background transition-colors">Destinations</a></li>
-                  <li><a href="/journey-planner" className="hover:text-background transition-colors">Plan Journey</a></li>
-                  <li>
-                    <button 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setActiveTab('about');
-                      }} 
-                      className="hover:text-background transition-colors text-left"
-                    >
-                      About BounceSteps
-                    </button>
-                  </li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 className="font-semibold text-background mb-4">Support</h4>
-                <ul className="space-y-2 text-sm text-background/80">
-                  <li><a href="#" className="hover:text-background transition-colors">24/7 Concierge</a></li>
-                  <li><a href="#" className="hover:text-background transition-colors">Travel Insurance</a></li>
-                  <li><a href="#" className="hover:text-background transition-colors">Emergency Support</a></li>
-                  <li><a href="#" className="hover:text-background transition-colors">Contact Us</a></li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="border-t border-background/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-              <div className="text-center md:text-left">
-                <p className="text-background/60 text-sm">
-                  {new Date()?.getFullYear()} BounceSteps. All rights reserved.
-                </p>
-                <p className="text-sm text-background/60">
-                  2024 Developed & Owned by JEDA NETWORKS. All rights reserved.
-                </p>
-              </div>
-              <div className="flex space-x-6 mt-4 md:mt-0">
-                <a href="#" className="text-background/60 hover:text-background text-sm transition-colors">Privacy Policy</a>
-                <a href="#" className="text-background/60 hover:text-background text-sm transition-colors">Terms of Service</a>
-                <a href="#" className="text-background/60 hover:text-background text-sm transition-colors">Cookie Policy</a>
-              </div>
-            </div>
-          </div>
-        </footer>
-      )}
     </div>
   );
 };

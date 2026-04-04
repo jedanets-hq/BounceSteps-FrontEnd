@@ -5,9 +5,10 @@
   "env": {
     "VITE_API_URL": "https://api.bouncesteps.com/api",
     "VITE_API_BASE_URL": "https://api.bouncesteps.com/api",
+    "VITE_FRONTEND_URL": "https://www.bouncesteps.com",
+    "VITE_NODE_ENV": "production",
     "VITE_GOOGLE_CLIENT_ID": "392429231515-psehkvr2jtfapv4cp0r1tolpe0l6em21.apps.googleusercontent.com"
   },
-  "redirects": [],
   "rewrites": [
     {
       "source": "/(.*)",
