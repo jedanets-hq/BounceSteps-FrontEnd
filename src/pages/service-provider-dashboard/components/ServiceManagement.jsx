@@ -38,10 +38,10 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
     paymentMethods: {
       bankTransfer: { enabled: false, bankName: '', accountName: '', accountNumber: '', swiftCode: '' }
     },
-    // Contact Information
+    // Contact Information - AUTO-ENABLE email by default
     contactInfo: {
-      email: { enabled: false, address: '' },
-      whatsapp: { enabled: false, number: '' }
+      email: { enabled: true, address: user?.email || '' }, // Auto-enable and pre-fill with user's email
+      whatsapp: { enabled: false, number: user?.phone || '' } // Pre-fill phone if available
     }
   });
   
@@ -226,9 +226,10 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
       paymentMethods: {
         bankTransfer: { enabled: false, bankName: '', accountName: '', accountNumber: '', swiftCode: '' }
       },
+      // AUTO-ENABLE email by default when resetting
       contactInfo: {
-        email: { enabled: false, address: '' },
-        whatsapp: { enabled: false, number: '' }
+        email: { enabled: true, address: user?.email || '' }, // Auto-enable and pre-fill
+        whatsapp: { enabled: false, number: user?.phone || '' } // Pre-fill phone if available
       }
     });
     setLocation({ region: '', district: '', ward: '', street: '' });
