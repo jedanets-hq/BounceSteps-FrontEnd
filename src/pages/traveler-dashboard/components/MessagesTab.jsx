@@ -318,7 +318,7 @@ const MessagesTab = () => {
             </div>
 
             {/* Chat Body - Messages with WhatsApp-style bubbles */}
-            <div className={`flex-1 overflow-y-auto py-4 bg-gradient-to-b from-gray-50 to-gray-100 ${isMobileView ? 'px-2' : 'px-3'}`}>
+            <div className={`flex-1 overflow-y-auto py-4 bg-gradient-to-b from-gray-50 to-gray-100 ${isMobileView ? 'px-3' : 'px-3'}`}>
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
@@ -355,8 +355,17 @@ const MessagesTab = () => {
                         )}
                         
                         {/* WhatsApp-style Message Bubble */}
-                        <div className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} ${isMobileView ? 'px-1' : ''}`}>
-                          <div className={`${isMobileView ? 'max-w-[80%]' : 'max-w-[75%]'} flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
+                        <div 
+                          className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+                          style={{ width: isMobileView ? '100%' : 'auto' }}
+                        >
+                          <div 
+                            className={`flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}
+                            style={{ 
+                              width: isMobileView ? 'fit-content' : 'auto',
+                              maxWidth: isMobileView ? '90%' : '75%'
+                            }}
+                          >
                             <div
                               className={`shadow-sm ${
                                 isMyMessage
@@ -364,23 +373,22 @@ const MessagesTab = () => {
                                   : 'bg-white/90 text-gray-900'
                               }`}
                               style={{ 
-                                padding: isMobileView ? '8px 12px' : '0.75rem 0.75rem',
-                                borderRadius: isMobileView ? '10px' : '1rem',
-                                minHeight: 'auto',
+                                padding: isMobileView ? '10px 14px' : '0.75rem 0.75rem',
+                                borderRadius: isMobileView ? '12px' : '1rem',
+                                width: isMobileView ? 'fit-content' : 'auto',
+                                maxWidth: isMobileView ? '100%' : 'none',
                                 overflow: 'visible',
-                                boxSizing: 'border-box',
-                                maxWidth: '100%'
+                                boxSizing: 'border-box'
                               }}
                             >
                               <p 
                                 className={`${isMobileView ? 'text-sm' : 'text-sm'} leading-relaxed`}
                                 style={{ 
-                                  wordBreak: 'break-word', 
+                                  wordWrap: 'break-word', 
                                   overflowWrap: 'break-word',
-                                  whiteSpace: 'pre-wrap',
+                                  whiteSpace: 'normal',
                                   margin: 0,
-                                  padding: 0,
-                                  maxWidth: '100%'
+                                  padding: 0
                                 }}
                               >
                                 {message.text}
