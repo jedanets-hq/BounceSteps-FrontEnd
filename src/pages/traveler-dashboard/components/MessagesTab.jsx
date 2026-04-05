@@ -360,12 +360,14 @@ const MessagesTab = () => {
                             <div
                               className={`rounded-2xl shadow-sm ${
                                 isMyMessage
-                                  ? 'bg-primary text-white rounded-br-md'
-                                  : 'bg-white/90 text-gray-900 rounded-bl-md'
+                                  ? 'bg-primary text-white'
+                                  : 'bg-white/90 text-gray-900'
                               }`}
                               style={{ 
                                 padding: isMobileView ? '12px' : '0.75rem 0.75rem',
-                                borderRadius: isMobileView ? '16px' : '1rem'
+                                borderRadius: isMobileView ? '16px' : '1rem',
+                                minHeight: isMobileView ? '40px' : 'auto',
+                                overflow: 'visible'
                               }}
                             >
                               <p 
@@ -374,8 +376,9 @@ const MessagesTab = () => {
                                   wordBreak: 'break-word', 
                                   overflowWrap: 'anywhere',
                                   whiteSpace: 'pre-wrap',
-                                  display: 'block',
-                                  width: '100%'
+                                  display: 'inline-block',
+                                  width: '100%',
+                                  minWidth: 0
                                 }}
                               >
                                 {message.text}

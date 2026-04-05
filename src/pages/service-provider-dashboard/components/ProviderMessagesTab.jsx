@@ -341,7 +341,9 @@ const ProviderMessagesTab = () => {
                               }`}
                               style={{ 
                                 padding: isMobileView ? '12px' : '0.75rem 0.75rem',
-                                borderRadius: isMobileView ? '16px' : '1rem'
+                                borderRadius: isMobileView ? '16px' : '1rem',
+                                minHeight: isMobileView ? '40px' : 'auto',
+                                overflow: 'visible'
                               }}
                             >
                               <p 
@@ -350,8 +352,9 @@ const ProviderMessagesTab = () => {
                                   wordBreak: 'break-word', 
                                   overflowWrap: 'anywhere',
                                   whiteSpace: 'pre-wrap',
-                                  display: 'block',
-                                  width: '100%'
+                                  display: 'inline-block',
+                                  width: '100%',
+                                  minWidth: 0
                                 }}
                               >
                                 {message.message_text}
