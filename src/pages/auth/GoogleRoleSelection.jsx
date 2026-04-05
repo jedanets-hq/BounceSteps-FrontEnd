@@ -20,10 +20,6 @@ const SimpleHeader = () => (
             alt="BounceSteps" 
             className="h-10 w-auto"
             onError={(e) => {
-              e.target.src = '/bouncesteps-logo.png'; // Fallback
-            }}
-          />
-            onError={(e) => {
               e.target.style.display = 'none';
             }}
           />
@@ -281,19 +277,17 @@ const GoogleRoleSelection = () => {
   const [serviceLocation, setServiceLocation] = useState({ region: '', district: '', ward: '', street: '' });
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [description, setDescription] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  // Check if user is already logged in and redirect to dashboard
+  // Check if user is already logged in and redirect to home
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem('isafari_user');
       if (savedUser) {
         const userData = JSON.parse(savedUser);
         if (userData && userData.token && userData.userType) {
-          console.log('✅ User already logged in, redirecting to dashboard');
-          const dashboardPath = userData.userType === 'service_provider' 
-            ? '/service-provider-dashboard' 
-            : '/traveler-dashboard';
-          window.location.href = dashboardPath;
+          console.log('✅ User already logged in, redirecting to home');
+          window.location.href = '/';
           return;
         }
       }
@@ -479,11 +473,8 @@ const GoogleRoleSelection = () => {
           return;
         }
         
-        // Redirect to appropriate dashboard based on user type
-        const targetPath = data.user.userType === 'service_provider' 
-          ? '/service-provider-dashboard' 
-          : '/traveler-dashboard';
-        console.log('🚀 Redirecting to dashboard:', targetPath);
+        // Redirect to home page after successful registration
+        console.log('🚀 Redirecting to home page');
         console.log('👤 User type:', data.user.userType);
         
         // CRITICAL: Dispatch storage event to notify AuthContext immediately
@@ -515,7 +506,7 @@ const GoogleRoleSelection = () => {
         
         // Use window.location.href for navigation (allows back button)
         // This is more reliable than replace() for OAuth flows
-        window.location.href = targetPath;
+        window.location.href = '/';
       } else {
         console.error('❌ Auto-registration failed:', data.message);
         setError(data.message || 'Registration failed. Please try again.');
@@ -755,6 +746,11 @@ const GoogleRoleSelection = () => {
   const handleNewUserSubmit = async (e) => {
     e.preventDefault();
     
+    if (!acceptedTerms) {
+      setError('Please accept the Privacy Policy, Terms & Conditions to continue.');
+      return;
+    }
+    
     // Validate role selection is mandatory
     if (!selectedRole) {
       setError('Please select how you want to use BounceSteps');
@@ -831,6 +827,11 @@ const GoogleRoleSelection = () => {
   // Handle OAuth callback flow - complete registration
   const handleOAuthSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!acceptedTerms) {
+      setError('Please accept the Privacy Policy, Terms & Conditions to continue.');
+      return;
+    }
     
     // Validate role selection is mandatory
     if (!selectedRole) {
@@ -943,11 +944,8 @@ const GoogleRoleSelection = () => {
           return;
         }
         
-        // Redirect to appropriate dashboard based on user type
-        const targetPath = data.user.userType === 'service_provider' 
-          ? '/service-provider-dashboard' 
-          : '/traveler-dashboard';
-        console.log('🚀 Redirecting to dashboard:', targetPath);
+        // Redirect to home page after successful registration
+        console.log('🚀 Redirecting to home page');
         console.log('👤 User type:', data.user.userType);
         
         // CRITICAL: Dispatch storage event to notify AuthContext immediately
@@ -975,7 +973,7 @@ const GoogleRoleSelection = () => {
         }
         
         // Use window.location.href for more reliable navigation after OAuth
-        window.location.href = targetPath;
+        window.location.href = '/';
       } else {
         setError(data.message || 'Registration failed. Please try again.');
         setIsLoading(false);
@@ -1299,11 +1297,35 @@ const GoogleRoleSelection = () => {
                 </div>
               )}
 
+              {/* Terms & Conditions Checkbox */}
+              <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-lg border border-border">
+                <input
+                  type="checkbox"
+                  id="acceptTermsGoogle"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary cursor-pointer"
+                  required
+                />
+                <label htmlFor="acceptTermsGoogle" className="text-sm text-muted-foreground cursor-pointer">
+                  I accept the{' '}
+                  <a
+                    href="/legal"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-medium"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Privacy Policy, Terms & Conditions
+                  </a>
+                </label>
+              </div>
+
               {/* Submit Button */}
               <Button
                 type="submit"
                 fullWidth
-                disabled={isLoading || !selectedRole}
+                disabled={isLoading || !selectedRole || !acceptedTerms}
                 className="mt-6"
               >
                 {isLoading ? (

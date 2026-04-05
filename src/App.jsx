@@ -10,6 +10,7 @@ import VersionChecker from './components/VersionChecker';
 import HomePage from './pages/homepage';
 import LoginPage from './pages/auth/login';
 import RegisterPage from './pages/auth/register';
+import ForgotPassword from './pages/auth/ForgotPassword';
 import OAuthCallback from './pages/auth/OAuthCallback';
 import GoogleRoleSelection from './pages/auth/GoogleRoleSelection';
 import Dashboard from './pages/dashboard';
@@ -19,6 +20,7 @@ import ServiceProviderDashboard from './pages/service-provider-dashboard';
 import AboutPage from './pages/about';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import LegalDocuments from './pages/LegalDocuments';
 import TestDashboard from './pages/TestDashboard';
 import DestinationDiscovery from './pages/DestinationDiscovery';
 import ServiceBooking from './pages/ServiceBooking';
@@ -42,6 +44,7 @@ function App() {
                   <Route path="/" element={<HomePage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/auth/callback" element={<OAuthCallback />} />
                   <Route path="/google-role-selection" element={<GoogleRoleSelection />} />
                   <Route path="/test-dashboard" element={<TestDashboard />} />
@@ -53,6 +56,7 @@ function App() {
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/terms" element={<Terms />} />
+                  <Route path="/legal" element={<LegalDocuments />} />
                   <Route path="/destination-discovery" element={<DestinationDiscovery />} />
                   <Route path="/service-booking" element={<ServiceBooking />} />
                   <Route path="/journey-planner" element={<JourneyPlannerEnhanced />} />

@@ -148,7 +148,7 @@ const OAuthCallback = () => {
             
             setStatus('success');
             
-            // Redirect to home page after successful Google login
+            // Redirect to home page after successful Google login/registration
             console.log('🚀 Redirecting to home page');
             
             // Use longer delay to ensure localStorage is fully committed before navigation

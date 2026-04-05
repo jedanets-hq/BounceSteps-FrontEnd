@@ -110,6 +110,10 @@ All colors MUST be HSL.
     --input: 143 20% 11%;
     --ring: 143 80% 60%;
 
+    /* Section colors for dark mode */
+    --section-green: 145 60% 50%;
+    --section-green-light: 145 35% 15%;
+
     /* Dark mode gradients */
     --gradient-primary: linear-gradient(135deg, hsl(143 36% 4%), hsl(143 36% 8%));
     --gradient-accent: linear-gradient(135deg, hsl(143 20% 11%), hsl(161 84% 20%));

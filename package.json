@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node server.cjs",
     "dev": "vite",
+    "prebuild": "node -e \"const fs=require('fs');const hash=Date.now().toString(36);fs.writeFileSync('public/version.json',JSON.stringify({buildHash:hash,buildTime:new Date().toISOString(),version:require('./package.json').version},null,2))\"",
     "build": "vite build",
     "preview": "vite preview",
     "test": "jest",

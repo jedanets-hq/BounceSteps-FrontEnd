@@ -99,7 +99,10 @@ const HeroSection = () => {
             width={1920}
             height={1080}
           />
-          <div className="absolute inset-0 gradient-fade-white" />
+          {/* Light mode gradient */}
+          <div className="absolute inset-0 gradient-fade-white dark:hidden" />
+          {/* Dark mode gradient - darker overlay for better text visibility */}
+          <div className="absolute inset-0 hidden dark:block bg-gradient-to-b from-background/60 via-background/70 to-background/90" />
         </div>
 
         {/* Content */}
@@ -277,7 +280,7 @@ const HeroSection = () => {
       {/* Search Section - Mobile - Only show for travelers */}
       {(!isAuthenticated || user?.userType !== 'service_provider') && (
         <div className="md:hidden bg-transparent px-4 py-2 relative z-30 -mt-8">
-          <div className="bg-background/70 backdrop-blur-md rounded-xl shadow-lg p-3 border border-border/50">
+          <div className="bg-card/95 backdrop-blur-md rounded-xl shadow-lg p-3 border border-border">
             <div className="space-y-3">
               {/* From */}
               <div className="space-y-1">
@@ -290,7 +293,7 @@ const HeroSection = () => {
                   placeholder="Zanzibar, Tanzania"
                   value={searchData.from}
                   onChange={(e) => handleInputChange('from', e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-border/50 bg-background/80 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent text-sm"
                 />
               </div>
 
@@ -305,7 +308,7 @@ const HeroSection = () => {
                   placeholder="Enter Destination"
                   value={searchData.to}
                   onChange={(e) => handleInputChange('to', e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-border/50 bg-background/80 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent text-sm"
                 />
               </div>
 
@@ -320,7 +323,7 @@ const HeroSection = () => {
                     type="date"
                     value={searchData.checkIn}
                     onChange={(e) => handleInputChange('checkIn', e.target.value)}
-                    className="w-full px-2 py-2 rounded-lg border border-border/50 bg-background/80 text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent text-sm"
+                    className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent text-sm"
                   />
                 </div>
                 <div className="space-y-1">
@@ -332,7 +335,7 @@ const HeroSection = () => {
                     type="date"
                     value={searchData.checkOut}
                     onChange={(e) => handleInputChange('checkOut', e.target.value)}
-                    className="w-full px-2 py-2 rounded-lg border border-border/50 bg-background/80 text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent text-sm"
+                    className="w-full px-2 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent text-sm"
                   />
                 </div>
               </div>
@@ -346,7 +349,7 @@ const HeroSection = () => {
                 <select
                   value={searchData.travelers}
                   onChange={(e) => handleInputChange('travelers', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 rounded-lg border border-border/50 bg-background/80 text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent text-sm"
                 >
                   {[1,2,3,4,5,6,7,8].map(num => (
                     <option key={num} value={num}>{num} {num === 1 ? 'Traveler' : 'Travelers'}</option>
@@ -381,7 +384,7 @@ const HeroSection = () => {
             {/* Desktop Cards */}
             <div className="hidden md:flex gap-8 justify-center">
               {/* Traveler Card */}
-              <div className="flex-1 bg-background/90 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-border">
+              <div className="flex-1 bg-card/95 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-border">
                 <div className="text-center mb-4">
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                     <User size={32} className="text-primary" />
@@ -419,7 +422,7 @@ const HeroSection = () => {
               </div>
 
               {/* Service Provider Card */}
-              <div className="flex-1 bg-background/90 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-border">
+              <div className="flex-1 bg-card/95 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-border">
                 <div className="text-center mb-4">
                   <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Briefcase size={32} className="text-secondary" />
@@ -460,7 +463,7 @@ const HeroSection = () => {
             {/* Mobile Cards */}
             <div className="md:hidden space-y-4">
               {/* Traveler Card */}
-              <div className="bg-background/90 backdrop-blur-lg rounded-2xl shadow-xl p-4 border border-border">
+              <div className="bg-card/95 backdrop-blur-lg rounded-2xl shadow-xl p-4 border border-border">
                 <div className="text-center mb-3">
                   <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
                     <User size={24} className="text-primary" />
@@ -498,7 +501,7 @@ const HeroSection = () => {
               </div>
 
               {/* Service Provider Card */}
-              <div className="bg-background/90 backdrop-blur-lg rounded-2xl shadow-xl p-4 border border-border">
+              <div className="bg-card/95 backdrop-blur-lg rounded-2xl shadow-xl p-4 border border-border">
                 <div className="text-center mb-3">
                   <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Briefcase size={24} className="text-secondary" />

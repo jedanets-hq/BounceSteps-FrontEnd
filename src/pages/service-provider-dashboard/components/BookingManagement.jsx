@@ -113,7 +113,7 @@ const BookingManagement = ({ bookings = [], onUpdateBookingStatus, onDeleteBooki
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-xl font-medium">Pre-Order Management</h3>
-        <Button variant="outline" size="sm" onClick={() => alert('Export functionality will be implemented')}>
+        <Button variant="outline" size="sm" onClick={() => alert('Export functionality will be implemented')} className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600">
           <Icon name="Download" size={16} />
           Export
         </Button>

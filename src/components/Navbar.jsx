@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Sun, Moon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   
   // Dynamic links based on user type
   const getLinks = () => {
@@ -145,6 +147,21 @@ const Navbar = () => {
               </button>
             </li>
           ))}
+          {/* Theme Toggle Button */}
+          <li>
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-primary/10 transition-colors text-foreground/80 hover:text-primary"
+              aria-label="Toggle theme"
+              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            >
+              {theme === 'light' ? (
+                <Moon size={20} />
+              ) : (
+                <Sun size={20} />
+              )}
+            </button>
+          </li>
         </ul>
         <button
           className="md:hidden text-foreground"
@@ -169,6 +186,26 @@ const Navbar = () => {
               {l}
             </button>
           ))}
+          {/* Theme Toggle for Mobile */}
+          <button
+            onClick={() => {
+              toggleTheme();
+              setOpen(false);
+            }}
+            className="flex items-center gap-2 py-2 font-medium w-full text-left transition-colors text-foreground/80 hover:text-primary mt-2 pt-4 border-t border-border"
+          >
+            {theme === 'light' ? (
+              <>
+                <Moon size={18} />
+                <span>Dark Mode</span>
+              </>
+            ) : (
+              <>
+                <Sun size={18} />
+                <span>Light Mode</span>
+              </>
+            )}
+          </button>
         </div>
       )}
     </nav>

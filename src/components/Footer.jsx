@@ -8,8 +8,7 @@ const Footer = () => {
     { name: "Destinations", path: "/destination-discovery" },
     { name: "Services", path: "/destination-discovery" },
     { name: "Contact", path: "/about" },
-    { name: "Privacy", path: "/privacy" },
-    { name: "Terms", path: "/terms" }
+    { name: "Privacy, Terms & Conditions", path: "/legal" }
   ];
 
   const handleLinkClick = (link) => {
@@ -25,7 +24,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-foreground text-primary-foreground py-8 w-full">
+    <footer className="bg-card border-t border-border py-8 w-full">
       <div className="w-full px-4 content-padding">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Logo and Company Info */}
@@ -39,9 +38,8 @@ const Footer = () => {
                   e.target.style.display = 'none';
                 }}
               />
-              <span className="font-bold text-lg">BounceSteps</span>
+              <span className="font-bold text-lg text-foreground">BounceSteps</span>
             </div>
-            <span className="text-sm text-primary-foreground/50">● Sovare</span>
           </div>
           
           <div className="flex flex-wrap items-center gap-6">
@@ -49,7 +47,7 @@ const Footer = () => {
               <button
                 key={link.name}
                 onClick={() => handleLinkClick(link)}
-                className="text-sm text-primary-foreground/70 hover:text-primary-foreground transition-colors cursor-pointer"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 {link.name}
               </button>
@@ -61,7 +59,7 @@ const Footer = () => {
               {["f", "𝕏", "📷"].map((icon, i) => (
                 <div
                   key={i}
-                  className="w-8 h-8 rounded-full border border-primary-foreground/30 flex items-center justify-center text-xs text-primary-foreground/70 hover:text-primary-foreground hover:border-primary-foreground transition-colors cursor-pointer"
+                  className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-xs text-muted-foreground hover:text-foreground hover:border-foreground transition-colors cursor-pointer"
                 >
                   {icon}
                 </div>
@@ -69,7 +67,7 @@ const Footer = () => {
             </div>
           </div>
         </div>
-        <p className="text-center text-xs text-primary-foreground/40 mt-6">
+        <p className="text-center text-xs text-muted-foreground mt-6">
           © 2026 BounceSteps. All rights reserved.
         </p>
       </div>

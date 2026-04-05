@@ -167,13 +167,13 @@ const ProviderMessagesTab = () => {
   }
 
   return (
-    <div className="h-[80vh] min-h-[600px] bg-gray-100 rounded-2xl shadow-lg overflow-hidden flex">
+    <div className="h-[80vh] min-h-[600px] bg-gray-100 dark:bg-gray-900 rounded-2xl shadow-lg overflow-hidden flex">
       {/* Left Sidebar - Conversations List */}
       <div className={`${
         isMobileView && selectedConversation ? 'hidden' : 'flex'
-      } ${isMobileView ? 'w-full' : 'w-80'} border-r border-white/20 flex-col bg-white`}>
+      } ${isMobileView ? 'w-full' : 'w-80'} border-r border-white/20 dark:border-gray-700 flex-col bg-white dark:bg-gray-800`}>
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-primary text-white">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 dark:border-gray-700 bg-primary text-white">
           <h2 className="text-lg font-semibold">Messages</h2>
           <div className="flex items-center gap-1">
             <button className="p-2 hover:bg-white/10 rounded-full transition-all duration-200">
@@ -186,24 +186,24 @@ const ProviderMessagesTab = () => {
         </div>
         
         {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto bg-white">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800">
           {conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
                 <Icon name="MessageCircle" size={32} className="text-gray-400" />
               </div>
-              <p className="text-gray-900 font-medium mb-1">No messages yet</p>
-              <p className="text-sm text-gray-500">Travelers will message you about your services</p>
+              <p className="text-gray-900 dark:text-gray-100 font-medium mb-1">No messages yet</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Travelers will message you about your services</p>
             </div>
           ) : (
             conversations.map((conv) => (
               <button
                 key={`${conv.traveller_id}-${conv.service_id || 'general'}`}
                 onClick={() => setSelectedConversation(conv)}
-                className={`w-full p-3 text-left transition-all duration-200 hover:bg-gray-50 border-b border-gray-100 ${
+                className={`w-full p-3 text-left transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 ${
                   selectedConversation?.traveller_id === conv.traveller_id && 
                   selectedConversation?.service_id === conv.service_id
-                    ? 'bg-primary/5 border-l-4 border-l-primary'
+                    ? 'bg-primary/5 dark:bg-primary/10 border-l-4 border-l-primary'
                     : ''
                 }`}
               >
@@ -216,15 +216,15 @@ const ProviderMessagesTab = () => {
                       </span>
                     </div>
                     {/* Online status indicator */}
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-gray-900 truncate text-sm">
+                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate text-sm">
                         {conv.traveller_name || 'Traveler'}
                       </p>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         {new Date(conv.last_message_time).toLocaleTimeString('en-US', { 
                           hour: 'numeric',
                           minute: '2-digit'
@@ -232,7 +232,7 @@ const ProviderMessagesTab = () => {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="text-xs text-gray-600 truncate pr-2">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 truncate pr-2">
                         {conv.last_message}
                       </p>
                       {conv.unread_count > 0 && (
@@ -252,7 +252,7 @@ const ProviderMessagesTab = () => {
       {/* Right Panel - Active Chat View */}
       <div className={`${
         isMobileView && !selectedConversation ? 'hidden' : 'flex'
-      } flex-1 flex-col bg-gray-50`}>
+      } flex-1 flex-col bg-gray-50 dark:bg-gray-900`}>
         {selectedConversation ? (
           <>
             {/* Chat Header - Sticky Top */}
@@ -299,14 +299,14 @@ const ProviderMessagesTab = () => {
             </div>
 
             {/* Chat Body - Messages with WhatsApp-style bubbles */}
-            <div className={`flex-1 overflow-y-auto py-4 bg-gradient-to-b from-gray-50 to-gray-100 ${isMobileView ? 'px-3' : 'px-3'}`}>
+            <div className={`flex-1 overflow-y-auto py-4 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 ${isMobileView ? 'px-3' : 'px-3'}`}>
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                  <div className="w-16 h-16 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center mb-4 shadow-sm">
                     <Icon name="MessageCircle" size={32} className="text-gray-400" />
                   </div>
-                  <p className="text-gray-900 font-medium mb-1">No messages yet</p>
-                  <p className="text-sm text-gray-500">Send a message to start the conversation</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium mb-1">No messages yet</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Send a message to start the conversation</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -319,7 +319,7 @@ const ProviderMessagesTab = () => {
                       <React.Fragment key={message.id}>
                         {showDate && (
                           <div className="flex justify-center my-4">
-                            <span className="text-[10px] text-gray-500 bg-white/80 px-3 py-1 rounded-full shadow-sm">
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400 bg-white/80 dark:bg-gray-700/80 px-3 py-1 rounded-full shadow-sm">
                               {new Date(message.created_at).toLocaleDateString('en-US', { 
                                 weekday: 'short',
                                 month: 'short', 
@@ -346,7 +346,7 @@ const ProviderMessagesTab = () => {
                               className={`shadow-sm ${
                                 isMyMessage
                                   ? 'bg-primary text-white'
-                                  : 'bg-white/90 text-gray-900'
+                                  : 'bg-white/90 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                               }`}
                               style={{ 
                                 padding: isMobileView ? '10px 14px' : '0.75rem 0.75rem',
@@ -389,13 +389,13 @@ const ProviderMessagesTab = () => {
             </div>
 
             {/* Input Area - WhatsApp-style Bottom Bar */}
-            <div className="flex items-center gap-2 px-3 py-2 border-t border-white/10 bg-white sticky bottom-0">
+            <div className="flex items-center gap-2 px-3 py-2 border-t border-white/10 dark:border-gray-700 bg-white dark:bg-gray-800 sticky bottom-0">
               {/* Optional emoji/attachment buttons */}
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200">
-                <Icon name="Smile" size={18} className="text-gray-600" />
+              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all duration-200">
+                <Icon name="Smile" size={18} className="text-gray-600 dark:text-gray-400" />
               </button>
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200">
-                <Icon name="Paperclip" size={18} className="text-gray-600" />
+              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all duration-200">
+                <Icon name="Paperclip" size={18} className="text-gray-600 dark:text-gray-400" />
               </button>
               
               {/* Input field */}
@@ -405,7 +405,7 @@ const ProviderMessagesTab = () => {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type a message..."
-                  className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition-all duration-200"
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white dark:focus:bg-gray-600 transition-all duration-200"
                   disabled={sending}
                 />
                 
@@ -426,12 +426,12 @@ const ProviderMessagesTab = () => {
           </>
         ) : (
           /* No conversation selected */
-          <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-50">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm">
+          <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-gray-50 dark:bg-gray-900">
+            <div className="w-24 h-24 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center mb-6 shadow-sm">
               <Icon name="MessageCircle" size={48} className="text-gray-400" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Select a conversation</h3>
-            <p className="text-gray-500 max-w-sm">Choose a conversation from the list to view messages and start chatting</p>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Select a conversation</h3>
+            <p className="text-gray-500 dark:text-gray-400 max-w-sm">Choose a conversation from the list to view messages and start chatting</p>
           </div>
         )}
       </div>
