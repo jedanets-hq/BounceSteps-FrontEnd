@@ -299,7 +299,7 @@ const ProviderMessagesTab = () => {
             </div>
 
             {/* Chat Body - Messages with WhatsApp-style bubbles */}
-            <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-4 bg-gradient-to-b from-gray-50 to-gray-100">
+            <div className="flex-1 overflow-y-auto px-3 py-4 bg-gradient-to-b from-gray-50 to-gray-100">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
@@ -332,21 +332,22 @@ const ProviderMessagesTab = () => {
                         
                         {/* WhatsApp-style Message Bubble */}
                         <div className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`${isMobileView ? 'max-w-[65%]' : 'max-w-[75%]'} flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
+                          <div className={`${isMobileView ? 'max-w-[80%]' : 'max-w-[75%]'} flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
                             <div
-                              className={`${isMobileView ? 'px-2.5 py-2' : 'px-3 py-2'} rounded-2xl shadow-sm ${
+                              className={`${isMobileView ? 'px-3 py-2.5' : 'px-3 py-2'} rounded-2xl shadow-sm ${
                                 isMyMessage
                                   ? 'bg-primary text-white rounded-br-md'
                                   : 'bg-white/90 text-gray-900 rounded-bl-md'
                               }`}
                             >
                               <p 
-                                className={`${isMobileView ? 'text-[13px]' : 'text-sm'} leading-relaxed`}
+                                className={`${isMobileView ? 'text-sm' : 'text-sm'} leading-relaxed`}
                                 style={{ 
                                   wordBreak: 'break-word', 
                                   overflowWrap: 'anywhere',
                                   whiteSpace: 'pre-wrap',
-                                  maxWidth: '100%'
+                                  display: 'block',
+                                  width: '100%'
                                 }}
                               >
                                 {message.message_text}
