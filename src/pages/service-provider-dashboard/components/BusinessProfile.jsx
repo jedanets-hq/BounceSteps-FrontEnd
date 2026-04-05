@@ -615,11 +615,11 @@ const BusinessProfile = () => {
       </div>
 
       {/* Profile Picture Upload */}
-      <div className="bg-card border border-border rounded-lg p-6">
+      <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
         <h4 className="font-medium text-foreground mb-4">Profile Picture</h4>
-        <div className="flex items-center space-x-6">
-          <div className="relative">
-            <div className="w-28 h-28 rounded-full border-4 border-primary/20 overflow-hidden" style={{ minWidth: '7rem', minHeight: '7rem' }}>
+        <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+          <div className="relative flex-shrink-0">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-primary/20 overflow-hidden" style={{ minWidth: '5rem', minHeight: '5rem' }}>
               <img 
                 src={profileImage || user?.profileImage || `https://ui-avatars.com/api/?name=${user?.firstName || 'User'}+${user?.lastName || ''}&background=0D8ABC&color=fff&size=128`} 
                 alt="Profile" 
@@ -629,12 +629,12 @@ const BusinessProfile = () => {
             </div>
             <button 
               onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white hover:bg-primary/90 transition-colors"
+              className="absolute bottom-0 right-0 w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-full flex items-center justify-center text-white hover:bg-primary/90 transition-colors"
             >
-              <Icon name="Camera" size={16} />
+              <Icon name="Camera" size={14} />
             </button>
           </div>
-          <div>
+          <div className="flex-1 w-full text-center sm:text-left">
             <input 
               ref={fileInputRef}
               type="file" 
@@ -642,9 +642,13 @@ const BusinessProfile = () => {
               onChange={handleImageUpload}
               className="hidden"
             />
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <Icon name="Upload" size={16} />
-              Upload New Photo
+            <Button 
+              variant="outline" 
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full sm:w-auto text-sm px-4 py-2"
+            >
+              <Icon name="Upload" size={14} />
+              <span className="ml-2">Upload New Photo</span>
             </Button>
             <p className="text-xs text-muted-foreground mt-2">
               JPG, PNG or GIF (max 2MB)
