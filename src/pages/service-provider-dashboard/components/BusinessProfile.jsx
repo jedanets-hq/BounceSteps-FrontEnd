@@ -334,7 +334,8 @@ const BusinessProfile = () => {
                   <img 
                     src={profileImage || user?.profileImage || `https://ui-avatars.com/api/?name=${user?.firstName || 'User'}+${user?.lastName || ''}&background=0D8ABC&color=fff&size=128`} 
                     alt="Profile" 
-                    className="w-20 h-20 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-lg object-cover aspect-square"
+                    className="w-20 h-20 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-lg object-cover"
+                    style={{ aspectRatio: '1/1' }}
                   />
                   <div className="absolute bottom-0 right-0 w-5 h-5 sm:w-7 sm:h-7 bg-green-500 rounded-full border-2 sm:border-3 border-white"></div>
                 </div>
@@ -619,7 +620,8 @@ const BusinessProfile = () => {
             <img 
               src={profileImage || user?.profileImage || `https://ui-avatars.com/api/?name=${user?.firstName || 'User'}+${user?.lastName || ''}&background=0D8ABC&color=fff&size=128`} 
               alt="Profile" 
-              className="w-28 h-28 rounded-full border-4 border-primary/20 object-cover aspect-square"
+              className="w-28 h-28 rounded-full border-4 border-primary/20 object-cover"
+              style={{ aspectRatio: '1/1' }}
             />
             <button 
               onClick={() => fileInputRef.current?.click()}
