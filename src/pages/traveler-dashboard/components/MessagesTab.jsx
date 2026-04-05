@@ -356,29 +356,29 @@ const MessagesTab = () => {
                         
                         {/* WhatsApp-style Message Bubble */}
                         <div className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`${isMobileView ? 'max-w-[90%]' : 'max-w-[75%]'} flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
+                          <div className={`${isMobileView ? 'max-w-[85%]' : 'max-w-[75%]'} flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
                             <div
-                              className={`rounded-2xl shadow-sm ${
+                              className={`shadow-sm ${
                                 isMyMessage
                                   ? 'bg-primary text-white'
                                   : 'bg-white/90 text-gray-900'
                               }`}
                               style={{ 
-                                padding: isMobileView ? '12px' : '0.75rem 0.75rem',
-                                borderRadius: isMobileView ? '16px' : '1rem',
-                                minHeight: isMobileView ? '40px' : 'auto',
-                                overflow: 'visible'
+                                padding: isMobileView ? '10px 14px' : '0.75rem 0.75rem',
+                                borderRadius: isMobileView ? '12px' : '1rem',
+                                minHeight: 'auto',
+                                overflow: 'visible',
+                                boxSizing: 'border-box'
                               }}
                             >
                               <p 
                                 className={`${isMobileView ? 'text-sm' : 'text-sm'} leading-relaxed`}
                                 style={{ 
                                   wordBreak: 'break-word', 
-                                  overflowWrap: 'anywhere',
+                                  overflowWrap: 'break-word',
                                   whiteSpace: 'pre-wrap',
-                                  display: 'inline-block',
-                                  width: '100%',
-                                  minWidth: 0
+                                  margin: 0,
+                                  padding: 0
                                 }}
                               >
                                 {message.text}
