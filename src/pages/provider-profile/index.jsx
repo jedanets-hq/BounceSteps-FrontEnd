@@ -618,7 +618,7 @@ const ProviderProfile = () => {
                         <Button 
                           variant="outline"
                           size="sm"
-                          className="w-full"
+                          className="w-full py-2.5"
                           onClick={() => {
                             console.log('🔍 [View Details Button Clicked] Service data:', {
                               id: service?.id,
@@ -642,32 +642,30 @@ const ProviderProfile = () => {
                           <Icon name="Eye" size={16} />
                           View Details
                         </Button>
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <Button 
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 text-sm"
-                            onClick={async () => {
-                              const savedUser = localStorage.getItem('isafari_user');
-                              if (!savedUser) {
-                                navigate('/login?redirect=/provider/' + providerId);
-                                return;
-                              }
-                              await handleAddToCart(service);
-                            }}
-                          >
-                            <Icon name="ShoppingCart" size={14} />
-                            <span className="ml-1">Add to Cart</span>
-                          </Button>
-                          <Button 
-                            size="sm"
-                            className="flex-1 bg-primary hover:bg-primary/90 text-sm"
-                            onClick={() => handleBookNow(service)}
-                          >
-                            <Icon name="CreditCard" size={14} />
-                            <span className="ml-1">Book Now</span>
-                          </Button>
-                        </div>
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="w-full py-2.5"
+                          onClick={async () => {
+                            const savedUser = localStorage.getItem('isafari_user');
+                            if (!savedUser) {
+                              navigate('/login?redirect=/provider/' + providerId);
+                              return;
+                            }
+                            await handleAddToCart(service);
+                          }}
+                        >
+                          <Icon name="ShoppingCart" size={16} />
+                          <span className="ml-1">Add to Cart</span>
+                        </Button>
+                        <Button 
+                          size="sm"
+                          className="w-full bg-primary hover:bg-primary/90 py-2.5"
+                          onClick={() => handleBookNow(service)}
+                        >
+                          <Icon name="CreditCard" size={16} />
+                          <span className="ml-1">Book Now</span>
+                        </Button>
                       </div>
                     </div>
                   </div>
