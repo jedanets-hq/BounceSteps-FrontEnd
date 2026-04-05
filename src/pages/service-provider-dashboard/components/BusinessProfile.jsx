@@ -331,12 +331,14 @@ const BusinessProfile = () => {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-4 sm:space-y-0">
               <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
                 <div className="relative flex justify-center sm:justify-start">
-                  <img 
-                    src={profileImage || user?.profileImage || `https://ui-avatars.com/api/?name=${user?.firstName || 'User'}+${user?.lastName || ''}&background=0D8ABC&color=fff&size=128`} 
-                    alt="Profile" 
-                    className="w-20 h-20 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-lg object-cover"
-                    style={{ aspectRatio: '1/1' }}
-                  />
+                  <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-lg overflow-hidden" style={{ minWidth: '5rem', minHeight: '5rem' }}>
+                    <img 
+                      src={profileImage || user?.profileImage || `https://ui-avatars.com/api/?name=${user?.firstName || 'User'}+${user?.lastName || ''}&background=0D8ABC&color=fff&size=128`} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                      style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                    />
+                  </div>
                   <div className="absolute bottom-0 right-0 w-5 h-5 sm:w-7 sm:h-7 bg-green-500 rounded-full border-2 sm:border-3 border-white"></div>
                 </div>
                 <div className="text-center sm:text-left">
@@ -617,12 +619,14 @@ const BusinessProfile = () => {
         <h4 className="font-medium text-foreground mb-4">Profile Picture</h4>
         <div className="flex items-center space-x-6">
           <div className="relative">
-            <img 
-              src={profileImage || user?.profileImage || `https://ui-avatars.com/api/?name=${user?.firstName || 'User'}+${user?.lastName || ''}&background=0D8ABC&color=fff&size=128`} 
-              alt="Profile" 
-              className="w-28 h-28 rounded-full border-4 border-primary/20 object-cover"
-              style={{ aspectRatio: '1/1' }}
-            />
+            <div className="w-28 h-28 rounded-full border-4 border-primary/20 overflow-hidden" style={{ minWidth: '7rem', minHeight: '7rem' }}>
+              <img 
+                src={profileImage || user?.profileImage || `https://ui-avatars.com/api/?name=${user?.firstName || 'User'}+${user?.lastName || ''}&background=0D8ABC&color=fff&size=128`} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+              />
+            </div>
             <button 
               onClick={() => fileInputRef.current?.click()}
               className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white hover:bg-primary/90 transition-colors"
