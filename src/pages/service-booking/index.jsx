@@ -286,23 +286,23 @@ const ServiceBooking = () => {
                     </div>
                   </div>
                   
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button 
                       onClick={() => handleAddToCart(service)}
                       variant="outline"
                       size="sm"
-                      className="flex-1"
+                      className="flex-1 text-sm"
                     >
-                      <Icon name="ShoppingBag" size={16} />
-                      Add to Cart
+                      <Icon name="ShoppingBag" size={14} />
+                      <span className="ml-1">Add to Cart</span>
                     </Button>
                     <Button 
                       onClick={() => handleBookNow(service)}
                       size="sm"
-                      className="flex-1"
+                      className="flex-1 text-sm"
                     >
-                      <Icon name="CreditCard" size={16} />
-                      Book Now
+                      <Icon name="CreditCard" size={14} />
+                      <span className="ml-1">Book Now</span>
                     </Button>
                   </div>
                 </div>

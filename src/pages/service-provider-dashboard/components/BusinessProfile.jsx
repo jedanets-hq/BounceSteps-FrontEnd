@@ -334,7 +334,7 @@ const BusinessProfile = () => {
                   <img 
                     src={profileImage || user?.profileImage || `https://ui-avatars.com/api/?name=${user?.firstName || 'User'}+${user?.lastName || ''}&background=0D8ABC&color=fff&size=128`} 
                     alt="Profile" 
-                    className="w-20 h-20 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-lg object-cover"
+                    className="w-20 h-20 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-lg object-cover aspect-square"
                   />
                   <div className="absolute bottom-0 right-0 w-5 h-5 sm:w-7 sm:h-7 bg-green-500 rounded-full border-2 sm:border-3 border-white"></div>
                 </div>
@@ -598,13 +598,13 @@ const BusinessProfile = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h3 className="font-display text-xl font-medium">Edit Business Profile</h3>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => setIsEditing(false)}>
+        <div className="flex items-center space-x-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={() => setIsEditing(false)} className="flex-1 sm:flex-none">
             Cancel
           </Button>
-          <Button variant="default" onClick={handleSave}>
+          <Button variant="default" onClick={handleSave} className="flex-1 sm:flex-none">
             <Icon name="Save" size={16} />
             Save Changes
           </Button>
@@ -619,7 +619,7 @@ const BusinessProfile = () => {
             <img 
               src={profileImage || user?.profileImage || `https://ui-avatars.com/api/?name=${user?.firstName || 'User'}+${user?.lastName || ''}&background=0D8ABC&color=fff&size=128`} 
               alt="Profile" 
-              className="w-28 h-28 rounded-full border-4 border-primary/20 object-cover"
+              className="w-28 h-28 rounded-full border-4 border-primary/20 object-cover aspect-square"
             />
             <button 
               onClick={() => fileInputRef.current?.click()}

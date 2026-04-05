@@ -29,8 +29,9 @@ const InspirationFeed = ({ inspirations }) => {
       <div className="space-y-4">
         {inspirations?.map((item) => (
           <div key={item?.id} className="border border-border rounded-lg overflow-hidden hover:shadow-sm transition-all duration-200">
-            <div className="flex">
-              <div className="w-24 h-24 flex-shrink-0">
+            {/* Mobile: Stacked vertical layout, Desktop: Horizontal layout */}
+            <div className="flex flex-col md:flex-row">
+              <div className="w-full md:w-24 h-48 md:h-24 flex-shrink-0">
                 <Image
                   src={item?.image}
                   alt={item?.title}
@@ -52,8 +53,8 @@ const InspirationFeed = ({ inspirations }) => {
                 
                 <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{item?.description}</p>
                 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Icon name="Calendar" size={12} />
                       <span>{item?.bestTime}</span>
@@ -68,11 +69,11 @@ const InspirationFeed = ({ inspirations }) => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="h-6 px-2 text-xs"
+                      className="h-8 px-3 text-xs flex-1 sm:flex-none"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -90,12 +91,12 @@ const InspirationFeed = ({ inspirations }) => {
                         }
                       }}
                     >
-                      <Icon name="Bookmark" size={12} />
+                      <Icon name="Bookmark" size={14} />
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="h-6 px-3 text-xs"
+                      className="h-8 px-4 text-xs flex-1 sm:flex-none"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();

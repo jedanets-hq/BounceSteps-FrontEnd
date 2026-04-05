@@ -1340,11 +1340,11 @@ const TravelerDashboard = () => {
                               </p>
                             )}
                             
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                className="flex-1"
+                                className="flex-1 text-sm"
                                 onClick={async () => {
                                   // Add to cart
                                   const result = await addToCart({
@@ -1365,12 +1365,12 @@ const TravelerDashboard = () => {
                                 }}
                               >
                                 <Icon name="ShoppingBag" size={14} />
-                                Add to Cart
+                                <span className="ml-1">Add to Cart</span>
                               </Button>
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                className="text-red-500 hover:bg-red-50"
+                                className="text-red-500 hover:bg-red-50 sm:w-auto"
                                 onClick={async () => {
                                   await removeFromFavorites('service', favorite.service_id);
                                 }}
@@ -2390,17 +2390,17 @@ const TravelerDashboard = () => {
 
       {/* Dashboard Content with Background Image and Glass Morphism */}
       <div className="relative min-h-screen">
-        {/* Background Image */}
+        {/* Background Image - with pointer-events-none to prevent interaction issues */}
         <div 
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-30"
+          className="fixed inset-0 bg-cover bg-center bg-no-repeat opacity-30 pointer-events-none"
           style={{
             backgroundImage: "url('https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80')"
           }}
         />
         
-        {/* Gradient Overlay */}
-        <div className="fixed inset-0 bg-gradient-to-br from-background/90 via-background/80 to-background/90" />
-        <div className="fixed inset-0 bg-background/40" />
+        {/* Gradient Overlay - with pointer-events-none */}
+        <div className="fixed inset-0 bg-gradient-to-br from-background/90 via-background/80 to-background/90 pointer-events-none" />
+        <div className="fixed inset-0 bg-background/40 pointer-events-none" />
 
         {/* Dashboard Navigation Tabs */}
         <div className="relative z-10 pt-20 pb-8">

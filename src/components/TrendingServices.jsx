@@ -570,19 +570,21 @@ const TrendingServices = () => {
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button 
                   variant="outline"
                   onClick={() => handleAddToCart(selectedServiceDetails)}
+                  className="w-full sm:w-auto text-sm"
                 >
-                  <Icon name="ShoppingCart" size={16} />
-                  Add to Cart
+                  <Icon name="ShoppingCart" size={14} />
+                  <span className="ml-1">Add to Cart</span>
                 </Button>
                 <Button 
                   onClick={() => handleBookNow(selectedServiceDetails)}
+                  className="w-full sm:w-auto text-sm"
                 >
-                  <Icon name="CreditCard" size={16} />
-                  Book Now
+                  <Icon name="CreditCard" size={14} />
+                  <span className="ml-1">Book Now</span>
                 </Button>
                 <Button 
                   variant="outline"
@@ -611,9 +613,10 @@ const TrendingServices = () => {
                     setShowMessaging(true);
                     setSelectedServiceDetails(null);
                   }}
+                  className="w-full sm:w-auto text-sm"
                 >
-                  <Icon name="MessageCircle" size={16} />
-                  Chat with Provider
+                  <Icon name="MessageCircle" size={14} />
+                  <span className="ml-1">Chat with Provider</span>
                 </Button>
               </div>
             </div>

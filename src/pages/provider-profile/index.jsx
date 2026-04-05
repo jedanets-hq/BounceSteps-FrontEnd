@@ -642,11 +642,11 @@ const ProviderProfile = () => {
                           <Icon name="Eye" size={16} />
                           View Details
                         </Button>
-                        <div className="flex space-x-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <Button 
                             variant="outline"
                             size="sm"
-                            className="flex-1"
+                            className="flex-1 text-sm"
                             onClick={async () => {
                               const savedUser = localStorage.getItem('isafari_user');
                               if (!savedUser) {
@@ -656,16 +656,16 @@ const ProviderProfile = () => {
                               await handleAddToCart(service);
                             }}
                           >
-                            <Icon name="ShoppingCart" size={14} className="mr-1" />
-                            Add to Cart
+                            <Icon name="ShoppingCart" size={14} />
+                            <span className="ml-1">Add to Cart</span>
                           </Button>
                           <Button 
                             size="sm"
-                            className="flex-1 bg-primary hover:bg-primary/90"
+                            className="flex-1 bg-primary hover:bg-primary/90 text-sm"
                             onClick={() => handleBookNow(service)}
                           >
-                            <Icon name="CreditCard" size={14} className="mr-1" />
-                            Book Now
+                            <Icon name="CreditCard" size={14} />
+                            <span className="ml-1">Book Now</span>
                           </Button>
                         </div>
                       </div>

@@ -331,16 +331,16 @@ const ProviderMessagesTab = () => {
                         )}
                         
                         {/* WhatsApp-style Message Bubble */}
-                        <div className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`${isMobileView ? 'max-w-[85%]' : 'max-w-[75%]'} flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
+                        <div className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} px-1`}>
+                          <div className={`${isMobileView ? 'max-w-[80%]' : 'max-w-[75%]'} flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
                             <div
-                              className={`${isMobileView ? 'px-2 py-1.5' : 'px-3 py-2'} rounded-2xl shadow-sm ${
+                              className={`${isMobileView ? 'px-3 py-2' : 'px-3 py-2'} rounded-2xl shadow-sm ${
                                 isMyMessage
                                   ? 'bg-primary text-white rounded-br-md'
                                   : 'bg-white/90 text-gray-900 rounded-bl-md'
                               }`}
                             >
-                              <p className={`${isMobileView ? 'text-xs' : 'text-sm'} leading-relaxed break-words`}>
+                              <p className={`${isMobileView ? 'text-sm' : 'text-sm'} leading-relaxed break-words whitespace-pre-wrap`}>
                                 {message.message_text}
                               </p>
                             </div>

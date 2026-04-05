@@ -93,20 +93,20 @@ const BusinessAnalytics = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h3 className="font-display text-xl font-medium">Business Analytics</h3>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+            className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm w-full sm:w-auto"
           >
             <option value="7days">Last 7 days</option>
             <option value="30days">Last 30 days</option>
             <option value="90days">Last 90 days</option>
             <option value="1year">Last year</option>
           </select>
-          <Button variant="outline" size="sm" onClick={handleExportReport}>
+          <Button variant="outline" size="sm" onClick={handleExportReport} className="w-full sm:w-auto">
             <Icon name="Download" size={16} />
             Export Report
           </Button>
