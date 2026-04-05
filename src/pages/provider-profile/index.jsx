@@ -554,7 +554,7 @@ const ProviderProfile = () => {
                 <p className="text-muted-foreground">No services available</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredServices.map((service) => (
                   <div key={service.id} className="bg-card rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow border border-border">
                     <div className="relative h-48">
