@@ -375,10 +375,27 @@ const HeroSection = () => {
         {!isAuthenticated ? (
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
-              <h3 className="text-xl font-semibold text-foreground mb-3">Start Your Journey</h3>
-              <p className="text-base text-muted-foreground leading-relaxed">
-                Whether you're a traveler seeking extraordinary experiences or a service provider ready to showcase your offerings, BounceSteps is your gateway to the world.
+              <h3 className="text-xl font-semibold text-foreground mb-3">Start Your Journey with BounceSteps</h3>
+              <p className="text-base text-muted-foreground leading-relaxed mb-4">
+                Travel the world, explore breathtaking destinations, and book unforgettable experiences. From flights and hotels to local adventures and cultural tours, BounceSteps connects you with everything you need for your perfect journey.
               </p>
+              {/* Login/Register Links */}
+              <div className="flex items-center justify-center gap-4 text-sm">
+                <span className="text-muted-foreground">Already have an account?</span>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="text-primary hover:text-primary/80 font-semibold underline underline-offset-4 transition-colors"
+                >
+                  Login
+                </button>
+                <span className="text-muted-foreground">|</span>
+                <button
+                  onClick={() => navigate('/register')}
+                  className="text-secondary hover:text-secondary/80 font-semibold underline underline-offset-4 transition-colors"
+                >
+                  Register
+                </button>
+              </div>
             </div>
 
             {/* Desktop Cards */}
