@@ -89,8 +89,8 @@ const ServiceCard = ({
         </div>
       </div>
       
-      <div className="p-3 md:p-5 flex flex-col flex-grow">
-        <div className="flex items-start justify-between mb-1.5 md:mb-2">
+      <div className="p-2 md:p-5 flex flex-col flex-grow">
+        <div className="flex items-start justify-between mb-1 md:mb-2">
           <div className="w-full">
             <h3 className="text-sm md:text-lg font-semibold text-foreground mb-0.5 md:mb-1 line-clamp-1 truncate w-full">{service.title}</h3>
             <div className="flex items-center text-xs md:text-sm text-muted-foreground">
@@ -105,10 +105,11 @@ const ServiceCard = ({
           {service.description}
         </p>
         
+        {/* Amenities - Hidden on mobile, shown on desktop */}
         {service.amenities && service.amenities.length > 0 && (
-          <div className="flex flex-wrap gap-1 md:gap-2 mb-2 md:mb-4">
+          <div className="hidden md:flex flex-wrap gap-2 mb-4">
             {service.amenities.slice(0, 2).map((amenity, idx) => (
-              <span key={idx} className="px-1.5 md:px-2 py-0.5 md:py-1 bg-primary/10 text-primary text-[10px] md:text-[11px] rounded-full line-clamp-1 max-w-[100px] truncate">
+              <span key={idx} className="px-2 py-1 bg-primary/10 text-primary text-[11px] rounded-full line-clamp-1 max-w-[100px] truncate">
                 {amenity}
               </span>
             ))}
