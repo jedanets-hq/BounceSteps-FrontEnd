@@ -234,41 +234,7 @@ const ServiceDetailsModal = ({ isOpen, onClose, service, providerInfo }) => {
             );
           })()}
 
-          {/* Payment Methods */}
-          {service.payment_methods && Object.keys(service.payment_methods).some(key => service.payment_methods[key]?.enabled) && (
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Icon name="CreditCard" size={20} />
-                Accepted Payment Methods
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {service.payment_methods.visa?.enabled && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-primary/5 dark:bg-primary/20 text-primary dark:text-primary/70 rounded-lg">
-                    <Icon name="CreditCard" size={18} />
-                    <span className="font-medium">Visa/Mastercard</span>
-                  </div>
-                )}
-                {service.payment_methods.paypal?.enabled && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-primary/5 dark:bg-primary/20 text-primary dark:text-primary/70 rounded-lg">
-                    <Icon name="DollarSign" size={18} />
-                    <span className="font-medium">PayPal</span>
-                  </div>
-                )}
-                {service.payment_methods.googlePay?.enabled && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg">
-                    <Icon name="Smartphone" size={18} />
-                    <span className="font-medium">Google Pay</span>
-                  </div>
-                )}
-                {service.payment_methods.mobileMoney?.enabled && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg">
-                    <Icon name="Smartphone" size={18} />
-                    <span className="font-medium">Mobile Money</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+
 
           {/* Contact Information */}
           {service.contact_info && (service.contact_info.email?.enabled || service.contact_info.whatsapp?.enabled || service.contact_info.phone?.enabled) && (

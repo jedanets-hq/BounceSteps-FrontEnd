@@ -428,31 +428,7 @@ const DestinationDiscovery = () => {
                 </div>
               )}
 
-              {/* Payment Methods */}
-              {selectedServiceDetails?.payment_methods && Object.keys(selectedServiceDetails.payment_methods).some(key => selectedServiceDetails.payment_methods[key]?.enabled) && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-foreground mb-2">Accepted Payments</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedServiceDetails.payment_methods.visa?.enabled && (
-                      <span className="inline-flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                        <Icon name="CreditCard" size={14} className="mr-1" />
-                        Visa/Card
-                      </span>
-                    )}
-                    {selectedServiceDetails.payment_methods.paypal?.enabled && (
-                      <span className="inline-flex items-center px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                        PayPal
-                      </span>
-                    )}
-                    {selectedServiceDetails.payment_methods.mobileMoney?.enabled && (
-                      <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                        <Icon name="Smartphone" size={14} className="mr-1" />
-                        Mobile Money
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
+
 
               {/* Contact Info */}
               {selectedServiceDetails?.contact_info && (selectedServiceDetails.contact_info.email?.enabled || selectedServiceDetails.contact_info.whatsapp?.enabled) && (

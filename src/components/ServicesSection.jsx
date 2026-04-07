@@ -16,7 +16,8 @@ const ServicesSection = () => {
   const navigate = useNavigate();
 
   const scroll = (dir) => {
-    scrollRef.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
+    const scrollAmount = window.innerWidth < 768 ? 120 : 220; // Smaller scroll for mobile
+    scrollRef.current?.scrollBy({ left: dir * scrollAmount, behavior: "smooth" });
   };
 
   const handleServiceClick = (service) => {
@@ -65,13 +66,13 @@ const ServicesSection = () => {
               <div
                 key={s.title}
                 onClick={() => handleServiceClick(s)}
-                className="flex-shrink-0 w-[180px] md:w-[200px] bg-background/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 flex flex-col items-center gap-4 hover:shadow-lg transition-all cursor-pointer snap-start shadow-sm hover:scale-105 hover:bg-background dark:hover:bg-gray-800"
+                className="flex-shrink-0 w-[110px] md:w-[200px] bg-background/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-3 md:p-6 flex flex-col items-center gap-2 md:gap-4 hover:shadow-lg transition-all cursor-pointer snap-start shadow-sm hover:scale-105 hover:bg-background dark:hover:bg-gray-800"
               >
-                <div className="w-16 h-16 rounded-xl bg-secondary dark:bg-gray-700 flex items-center justify-center">
-                  <Icon name={s.icon} size={32} className="text-primary dark:text-primary" />
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-secondary dark:bg-gray-700 flex items-center justify-center">
+                  <Icon name={s.icon} size={24} className="text-primary dark:text-primary md:w-8 md:h-8" />
                 </div>
-                <h3 className="font-semibold text-foreground dark:text-white text-base">{s.title}</h3>
-                <p className="text-sm text-muted-foreground dark:text-gray-300 leading-tight text-center">{s.desc}</p>
+                <h3 className="font-semibold text-foreground dark:text-white text-xs md:text-base">{s.title}</h3>
+                <p className="text-xs md:text-sm text-muted-foreground dark:text-gray-300 leading-tight text-center">{s.desc}</p>
               </div>
             ))}
           </div>

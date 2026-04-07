@@ -13,15 +13,15 @@ const Button = React.forwardRef(({
     const baseClasses = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50";
     
     const variantClasses = {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md",
-        destructive: "bg-red-600 text-white hover:bg-red-700",
-        outline: "border border-gray-300 bg-white hover:bg-gray-50",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/90",
-        ghost: "hover:bg-gray-100",
-        link: "text-primary hover:text-primary/80 underline-offset-4 hover:underline",
-        success: "bg-green-600 text-white hover:bg-green-700",
-        warning: "bg-yellow-600 text-white hover:bg-yellow-700",
-        danger: "bg-red-600 text-white hover:bg-red-700",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md dark:bg-primary dark:text-white dark:hover:bg-primary/80",
+        destructive: "bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800",
+        outline: "border border-gray-300 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/90 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600",
+        ghost: "hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-200",
+        link: "text-primary hover:text-primary/80 underline-offset-4 hover:underline dark:text-primary-foreground",
+        success: "bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800",
+        warning: "bg-yellow-600 text-white hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-800",
+        danger: "bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800",
     };
     
     const sizeClasses = {
