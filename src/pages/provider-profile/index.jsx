@@ -399,34 +399,24 @@ const ProviderProfile = () => {
 
               {/* Location, Category, Description - Aligned with Name */}
               <div className="ml-16">
-                {/* Location */}
-                {provider?.location && (
+                {/* Location Display */}
+                {provider?.location_data && Object.keys(provider.location_data).length > 0 ? (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
+                    <Icon name="MapPin" size={12} />
+                    <span className="truncate">
+                      {[
+                        provider.location_data.village || provider.location_data.street || provider.location_data.area,
+                        provider.location_data.ward,
+                        provider.location_data.district,
+                        provider.location_data.region
+                      ].filter(Boolean).join(', ')}
+                    </span>
+                  </p>
+                ) : provider?.location && (
                   <p className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
                     <Icon name="MapPin" size={12} />
                     <span className="truncate">{provider.location}</span>
                   </p>
-                )}
-                
-                {/* Location Tags */}
-                {provider?.location_data && Object.keys(provider.location_data).length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {provider.location_data.region && (
-                      <span className="inline-flex items-center px-2 py-0.5 bg-muted/30 text-muted-foreground rounded text-xs">
-                        <Icon name="MapPin" size={10} className="mr-1" />
-                        {provider.location_data.region}
-                      </span>
-                    )}
-                    {provider.location_data.district && (
-                      <span className="inline-flex items-center px-2 py-0.5 bg-muted/30 text-muted-foreground rounded text-xs">
-                        {provider.location_data.district}
-                      </span>
-                    )}
-                    {provider.location_data.ward && (
-                      <span className="inline-flex items-center px-2 py-0.5 bg-muted/30 text-muted-foreground rounded text-xs">
-                        {provider.location_data.ward}
-                      </span>
-                    )}
-                  </div>
                 )}
 
                 {/* Service Categories */}
@@ -524,33 +514,26 @@ const ProviderProfile = () => {
                   {provider?.badge_type && <ProviderBadge badgeType={provider.badge_type} size="lg" showText={false} />}
                 </h1>
                 
-                {provider?.location && (
+                {/* Location Display */}
+                {provider?.location_data && Object.keys(provider.location_data).length > 0 ? (
+                  <div className="mb-2">
+                    <p className="text-muted-foreground flex items-center gap-2 mb-1">
+                      <Icon name="MapPin" size={18} />
+                      <span>
+                        {[
+                          provider.location_data.village || provider.location_data.street || provider.location_data.area,
+                          provider.location_data.ward,
+                          provider.location_data.district,
+                          provider.location_data.region
+                        ].filter(Boolean).join(', ')}
+                      </span>
+                    </p>
+                  </div>
+                ) : provider?.location && (
                   <p className="text-muted-foreground flex items-center gap-2 mb-2">
                     <Icon name="MapPin" size={18} />
                     {provider.location}
                   </p>
-                )}
-                
-                {/* Detailed Location Data */}
-                {provider?.location_data && Object.keys(provider.location_data).length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {provider.location_data.region && (
-                      <span className="inline-flex items-center px-2 py-1 bg-muted/30 text-muted-foreground rounded text-xs">
-                        <Icon name="MapPin" size={12} className="mr-1" />
-                        {provider.location_data.region}
-                      </span>
-                    )}
-                    {provider.location_data.district && (
-                      <span className="inline-flex items-center px-2 py-1 bg-muted/30 text-muted-foreground rounded text-xs">
-                        {provider.location_data.district}
-                      </span>
-                    )}
-                    {provider.location_data.ward && (
-                      <span className="inline-flex items-center px-2 py-1 bg-muted/30 text-muted-foreground rounded text-xs">
-                        {provider.location_data.ward}
-                      </span>
-                    )}
-                  </div>
                 )}
                 
                 {/* Service Categories */}

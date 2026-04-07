@@ -64,6 +64,14 @@ const TrendingServices = () => {
     return `TZS ${parseFloat(price).toLocaleString()}`;
   };
 
+  // Capitalize first letter of each word
+  const capitalizeTitle = (title) => {
+    if (!title) return '';
+    return title.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
+
   // Add service to cart
   const handleAddToCart = async (service) => {
     const savedUser = localStorage.getItem('isafari_user');
@@ -256,6 +264,10 @@ const TrendingServices = () => {
                         e.target.src = '/service-placeholder.jpg';
                       }}
                     />
+                    {/* Category Badge */}
+                    <div className="absolute bottom-3 left-3 bg-black/50 text-white px-1.5 py-0.5 rounded text-xs font-medium backdrop-blur-sm">
+                      {service.category || 'Service'}
+                    </div>
                     {/* TOP Badge */}
                     <div className="absolute top-3 right-3 bg-orange-500/90 text-white px-1.5 py-0.5 md:px-2 md:py-1 rounded-full text-xs font-semibold flex items-center gap-0.5 md:gap-1">
                       <Star size={10} className="md:w-3 md:h-3" fill="currentColor" />
@@ -265,9 +277,22 @@ const TrendingServices = () => {
 
                   {/* Service Info - Same structure as destinations */}
                   <div className="p-4 text-left">
-                    <h3 className="font-bold text-foreground text-base md:text-lg">{service.title}</h3>
+                    <h3 className="font-bold text-foreground text-base md:text-lg">{capitalizeTitle(service.title)}</h3>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                       {service.description || `${service.category} service in Tanzania`}
+                    </p>
+                    {/* Location info */}
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <MapPin size={12} />
+                      <span className="md:hidden">
+                        {service.region || service.area || service.district || service.location || 'Tanzania'}
+                      </span>
+                      <span className="hidden md:block">
+                        {service.location || service.area || service.district || service.region ? 
+                          `${service.location || service.area || service.district || service.region}, Tanzania` : 
+                          'Tanzania'
+                        }
+                      </span>
                     </p>
                     {/* Price info */}
                     <p className="text-xs text-primary mt-2">

@@ -115,31 +115,7 @@ const ServiceCard = ({
           </div>
         )}
         
-        {/* Payment Methods Display - Hidden on mobile, shown on desktop */}
-        {service?.payment_methods && Object.keys(service.payment_methods).some(key => service.payment_methods[key]?.enabled) && (
-          <div className="hidden md:block mb-3 p-2 bg-muted/30 rounded-lg">
-            <p className="text-xs font-medium text-muted-foreground mb-1.5">Accepted Payments:</p>
-            <div className="flex flex-wrap gap-1.5">
-              {service.payment_methods.visa?.enabled && (
-                <span className="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
-                  <Icon name="CreditCard" size={10} className="mr-1 shrink-0" />
-                  Visa/Card
-                </span>
-              )}
-              {service.payment_methods.paypal?.enabled && (
-                <span className="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
-                  PayPal
-                </span>
-              )}
-              {service.payment_methods.mobileMoney?.enabled && (
-                <span className="inline-flex items-center px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
-                  <Icon name="Smartphone" size={10} className="mr-1 shrink-0" />
-                  M-Money
-                </span>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Removed Payment Methods Display section */}
 
         <div className="flex items-center justify-between pt-2 md:pt-4 mt-auto border-t border-border">
           <div className="w-full">
