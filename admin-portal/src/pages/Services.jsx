@@ -233,10 +233,10 @@ const Services = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">Content Management</h1>
-        <p className="text-muted-foreground">Manage home slides (featured), trending services, and all services</p>
+        <p className="text-muted-foreground">Manage home slides (featured), top ranking services, and all services</p>
       </div>
 
-      {/* Tabs Navigation - Only Featured and Trending */}
+      {/* Tabs Navigation - Only Featured and Top Ranking */}
       <div className="mb-8 border-b border-border">
         <div className="flex gap-1">
           <button
@@ -274,7 +274,7 @@ const Services = () => {
           >
             <div className="flex items-center gap-2">
               <TrendingUp size={18} />
-              <span>Trending Services</span>
+              <span>Top Ranking</span>
               {stats && (
                 <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
                   {stats.trending_services}
@@ -303,9 +303,9 @@ const Services = () => {
           <div className="flex items-start gap-3">
             <TrendingUp className="text-green-500 mt-1" size={20} />
             <div>
-              <h3 className="font-semibold text-foreground mb-1">Trending Services Management</h3>
+              <h3 className="font-semibold text-foreground mb-1">Top Ranking Services Management</h3>
               <p className="text-sm text-muted-foreground">
-                Manage services that appear in the "Trending Services This Month" section on the homepage. 
+                Manage services that appear in the "Top Ranking" section on the homepage. 
                 Click the trending icon to add/remove services. Only marked services will be displayed to travelers.
               </p>
             </div>

@@ -161,10 +161,10 @@ const About = () => {
                   <h3 className="text-lg font-semibold text-foreground mb-2">{partner.name}</h3>
                   <p className="text-muted-foreground text-sm mb-4">{partner.role}</p>
                   <div className="flex justify-center space-x-2">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700">
                       <Icon name="Mail" size={14} />
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700">
                       <Icon name="Linkedin" size={14} />
                     </Button>
                   </div>
@@ -235,11 +235,11 @@ const About = () => {
               that connect travelers with authentic African experiences.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg">
+              <Button size="lg" className="dark:bg-primary dark:text-white dark:hover:bg-primary/80">
                 <Icon name="Mail" size={20} />
                 Contact Us
               </Button>
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700">
                 <Icon name="Building" size={20} />
                 Partnership Opportunities
               </Button>

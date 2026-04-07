@@ -1180,7 +1180,7 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1193,7 +1193,7 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1211,7 +1211,7 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
                     e.stopPropagation();
                     deleteService(service.id);
                   }}
-                  className="text-red-600 hover:text-red-700 hover:border-red-300"
+                  className="text-red-600 hover:text-red-700 hover:border-red-300 dark:text-red-400 dark:hover:text-red-300 dark:border-gray-600 dark:hover:border-red-400"
                 >
                   <Icon name="Trash2" size={14} />
                 </Button>

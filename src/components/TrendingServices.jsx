@@ -165,7 +165,7 @@ const TrendingServices = () => {
         <div className="w-full px-4 text-center relative z-10">
           <div className="max-w-full">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-              Trending Services
+              Top Ranking
             </h2>
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -182,14 +182,14 @@ const TrendingServices = () => {
         <div className="w-full px-4 text-center relative z-10">
           <div className="max-w-full">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-              Trending Services
+              Top Ranking
             </h2>
             <div className="text-center py-12">
               <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
                 <Star className="w-8 h-8 text-muted-foreground" />
               </div>
               <p className="text-muted-foreground">
-                No trending services available at the moment. Check back soon!
+                No top ranking services available at the moment. Check back soon!
               </p>
             </div>
           </div>
@@ -203,7 +203,7 @@ const TrendingServices = () => {
       <div className="w-full px-4 text-center relative z-10">
         <div className="max-w-full">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            Trending Services
+            Top Ranking
           </h2>
           <p className="text-muted-foreground mb-10">
             Discover the most popular services approved by our community
@@ -232,18 +232,18 @@ const TrendingServices = () => {
             {/* Services Carousel */}
             <div
               ref={scrollRef}
-              className="flex gap-6 overflow-x-auto scrollbar-hide justify-start pl-6 pr-6 snap-x pb-4"
+              className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide justify-start pl-4 md:pl-6 pr-4 md:pr-6 snap-x pb-4"
               style={{ scrollbarWidth: "none" }}
             >
               {trendingServices.map((service, index) => (
                 <div
                   key={service.id}
-                  className={`flex-shrink-0 w-[260px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background border border-border group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
+                  className={`flex-shrink-0 w-[280px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background border border-border group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
                     index === trendingServices.length - 1 ? 'mr-8' : ''
                   }`}
                 >
                   {/* Service Image */}
-                  <div className="h-48 md:h-60 overflow-hidden relative">
+                  <div className="h-40 md:h-60 overflow-hidden relative">
                     <img
                       src={getServiceImage(service)}
                       alt={service.title}
@@ -262,15 +262,24 @@ const TrendingServices = () => {
                   </div>
 
                   {/* Service Info */}
-                  <div className="p-5">
-                    {/* Title */}
-                    <h3 className="font-bold text-foreground text-left mb-2 line-clamp-2 min-h-[3rem]">
-                      {service.title}
-                    </h3>
+                  <div className="p-4 md:p-5">
+                    {/* Title and Location Combined for Mobile */}
+                    <div className="mb-3">
+                      <h3 className="font-bold text-foreground text-left mb-1 line-clamp-2 text-base md:text-lg">
+                        {service.title}
+                      </h3>
+                      {/* Location - Moved up and formatted as "Tanzania, Area" */}
+                      {(service.area || service.district || service.region) && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <MapPin size={12} className="shrink-0" />
+                          <span>Tanzania, {service.area || service.district || service.region}</span>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Provider Info */}
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                         {service.avatar_url ? (
                           <img
                             src={service.avatar_url}
@@ -283,9 +292,9 @@ const TrendingServices = () => {
                           </span>
                         )}
                       </div>
-                      <div className="text-left">
+                      <div className="text-left flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-medium text-foreground">
+                          <p className="text-xs font-medium text-foreground truncate">
                             {service.business_name || `${service.provider_first_name} ${service.provider_last_name}`}
                           </p>
                           {/* Provider Badge - next to provider name */}
@@ -304,16 +313,8 @@ const TrendingServices = () => {
                       </div>
                     </div>
 
-                    {/* Service Details */}
-                    <div className="space-y-2 mb-4">
-                      {/* Location */}
-                      {(service.area || service.district || service.region) && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <MapPin size={12} />
-                          <span>{service.area || service.district || service.region}</span>
-                        </div>
-                      )}
-
+                    {/* Service Details - Duration and Max Participants hidden on mobile, shown on desktop */}
+                    <div className="hidden md:space-y-2 md:mb-4">
                       {/* Duration */}
                       {service.duration && (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -334,21 +335,19 @@ const TrendingServices = () => {
                     {/* Price and Book Button */}
                     <div className="flex items-center justify-between">
                       <div className="text-left">
-                        <p className="text-lg font-bold text-primary">
+                        <p className="text-base md:text-lg font-bold text-primary">
                           {formatPrice(service.price)}
                         </p>
-                        {service.duration && (
-                          <p className="text-xs text-muted-foreground">
-                            per {service.duration.toLowerCase().includes('hour') ? 'hour' : 'person'}
-                          </p>
-                        )}
+                        <p className="text-xs text-muted-foreground">
+                          per person
+                        </p>
                       </div>
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
                           handleServiceClick(service);
                         }}
-                        className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:bg-accent transition-colors"
+                        className="bg-primary text-primary-foreground px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-accent transition-colors dark:bg-primary dark:text-white dark:hover:bg-primary/80"
                       >
                         View Details
                       </button>
@@ -458,6 +457,27 @@ const TrendingServices = () => {
                   </div>
                 )}
               </div>
+
+              {/* Service Details - Duration and Max Participants */}
+              {(selectedServiceDetails.duration || selectedServiceDetails.max_participants) && (
+                <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+                  <h3 className="font-semibold text-foreground mb-3">Service Details</h3>
+                  <div className="space-y-2">
+                    {selectedServiceDetails.duration && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock size={16} />
+                        <span>{selectedServiceDetails.duration}</span>
+                      </div>
+                    )}
+                    {selectedServiceDetails.max_participants && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users size={16} />
+                        <span>Up to {selectedServiceDetails.max_participants} people</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Description */}
               <div className="mb-6">
@@ -574,14 +594,14 @@ const TrendingServices = () => {
                 <Button 
                   variant="outline"
                   onClick={() => handleAddToCart(selectedServiceDetails)}
-                  className="w-full sm:w-auto text-sm"
+                  className="w-full sm:w-auto text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                 >
                   <Icon name="ShoppingCart" size={14} />
                   <span className="ml-1">Add to Cart</span>
                 </Button>
                 <Button 
                   onClick={() => handleBookNow(selectedServiceDetails)}
-                  className="w-full sm:w-auto text-sm"
+                  className="w-full sm:w-auto text-sm dark:bg-primary dark:text-white dark:hover:bg-primary/80"
                 >
                   <Icon name="CreditCard" size={14} />
                   <span className="ml-1">Book Now</span>
@@ -613,7 +633,7 @@ const TrendingServices = () => {
                     setShowMessaging(true);
                     setSelectedServiceDetails(null);
                   }}
-                  className="w-full sm:w-auto text-sm"
+                  className="w-full sm:w-auto text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                 >
                   <Icon name="MessageCircle" size={14} />
                   <span className="ml-1">Chat with Provider</span>

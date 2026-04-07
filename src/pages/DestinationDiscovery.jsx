@@ -307,9 +307,9 @@ const DestinationDiscovery = () => {
             </div>
           )}
 
-          {/* Services Grid */}
+          {/* Services Grid - Mobile: 2 columns, Desktop: 3 columns */}
           {!loading && !error && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
               {filteredServices.map(service => (
                 <ServiceCard 
                   key={service.id}
@@ -482,6 +482,35 @@ const DestinationDiscovery = () => {
                   </div>
                 </div>
               )}
+
+              {/* Action Buttons - Add to Cart & Book Now (Mobile only) */}
+              <div className="md:hidden mb-6">
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    variant="outline"
+                    size="lg"
+                    className="w-full"
+                    onClick={() => {
+                      handleAddToCart(selectedServiceDetails);
+                      setSelectedServiceDetails(null);
+                    }}
+                  >
+                    <Icon name="ShoppingCart" size={20} />
+                    Add to Cart
+                  </Button>
+                  <Button 
+                    size="lg"
+                    className="w-full"
+                    onClick={() => {
+                      handleBookNow(selectedServiceDetails);
+                      setSelectedServiceDetails(null);
+                    }}
+                  >
+                    <Icon name="CreditCard" size={20} />
+                    Book Now
+                  </Button>
+                </div>
+              </div>
 
               {/* Provider Info */}
               {(selectedServiceDetails.business_name || selectedServiceDetails.provider_name) && (

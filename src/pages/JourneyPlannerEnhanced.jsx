@@ -771,46 +771,46 @@ const JourneyPlannerEnhanced = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-2">Check-in Date *</label>
+          <label className="block text-sm font-medium mb-2 dark:text-white">Check-in Date *</label>
           <input
             type="date"
             value={journeyData.checkInDate}
             onChange={(e) => setJourneyData({...journeyData, checkInDate: e.target.value})}
             min={new Date().toISOString().split('T')[0]}
-            className="w-full px-4 py-2 border rounded-lg"
+            className="w-full px-4 py-2 border rounded-lg dark:bg-gray-800 dark:text-white dark:border-gray-600"
             required
           />
-          <p className="text-xs text-muted-foreground mt-1">Today or future dates only</p>
+          <p className="text-xs text-muted-foreground mt-1 dark:text-gray-400">Today or future dates only</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Check-out Date *</label>
+          <label className="block text-sm font-medium mb-2 dark:text-white">Check-out Date *</label>
           <input
             type="date"
             value={journeyData.checkOutDate}
             onChange={(e) => setJourneyData({...journeyData, checkOutDate: e.target.value})}
             min={journeyData.checkInDate || new Date().toISOString().split('T')[0]}
-            className="w-full px-4 py-2 border rounded-lg"
+            className="w-full px-4 py-2 border rounded-lg dark:bg-gray-800 dark:text-white dark:border-gray-600"
             required
           />
-          <p className="text-xs text-muted-foreground mt-1">Must be after check-in date</p>
+          <p className="text-xs text-muted-foreground mt-1 dark:text-gray-400">Must be after check-in date</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Number of People *</label>
+          <label className="block text-sm font-medium mb-2 dark:text-white">Number of People *</label>
           <input
             type="number"
             min="1"
             value={journeyData.adults}
             onChange={(e) => setJourneyData({...journeyData, adults: parseInt(e.target.value)})}
-            className="w-full px-4 py-2 border rounded-lg"
+            className="w-full px-4 py-2 border rounded-lg dark:bg-gray-800 dark:text-white dark:border-gray-600"
             placeholder="Total number of travelers"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-3">Purpose of Travel <span className="text-muted-foreground text-xs">(Optional)</span></label>
+        <label className="block text-sm font-medium mb-3 dark:text-white">Purpose of Travel <span className="text-muted-foreground text-xs dark:text-gray-400">(Optional)</span></label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {travelPurposes.map(purpose => (
             <button
@@ -818,8 +818,8 @@ const JourneyPlannerEnhanced = () => {
               onClick={() => setJourneyData({...journeyData, travelPurpose: purpose.id})}
               className={`p-3 border rounded-lg flex items-center space-x-2 ${
                 journeyData.travelPurpose === purpose.id
-                  ? 'border-primary bg-primary/10'
-                  : 'border-border hover:bg-muted'
+                  ? 'border-primary bg-primary/10 dark:bg-primary/20'
+                  : 'border-border hover:bg-muted dark:border-gray-600 dark:hover:bg-gray-800 dark:text-white'
               }`}
             >
               <Icon name={purpose.icon} size={20} />
@@ -830,10 +830,10 @@ const JourneyPlannerEnhanced = () => {
       </div>
 
       <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={prevStep}>
+        <Button variant="outline" onClick={prevStep} className="dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700">
           <Icon name="ArrowLeft" size={16} /> Back
         </Button>
-        <Button onClick={nextStep} disabled={!journeyData.checkInDate || !journeyData.checkOutDate}>
+        <Button onClick={nextStep} disabled={!journeyData.checkInDate || !journeyData.checkOutDate} className="dark:bg-primary dark:text-white dark:hover:bg-primary/80">
           Next <Icon name="ArrowRight" size={16} />
         </Button>
       </div>
@@ -916,10 +916,10 @@ const JourneyPlannerEnhanced = () => {
       )}
 
       <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={prevStep}>
+        <Button variant="outline" onClick={prevStep} className="dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700">
           <Icon name="ArrowLeft" size={16} /> Back
         </Button>
-        <Button onClick={nextStep}>
+        <Button onClick={nextStep} className="dark:bg-primary dark:text-white dark:hover:bg-primary/80">
           Next <Icon name="ArrowRight" size={16} />
         </Button>
       </div>
@@ -944,7 +944,7 @@ const JourneyPlannerEnhanced = () => {
             {selectedLocation.ward && ` - ${selectedLocation.ward}`}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchProviders}>
+        <Button variant="outline" size="sm" onClick={fetchProviders} className="dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700">
           <Icon name="RefreshCw" size={16} />
           Refresh
         </Button>
@@ -1029,7 +1029,7 @@ const JourneyPlannerEnhanced = () => {
             <Button 
               variant="outline" 
               onClick={prevStep}
-              className="w-full sm:w-auto text-sm px-3 py-2"
+              className="w-full sm:w-auto text-sm px-3 py-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
             >
               <Icon name="ArrowLeft" size={16} />
               <span className="ml-1">Change Location</span>
@@ -1037,7 +1037,7 @@ const JourneyPlannerEnhanced = () => {
             <Button 
               variant="default" 
               onClick={() => navigate('/destination-discovery')}
-              className="w-full sm:w-auto text-sm px-3 py-2"
+              className="w-full sm:w-auto text-sm px-3 py-2 dark:bg-primary dark:text-white dark:hover:bg-primary/80"
             >
               <Icon name="Search" size={16} />
               <span className="ml-1">Browse All Services</span>
@@ -1047,12 +1047,13 @@ const JourneyPlannerEnhanced = () => {
       )}
 
       <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={prevStep}>
+        <Button variant="outline" onClick={prevStep} className="dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700">
           <Icon name="ArrowLeft" size={16} /> Back
         </Button>
         <Button 
           onClick={viewSummary} 
           disabled={!journeyData.selectedProviders || journeyData.selectedProviders.length === 0}
+          className="dark:bg-primary dark:text-white dark:hover:bg-primary/80"
         >
           View Summary <Icon name="FileText" size={16} />
         </Button>
@@ -1441,7 +1442,7 @@ const JourneyPlannerEnhanced = () => {
         {isMultiTripEnabled && multiTripDestinations.length > 0 ? renderMultiTripSummary() : renderSingleTripSummary()}
 
         <div className="flex flex-col sm:flex-row justify-between pt-6 gap-4 sm:gap-0">
-          <Button variant="outline" onClick={prevStep} className="w-full sm:w-auto">
+          <Button variant="outline" onClick={prevStep} className="w-full sm:w-auto dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700">
             <Icon name="ArrowLeft" size={16} /> Back
           </Button>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -1505,7 +1506,7 @@ const JourneyPlannerEnhanced = () => {
               
               alert('✅ Trip plan saved! View it in Dashboard > My Trips');
               navigate('/traveler-dashboard?tab=trips');
-            }} className="w-full sm:w-auto text-sm px-3 py-2 h-9">
+            }} className="w-full sm:w-auto text-sm px-3 py-2 h-9 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700">
               <Icon name="Save" size={14} className="mr-1" /> Save Plan
             </Button>
             <Button variant="secondary" onClick={async () => {
@@ -1569,7 +1570,7 @@ const JourneyPlannerEnhanced = () => {
                 console.error('Pre-order error:', error);
                 alert('Error creating pre-orders. Please try again.');
               }
-            }} className="w-full sm:w-auto text-sm px-3 py-2 h-9">
+            }} className="w-full sm:w-auto text-sm px-3 py-2 h-9 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
               <Icon name="Clock" size={14} className="mr-1" /> Pre-Order
             </Button>
             <Button onClick={async () => {
@@ -1641,7 +1642,7 @@ const JourneyPlannerEnhanced = () => {
                 console.error('❌ [Journey Planner] Critical error:', error);
                 alert('Error adding services to cart. Please try again.');
               }
-            }} className="w-full sm:w-auto text-sm px-3 py-2 h-9 bg-primary text-primary-foreground hover:bg-primary/90">
+            }} className="w-full sm:w-auto text-sm px-3 py-2 h-9 bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary dark:text-white dark:hover:bg-primary/80">
               <Icon name="ShoppingCart" size={14} className="mr-1" /> Continue to Cart & Payment
             </Button>
           </div>

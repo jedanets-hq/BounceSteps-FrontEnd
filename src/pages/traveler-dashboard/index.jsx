@@ -1037,7 +1037,7 @@ const TravelerDashboard = () => {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            className="w-full sm:w-auto text-xs px-2 py-1"
+                            className="w-full sm:w-auto text-xs px-2 py-1 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                             onClick={() => {
                               setSelectedTrip({
                                 ...plan,
@@ -1063,7 +1063,7 @@ const TravelerDashboard = () => {
                             return (
                               <Button 
                                 size="sm"
-                                className="w-full sm:w-auto text-xs px-2 py-1"
+                                className="w-full sm:w-auto text-xs px-2 py-1 dark:bg-primary dark:text-white dark:hover:bg-primary/80"
                                 onClick={async () => {
                                   // Add services to cart
                                   for (const service of plan.services || []) {
@@ -1198,7 +1198,7 @@ const TravelerDashboard = () => {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                className="w-full sm:w-auto text-xs px-2 py-1"
+                                className="w-full sm:w-auto text-xs px-2 py-1 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                                 onClick={() => {
                                   setSelectedTrip({
                                     ...booking,

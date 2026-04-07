@@ -8,7 +8,8 @@ const Footer = () => {
     { name: "Destinations", path: "/destination-discovery" },
     { name: "Services", path: "/destination-discovery" },
     { name: "Contact", path: "/about" },
-    { name: "Privacy, Terms & Conditions", path: "/legal" }
+    { name: "Privacy Policy", path: "/privacy" },
+    { name: "Terms & Conditions", path: "/terms" }
   ];
 
   const handleLinkClick = (link) => {

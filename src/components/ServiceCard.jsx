@@ -114,25 +114,25 @@ const ServiceCard = ({
           </div>
         )}
         
-        {/* Payment Methods Display */}
+        {/* Payment Methods Display - Hidden on mobile, shown on desktop */}
         {service?.payment_methods && Object.keys(service.payment_methods).some(key => service.payment_methods[key]?.enabled) && (
-          <div className="mb-2 md:mb-3 p-1.5 md:p-2 bg-muted/30 rounded-lg">
-            <p className="text-[10px] md:text-xs font-medium text-muted-foreground mb-1 md:mb-1.5">Accepted Payments:</p>
-            <div className="flex flex-wrap gap-1 md:gap-1.5">
+          <div className="hidden md:block mb-3 p-2 bg-muted/30 rounded-lg">
+            <p className="text-xs font-medium text-muted-foreground mb-1.5">Accepted Payments:</p>
+            <div className="flex flex-wrap gap-1.5">
               {service.payment_methods.visa?.enabled && (
-                <span className="inline-flex items-center px-1.5 md:px-2 py-0.5 bg-primary/10 text-primary rounded text-[9px] md:text-xs">
-                  <Icon name="CreditCard" size={10} className="mr-0.5 md:mr-1 shrink-0" />
+                <span className="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
+                  <Icon name="CreditCard" size={10} className="mr-1 shrink-0" />
                   Visa/Card
                 </span>
               )}
               {service.payment_methods.paypal?.enabled && (
-                <span className="inline-flex items-center px-1.5 md:px-2 py-0.5 bg-primary/10 text-primary rounded text-[9px] md:text-xs">
+                <span className="inline-flex items-center px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
                   PayPal
                 </span>
               )}
               {service.payment_methods.mobileMoney?.enabled && (
-                <span className="inline-flex items-center px-1.5 md:px-2 py-0.5 bg-green-100 text-green-700 rounded text-[9px] md:text-xs">
-                  <Icon name="Smartphone" size={10} className="mr-0.5 md:mr-1 shrink-0" />
+                <span className="inline-flex items-center px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                  <Icon name="Smartphone" size={10} className="mr-1 shrink-0" />
                   M-Money
                 </span>
               )}
@@ -152,34 +152,46 @@ const ServiceCard = ({
           </div>
         </div>
         
-        {/* Action Buttons */}
+        {/* Action Buttons - Mobile: View only, Desktop: All buttons */}
         <div className="flex flex-col gap-1.5 md:gap-2 mt-3 md:mt-4">
-          <div className="flex gap-1.5 md:gap-2">
+          {/* Mobile: Only View button */}
+          <Button 
+            variant="outline"
+            size="sm"
+            className="w-full md:hidden text-[10px] py-1.5 h-auto dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
+            onClick={() => onViewDetails && onViewDetails(service)}
+          >
+            <Icon name="Eye" className="w-3 h-3 mr-1" />
+            View
+          </Button>
+          
+          {/* Desktop: All buttons */}
+          <div className="hidden md:flex gap-2">
             <Button 
               variant="outline"
               size="sm"
-              className="flex-1 text-[10px] md:text-sm py-1.5 md:py-2 h-auto"
+              className="flex-1 text-sm py-2 h-auto dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
               onClick={() => onViewDetails && onViewDetails(service)}
             >
-              <Icon name="Eye" className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1 md:mr-2" />
+              <Icon name="Eye" className="w-3.5 h-3.5 mr-2" />
               View
             </Button>
             <Button 
               variant="outline"
               size="sm"
-              className="flex-1 text-[10px] md:text-sm py-1.5 md:py-2 h-auto"
+              className="flex-1 text-sm py-2 h-auto dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
               onClick={() => onAddToCart && onAddToCart(service)}
             >
-              <Icon name="ShoppingCart" className="w-3 h-3 md:w-3.5 md:h-3.5 mr-1 md:mr-2" />
+              <Icon name="ShoppingCart" className="w-3.5 h-3.5 mr-2" />
               Cart
             </Button>
           </div>
           <Button 
             size="sm"
-            className="w-full bg-primary hover:bg-primary/90 text-xs md:text-sm py-2 md:py-3 h-auto leading-none"
+            className="hidden md:block w-full bg-primary hover:bg-primary/90 text-sm py-3 h-auto leading-none"
             onClick={() => onBookNow && onBookNow(service)}
           >
-            <Icon name="CreditCard" className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1.5 md:mr-2" />
+            <Icon name="CreditCard" className="w-4 h-4 mr-2" />
             Book Now
           </Button>
         </div>

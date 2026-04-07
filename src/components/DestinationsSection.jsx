@@ -200,18 +200,18 @@ const DestinationsSection = () => {
           ) : (
             <div
               ref={scrollRef}
-              className="flex gap-5 overflow-x-auto scrollbar-hide justify-start pl-6 pr-6 snap-x pb-4"
+              className="flex gap-4 md:gap-5 overflow-x-auto scrollbar-hide justify-start pl-4 md:pl-6 pr-4 md:pr-6 snap-x pb-4"
               style={{ scrollbarWidth: "none" }}
             >
               {destinations.map((d, index) => (
                 <div
                   key={`${d.name}-${index}`}
                   onClick={() => handleDestinationClick(d)}
-                  className={`flex-shrink-0 w-[220px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
+                  className={`flex-shrink-0 w-[280px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
                     index === destinations.length - 1 ? 'mr-8' : ''
                   }`}
                 >
-                  <div className="h-48 md:h-56 overflow-hidden">
+                  <div className="h-40 md:h-56 overflow-hidden">
                     <img
                       src={d.img}
                       alt={d.name}
@@ -225,10 +225,10 @@ const DestinationsSection = () => {
                     />
                   </div>
                   <div className="p-4 text-left">
-                    <h3 className="font-bold text-foreground">{d.name}</h3>
+                    <h3 className="font-bold text-foreground text-base md:text-lg">{d.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{d.desc}</p>
                     {d.service_count && (
-                      <p className="text-xs text-primary mt-1">
+                      <p className="text-xs text-primary mt-2">
                         {d.service_count} service{d.service_count !== 1 ? 's' : ''} available
                       </p>
                     )}
@@ -237,7 +237,7 @@ const DestinationsSection = () => {
                         e.stopPropagation();
                         handleDestinationClick(d);
                       }}
-                      className="mt-3 bg-primary text-primary-foreground px-6 py-2 rounded-lg text-sm font-semibold hover:bg-accent transition-colors"
+                      className="mt-3 bg-primary text-primary-foreground px-4 md:px-6 py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-accent transition-colors w-full md:w-auto"
                     >
                       Explore
                     </button>
@@ -271,8 +271,61 @@ const DestinationsSection = () => {
         </div>
       </div>
 
-      {/* Trending Services Section */}
+      {/* Top Ranking Services Section */}
       <TrendingServices />
+
+      {/* Space for future content */}
+      <div className="py-8"></div>
+
+      {/* Trending Services Section - Placeholder */}
+      <section className="py-16 relative bg-gradient-to-b from-background/50 to-background">
+        <div className="w-full px-4 text-center relative z-10">
+          <div className="max-w-full">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+              Trending Services
+            </h2>
+            <p className="text-muted-foreground mb-10">
+              Discover what's trending in travel services
+            </p>
+            {/* Placeholder content */}
+            <div className="max-w-4xl mx-auto p-12 bg-card border border-border rounded-2xl">
+              <div className="w-16 h-16 mx-auto mb-4 bg-orange-500/10 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+              <p className="text-muted-foreground">
+                Trending services based on bookings and popularity
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Recommendations Section - Placeholder */}
+      <section className="py-16 relative bg-gradient-to-b from-background to-background/50">
+        <div className="w-full px-4 text-center relative z-10">
+          <div className="max-w-full">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+              Recommendations
+            </h2>
+            <p className="text-muted-foreground mb-10">
+              Personalized recommendations just for you
+            </p>
+            {/* Placeholder content */}
+            <div className="max-w-4xl mx-auto p-12 bg-card border border-border rounded-2xl">
+              <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <p className="text-muted-foreground">
+                Personalized service recommendations based on your preferences
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* How BounceSteps Works Section */}
       <div className="w-full px-4 text-center relative z-10 mt-20">
@@ -384,8 +437,8 @@ const DestinationsSection = () => {
             </div>
           ) : travelerStories.length > 0 ? (
             <>
-              {/* Desktop View - Grid */}
-              <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+              {/* Desktop View - Grid: Mobile 2 columns, Desktop 3 columns */}
+              <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
                 {travelerStories.map((story) => {
                   // Parse images
                   let storyImages = [];

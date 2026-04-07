@@ -97,7 +97,7 @@ const ProviderCard = ({ provider, onViewProfile, onSelect, isSelected }) => {
           variant="outline"
           size="sm"
           onClick={() => onViewProfile(provider)}
-          className="flex-1 text-sm px-3 py-2 h-9"
+          className="flex-1 text-sm px-3 py-2 h-9 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
         >
           <Icon name="Eye" size={14} className="mr-1" />
           <span className="truncate">View Profile</span>
@@ -138,7 +138,7 @@ const ProviderCard = ({ provider, onViewProfile, onSelect, isSelected }) => {
               navigate('/traveler-dashboard?tab=favorites');
             }
           }}
-          className={`flex-1 text-sm px-3 py-2 h-9 ${isFavorite(provider.id) ? 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100' : 'text-red-500 hover:bg-red-50 border-red-200'}`}
+          className={`flex-1 text-sm px-3 py-2 h-9 ${isFavorite(provider.id) ? 'text-red-600 bg-red-50 border-red-200 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:border-red-800 dark:hover:bg-red-900/30' : 'text-red-500 hover:bg-red-50 border-red-200 dark:text-red-400 dark:hover:bg-red-900/20 dark:border-red-800'}`}
         >
           <Icon name={isFavorite(provider.id) ? "HeartOff" : "Heart"} size={14} className="mr-1 flex-shrink-0" />
           <span className="truncate">{isFavorite(provider.id) ? 'In Favorites' : 'Add to Favorite'}</span>

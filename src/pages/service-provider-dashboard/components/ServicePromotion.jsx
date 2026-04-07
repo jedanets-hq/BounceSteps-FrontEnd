@@ -72,12 +72,12 @@ const ServicePromotion = () => {
     },
     {
       id: 'trending',
-      name: 'Trending Services',
-      description: 'Feature your service in the trending section',
+      name: 'Top Ranking',
+      description: 'Feature your service in the top ranking section',
       price: 30000,
       duration_days: 30,
       duration: '30 days',
-      benefits: ['Homepage trending section', 'Increased visibility', 'Priority in search'],
+      benefits: ['Homepage top ranking section', 'Increased visibility', 'Priority in search'],
       icon: 'TrendingUp',
       color: 'bg-orange-500'
     },

@@ -311,9 +311,229 @@ const ProviderProfile = () => {
           </button>
 
           {/* Provider Header */}
-          <div className="bg-card rounded-xl border border-border p-6 mb-8">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">
+          <div className="bg-card rounded-xl border border-border p-4 md:p-6 mb-8">
+            {/* Mobile Layout */}
+            <div className="md:hidden">
+              {/* Top Section: Avatar + Basic Info */}
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                  <Icon name="Building2" size={32} className="text-primary" />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-lg font-bold text-foreground flex items-center gap-2 mb-1">
+                    <span className="truncate">{provider?.business_name || provider?.name || 'Service Provider'}</span>
+                    {provider?.badge_type && <ProviderBadge badgeType={provider.badge_type} size="sm" showText={false} />}
+                  </h1>
+                  
+                  {provider?.location && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
+                      <Icon name="MapPin" size={12} />
+                      <span className="truncate">{provider.location}</span>
+                    </p>
+                  )}
+                  
+                  {/* Stats Row */}
+                  <div className="flex items-center gap-3 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Icon name="Package" size={12} className="text-primary" />
+                      <span className="font-medium">{services.length}</span>
+                      <span className="text-muted-foreground">Services</span>
+                    </div>
+                    
+                    {provider?.average_rating > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Icon name="Star" size={12} className="text-yellow-500 fill-yellow-500" />
+                        <span className="font-medium">{parseFloat(provider.average_rating).toFixed(1)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Location Tags */}
+              {provider?.location_data && Object.keys(provider.location_data).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {provider.location_data.region && (
+                    <span className="inline-flex items-center px-2 py-0.5 bg-muted/30 text-muted-foreground rounded text-xs">
+                      <Icon name="MapPin" size={10} className="mr-1" />
+                      {provider.location_data.region}
+                    </span>
+                  )}
+                  {provider.location_data.district && (
+                    <span className="inline-flex items-center px-2 py-0.5 bg-muted/30 text-muted-foreground rounded text-xs">
+                      {provider.location_data.district}
+                    </span>
+                  )}
+                  {provider.location_data.ward && (
+                    <span className="inline-flex items-center px-2 py-0.5 bg-muted/30 text-muted-foreground rounded text-xs">
+                      {provider.location_data.ward}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Service Categories */}
+              {provider?.service_categories && provider.service_categories.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {provider.service_categories.map((category, index) => (
+                    <span key={index} className="inline-flex items-center px-2 py-0.5 bg-secondary/10 text-secondary rounded-full text-xs font-medium">
+                      <Icon name="Briefcase" size={10} className="mr-1" />
+                      {category}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Description */}
+              {provider?.description && (
+                <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{provider.description}</p>
+              )}
+
+              {/* Follower Count */}
+              <div className="text-center py-2 mb-3 bg-muted/20 rounded-lg">
+                <p className="text-lg font-bold text-foreground">{followerCount}</p>
+                <p className="text-xs text-muted-foreground">Followers</p>
+              </div>
+
+              {/* Action Buttons Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant={isFollowing ? 'default' : 'outline'}
+                  onClick={handleFollowToggle}
+                  disabled={loadingFollow}
+                  className="text-xs py-2 h-auto dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
+                  size="sm"
+                >
+                  {loadingFollow ? (
+                    <Icon name="Loader2" size={12} className="animate-spin" />
+                  ) : (
+                    <>
+                      <Icon name={isFollowing ? 'UserCheck' : 'UserPlus'} size={12} className="mr-1" />
+                      {isFollowing ? 'Following' : 'Follow'}
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  variant={isFavorite('provider', parseInt(providerId)) ? 'default' : 'outline'}
+                  onClick={async () => {
+                    const savedUser = localStorage.getItem('isafari_user');
+                    if (!savedUser) {
+                      navigate('/login?redirect=/provider/' + providerId);
+                      return;
+                    }
+                    
+                    try {
+                      const isCurrentlyFavorite = isFavorite('provider', parseInt(providerId));
+                      
+                      if (isCurrentlyFavorite) {
+                        const success = await removeFromFavorites('provider', parseInt(providerId));
+                        if (success) {
+                          alert('✅ Removed from favorites!');
+                        } else {
+                          alert('❌ Failed to remove from favorites');
+                        }
+                      } else {
+                        const success = await addToFavorites('provider', parseInt(providerId));
+                        if (success) {
+                          alert('✅ Added to favorites!');
+                        } else {
+                          alert('❌ Failed to add to favorites');
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error managing favorites:', error);
+                      alert('❌ Error. Please try again.');
+                    }
+                  }}
+                  className="text-xs py-2 h-auto dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
+                  size="sm"
+                >
+                  <Icon 
+                    name="Heart" 
+                    size={12} 
+                    className={`mr-1 ${isFavorite('provider', parseInt(providerId)) ? 'fill-current' : ''}`} 
+                  />
+                  Favorite
+                </Button>
+                
+                {provider?.whatsapp && (
+                  <a 
+                    href={`https://wa.me/${provider.whatsapp.replace(/[^0-9]/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs font-medium dark:bg-green-600 dark:hover:bg-green-700"
+                  >
+                    <Icon name="MessageCircle" size={12} className="mr-1" />
+                    WhatsApp
+                  </a>
+                )}
+                
+                {provider?.phone && (
+                  <a 
+                    href={`tel:${provider.phone}`}
+                    className="inline-flex items-center justify-center px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-xs font-medium dark:bg-primary dark:hover:bg-primary/80"
+                  >
+                    <Icon name="Phone" size={12} className="mr-1" />
+                    Call
+                  </a>
+                )}
+                
+                {provider?.email && (
+                  <Button
+                    variant="default"
+                    onClick={async () => {
+                      const savedUser = localStorage.getItem('isafari_user');
+                      if (!savedUser) {
+                        navigate('/login?redirect=/provider/' + providerId);
+                        return;
+                      }
+                      
+                      const subject = prompt('Enter email subject:');
+                      if (!subject) return;
+                      
+                      const message = prompt('Enter your message:');
+                      if (!message) return;
+                      
+                      try {
+                        const userData = JSON.parse(savedUser);
+                        const token = userData.token;
+                        
+                        const response = await fetch(`${API_BASE_URL}/providers/${providerId}/contact`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                          },
+                          body: JSON.stringify({ subject, message })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                          alert('✅ ' + data.message);
+                        } else {
+                          alert('❌ ' + (data.message || 'Failed to send message'));
+                        }
+                      } catch (error) {
+                        console.error('Error sending contact message:', error);
+                        alert('❌ Error sending message. Please try again.');
+                      }
+                    }}
+                    className="inline-flex items-center justify-center px-3 py-2 text-xs font-medium col-span-2 dark:bg-primary dark:text-white dark:hover:bg-primary/80"
+                    size="sm"
+                  >
+                    <Icon name="Mail" size={12} className="mr-1" />
+                    Contact
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Desktop Layout */}
+            <div className="hidden md:flex items-start gap-6">
+              <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
                 <Icon name="Building2" size={48} className="text-primary" />
               </div>
               
@@ -398,7 +618,7 @@ const ProviderProfile = () => {
                   variant={isFollowing ? 'default' : 'outline'}
                   onClick={handleFollowToggle}
                   disabled={loadingFollow}
-                  className="min-w-[120px]"
+                  className="min-w-[120px] dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                 >
                   {loadingFollow ? (
                     <Icon name="Loader2" size={16} className="animate-spin" />
@@ -410,7 +630,7 @@ const ProviderProfile = () => {
                   )}
                 </Button>
                 
-                {/* Add to Favorite Button - USE CONTEXT */}
+                {/* Add to Favorite Button */}
                 <Button
                   variant={isFavorite('provider', parseInt(providerId)) ? 'default' : 'outline'}
                   onClick={async () => {
@@ -443,6 +663,7 @@ const ProviderProfile = () => {
                       alert('❌ Error. Please try again.');
                     }
                   }}
+                  className="dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                 >
                   <Icon 
                     name="Heart" 
@@ -457,7 +678,7 @@ const ProviderProfile = () => {
                     href={`https://wa.me/${provider.whatsapp.replace(/[^0-9]/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                    className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors dark:bg-green-600 dark:hover:bg-green-700"
                   >
                     <Icon name="MessageCircle" size={18} className="mr-2" />
                     WhatsApp
@@ -466,7 +687,7 @@ const ProviderProfile = () => {
                 {provider?.phone && (
                   <a 
                     href={`tel:${provider.phone}`}
-                    className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors"
+                    className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary transition-colors dark:bg-primary dark:hover:bg-primary/80"
                   >
                     <Icon name="Phone" size={18} className="mr-2" />
                     {provider.phone}
@@ -618,7 +839,7 @@ const ProviderProfile = () => {
                         <Button 
                           variant="outline"
                           size="sm"
-                          className="w-full py-2.5"
+                          className="w-full py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                           onClick={() => {
                             console.log('🔍 [View Details Button Clicked] Service data:', {
                               id: service?.id,
@@ -645,7 +866,7 @@ const ProviderProfile = () => {
                         <Button 
                           variant="outline"
                           size="sm"
-                          className="w-full py-2.5"
+                          className="w-full py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                           onClick={async () => {
                             const savedUser = localStorage.getItem('isafari_user');
                             if (!savedUser) {
@@ -660,7 +881,7 @@ const ProviderProfile = () => {
                         </Button>
                         <Button 
                           size="sm"
-                          className="w-full bg-primary hover:bg-primary/90 py-2.5"
+                          className="w-full bg-primary hover:bg-primary/90 py-2.5 dark:bg-primary dark:text-white dark:hover:bg-primary/80"
                           onClick={() => handleBookNow(service)}
                         >
                           <Icon name="CreditCard" size={16} />

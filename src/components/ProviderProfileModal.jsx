@@ -81,7 +81,7 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors flex-shrink-0"
+            className="p-2 hover:bg-muted rounded-lg transition-colors flex-shrink-0 dark:hover:bg-gray-700 dark:text-white"
           >
             <Icon name="X" size={20} className="sm:w-6 sm:h-6" />
           </button>
@@ -229,7 +229,7 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
                         <Button
                           variant={isSelected ? "default" : "outline"}
                           size="sm"
-                          className="w-full h-9 text-sm"
+                          className="w-full h-9 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleServiceSelection(service);
@@ -261,14 +261,14 @@ const ProviderProfileModal = ({ provider, onClose, onSelectService }) => {
                 <Button 
                   variant="outline" 
                   onClick={onClose}
-                  className="w-full sm:w-auto h-9 text-sm"
+                  className="w-full sm:w-auto h-9 text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
                 >
                   Close
                 </Button>
                 {selectedServices.length > 0 && (
                   <Button 
                     onClick={handleAddServices}
-                    className="w-full sm:w-auto h-9 text-sm"
+                    className="w-full sm:w-auto h-9 text-sm dark:bg-primary dark:text-white dark:hover:bg-primary/80"
                   >
                     <Icon name="Plus" size={14} className="mr-1" />
                     Add Selected Services

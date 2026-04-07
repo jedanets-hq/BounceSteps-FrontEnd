@@ -51,7 +51,7 @@ const ServicesSection = () => {
         <div className="relative mt-10 max-w-7xl mx-auto">
           <button
             onClick={() => scroll(-1)}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background shadow-md flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background dark:bg-gray-800 shadow-md flex items-center justify-center text-muted-foreground dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
           >
             <Icon name="ChevronLeft" size={18} />
           </button>
@@ -65,20 +65,20 @@ const ServicesSection = () => {
               <div
                 key={s.title}
                 onClick={() => handleServiceClick(s)}
-                className="flex-shrink-0 w-[180px] md:w-[200px] bg-background/90 backdrop-blur-sm rounded-2xl p-6 flex flex-col items-center gap-4 hover:shadow-lg transition-all cursor-pointer snap-start shadow-sm hover:scale-105 hover:bg-background"
+                className="flex-shrink-0 w-[180px] md:w-[200px] bg-background/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 flex flex-col items-center gap-4 hover:shadow-lg transition-all cursor-pointer snap-start shadow-sm hover:scale-105 hover:bg-background dark:hover:bg-gray-800"
               >
-                <div className="w-16 h-16 rounded-xl bg-secondary flex items-center justify-center">
-                  <Icon name={s.icon} size={32} className="text-primary" />
+                <div className="w-16 h-16 rounded-xl bg-secondary dark:bg-gray-700 flex items-center justify-center">
+                  <Icon name={s.icon} size={32} className="text-primary dark:text-primary" />
                 </div>
-                <h3 className="font-semibold text-foreground text-base">{s.title}</h3>
-                <p className="text-sm text-muted-foreground leading-tight text-center">{s.desc}</p>
+                <h3 className="font-semibold text-foreground dark:text-white text-base">{s.title}</h3>
+                <p className="text-sm text-muted-foreground dark:text-gray-300 leading-tight text-center">{s.desc}</p>
               </div>
             ))}
           </div>
 
           <button
             onClick={() => scroll(1)}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background shadow-md flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background dark:bg-gray-800 shadow-md flex items-center justify-center text-muted-foreground dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
           >
             <Icon name="ChevronRight" size={18} />
           </button>

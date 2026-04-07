@@ -381,7 +381,7 @@ const Register = () => {
                       className="px-3 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-muted"
                       disabled
                     >
-                      <option value="+255">+255 (Tanzania)</option>
+                      <option value="+255">+255</option>
                     </select>
                     <input
                       type="tel"
@@ -600,13 +600,23 @@ const Register = () => {
                   <label htmlFor="acceptTerms" className="text-sm text-muted-foreground cursor-pointer">
                     I accept the{' '}
                     <a
-                      href="/legal"
+                      href="/privacy"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary hover:underline font-medium"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      Privacy Policy, Terms & Conditions
+                      Privacy Policy
+                    </a>
+                    {' '}and{' '}
+                    <a
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline font-medium"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Terms & Conditions
                     </a>
                   </label>
                 </div>

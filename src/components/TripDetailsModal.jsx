@@ -91,7 +91,7 @@ const TripDetailsModal = ({ trip, isOpen, onClose }) => {
               {isJourneyPlan ? journeyLocation || 'Location not set' : tripDate}
             </p>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose} className="ml-2">
+          <Button variant="ghost" size="sm" onClick={onClose} className="ml-2 dark:text-white dark:hover:bg-gray-700">
             <Icon name="X" size={20} />
           </Button>
         </div>
@@ -306,7 +306,7 @@ const TripDetailsModal = ({ trip, isOpen, onClose }) => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
-              <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
+              <Button variant="outline" onClick={onClose} className="w-full sm:w-auto dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700">
                 Close
               </Button>
               
@@ -314,7 +314,7 @@ const TripDetailsModal = ({ trip, isOpen, onClose }) => {
               {isJourneyPlan && services.length > 0 && (
                 <Button 
                   variant="secondary"
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                   onClick={async () => {
                     const userData = JSON.parse(localStorage.getItem('isafari_user') || '{}');
                     const token = userData.token;
@@ -388,7 +388,7 @@ const TripDetailsModal = ({ trip, isOpen, onClose }) => {
                 }
                 
                 return (
-                  <Button onClick={handleContinueToPayment} className="w-full sm:w-auto">
+                  <Button onClick={handleContinueToPayment} className="w-full sm:w-auto dark:bg-primary dark:text-white dark:hover:bg-primary/80">
                     <Icon name="ShoppingCart" size={16} />
                     <span className="ml-1">Continue to Cart</span>
                   </Button>
