@@ -238,120 +238,50 @@ const TrendingServices = () => {
               {trendingServices.map((service, index) => (
                 <div
                   key={service.id}
-                  className={`flex-shrink-0 w-[170px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background border border-border group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
+                  onClick={() => handleServiceClick(service)}
+                  className={`flex-shrink-0 w-[170px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
                     index === trendingServices.length - 1 ? 'mr-8' : ''
                   }`}
                 >
                   {/* Service Image */}
-                  <div className="h-40 md:h-60 overflow-hidden relative">
+                  <div className="h-40 md:h-56 overflow-hidden relative">
                     <img
                       src={getServiceImage(service)}
                       alt={service.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       loading="lazy"
+                      width={640}
+                      height={512}
+                      onError={(e) => {
+                        e.target.src = '/service-placeholder.jpg';
+                      }}
                     />
-                    {/* Category Badge */}
-                    <div className="absolute top-3 left-3 bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold">
-                      {service.category}
-                    </div>
-                    {/* Trending Badge */}
-                    <div className="absolute top-3 right-3 bg-orange-500/90 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                      <Star size={12} fill="currentColor" />
-                      Trending
+                    {/* TOP Badge */}
+                    <div className="absolute top-3 right-3 bg-orange-500/90 text-white px-1.5 py-0.5 md:px-2 md:py-1 rounded-full text-xs font-semibold flex items-center gap-0.5 md:gap-1">
+                      <Star size={10} className="md:w-3 md:h-3" fill="currentColor" />
+                      <span className="text-xs md:text-xs">TOP</span>
                     </div>
                   </div>
 
-                  {/* Service Info */}
-                  <div className="p-4 md:p-5">
-                    {/* Title and Location Combined for Mobile */}
-                    <div className="mb-3">
-                      <h3 className="font-bold text-foreground text-left mb-1 line-clamp-2 text-base md:text-lg">
-                        {service.title}
-                      </h3>
-                      {/* Location - Moved up and formatted as "Tanzania, Area" */}
-                      {(service.area || service.district || service.region) && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <MapPin size={12} className="shrink-0" />
-                          <span>Tanzania, {service.area || service.district || service.region}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Provider Info */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        {service.avatar_url ? (
-                          <img
-                            src={service.avatar_url}
-                            alt={`${service.provider_first_name} ${service.provider_last_name}`}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-primary font-semibold text-xs">
-                            {service.provider_first_name?.charAt(0)}{service.provider_last_name?.charAt(0)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-left flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-medium text-foreground truncate">
-                            {service.business_name || `${service.provider_first_name} ${service.provider_last_name}`}
-                          </p>
-                          {/* Provider Badge - next to provider name */}
-                          {service.provider_badge_type && (
-                            <ProviderBadge badgeType={service.provider_badge_type} size="xs" showText={false} />
-                          )}
-                        </div>
-                        {service.provider_verified && (
-                          <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 rounded-full bg-green-500 flex items-center justify-center">
-                              <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                            </div>
-                            <span className="text-xs text-green-600 font-medium">Verified</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Service Details - Duration and Max Participants hidden on mobile, shown on desktop */}
-                    <div className="hidden md:space-y-2 md:mb-4">
-                      {/* Duration */}
-                      {service.duration && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Clock size={12} />
-                          <span>{service.duration}</span>
-                        </div>
-                      )}
-
-                      {/* Max Participants */}
-                      {service.max_participants && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Users size={12} />
-                          <span>Up to {service.max_participants} people</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Price and Book Button */}
-                    <div className="flex items-center justify-between">
-                      <div className="text-left">
-                        <p className="text-base md:text-lg font-bold text-primary">
-                          {formatPrice(service.price)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          per person
-                        </p>
-                      </div>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleServiceClick(service);
-                        }}
-                        className="bg-primary text-primary-foreground px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-accent transition-colors dark:bg-primary dark:text-white dark:hover:bg-primary/80"
-                      >
-                        View Details
-                      </button>
-                    </div>
+                  {/* Service Info - Same structure as destinations */}
+                  <div className="p-4 text-left">
+                    <h3 className="font-bold text-foreground text-base md:text-lg">{service.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {service.description || `${service.category} service in Tanzania`}
+                    </p>
+                    {/* Price info */}
+                    <p className="text-xs text-primary mt-2">
+                      TZS {parseFloat(service.price || 0).toLocaleString()} per person
+                    </p>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleServiceClick(service);
+                      }}
+                      className="mt-3 bg-primary text-primary-foreground px-4 md:px-6 py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-accent transition-colors w-full md:w-auto"
+                    >
+                      View Details
+                    </button>
                   </div>
                 </div>
               ))}
