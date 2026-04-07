@@ -101,7 +101,7 @@ const ServiceCard = ({
         </div>
         
         {/* Description - Hidden on mobile, shown on desktop */}
-        <p className="hidden md:block text-sm text-muted-foreground mb-4 line-clamp-2 flex-grow">
+        <p className="max-md:hidden text-sm text-muted-foreground mb-4 line-clamp-2 flex-grow">
           {service.description}
         </p>
         
