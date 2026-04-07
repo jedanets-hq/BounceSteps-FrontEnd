@@ -80,7 +80,8 @@ const DestinationsSection = () => {
   }, []);
 
   const scroll = (dir) => {
-    scrollRef.current?.scrollBy({ left: dir * 400, behavior: "smooth" });
+    const scrollAmount = window.innerWidth < 768 ? 180 : 400; // Smaller scroll for mobile
+    scrollRef.current?.scrollBy({ left: dir * scrollAmount, behavior: "smooth" });
     setActive((p) => Math.max(0, Math.min(destinations.length - 1, p + dir)));
   };
 
@@ -207,7 +208,7 @@ const DestinationsSection = () => {
                 <div
                   key={`${d.name}-${index}`}
                   onClick={() => handleDestinationClick(d)}
-                  className={`flex-shrink-0 w-[280px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
+                  className={`flex-shrink-0 w-[170px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
                     index === destinations.length - 1 ? 'mr-8' : ''
                   }`}
                 >

@@ -49,7 +49,7 @@ const TrendingServices = () => {
 
   const scroll = (dir) => {
     if (scrollRef.current) {
-      const cardWidth = 400; // Updated for larger desktop cards
+      const cardWidth = window.innerWidth < 768 ? 180 : 400; // Smaller scroll for mobile
       scrollRef.current.scrollBy({ left: dir * cardWidth, behavior: "smooth" });
       
       // Update active indicator
@@ -238,7 +238,7 @@ const TrendingServices = () => {
               {trendingServices.map((service, index) => (
                 <div
                   key={service.id}
-                  className={`flex-shrink-0 w-[280px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background border border-border group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
+                  className={`flex-shrink-0 w-[170px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background border border-border group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
                     index === trendingServices.length - 1 ? 'mr-8' : ''
                   }`}
                 >
