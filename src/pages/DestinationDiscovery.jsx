@@ -408,8 +408,8 @@ const DestinationDiscovery = () => {
                 )}
               </div>
 
-              {/* Description */}
-              <div className="mb-6">
+              {/* Description - Hidden on mobile, shown on desktop */}
+              <div className="hidden md:block mb-6">
                 <h3 className="font-semibold text-foreground mb-2">Description</h3>
                 <p className="text-muted-foreground">{selectedServiceDetails.description || 'No description available'}</p>
               </div>
