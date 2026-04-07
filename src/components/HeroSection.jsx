@@ -168,7 +168,10 @@ const HeroSection = () => {
                     <span className="text-secondary font-bold">
                       {user.user_type === 'service_provider' ? 'Service Provider' : 'Traveller'}
                     </span>{' '}
-                    Welcome back, <span className="text-primary font-bold">{user.first_name || user.name || 'Friend'}</span>! <Hand size={20} className="inline text-yellow-500" />
+                    {user.user_type === 'service_provider' 
+                      ? `Welcome back, ${user.firstName || user.first_name || user.name || 'Provider'}! Ready to serve travelers?`
+                      : `Welcome back, ${user.firstName || user.first_name || user.name || 'Traveler'}! Ready for your next adventure?`
+                    } <Hand size={20} className="inline text-yellow-500" />
                   </p>
                 </div>
               )}
