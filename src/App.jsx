@@ -11,6 +11,7 @@ import HomePage from './pages/homepage';
 import LoginPage from './pages/auth/login';
 import RegisterPage from './pages/auth/register';
 import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 import OAuthCallback from './pages/auth/OAuthCallback';
 import GoogleRoleSelection from './pages/auth/GoogleRoleSelection';
 import Dashboard from './pages/dashboard';
@@ -44,6 +45,7 @@ function App() {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/auth/callback" element={<OAuthCallback />} />
                   <Route path="/google-role-selection" element={<GoogleRoleSelection />} />
                   <Route path="/test-dashboard" element={<TestDashboard />} />

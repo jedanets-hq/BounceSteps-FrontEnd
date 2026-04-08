@@ -16,20 +16,27 @@ const ForgotPassword = () => {
     setSuccess(false);
 
     try {
-      // TODO: Implement API call to send reset email
-      // const response = await fetch(`${API_URL}/auth/forgot-password`, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email })
-      // });
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       
-      // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setSuccess(true);
-      setEmail('');
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSuccess(true);
+        setEmail('');
+      } else {
+        setError(data.message || 'Failed to send reset email. Please try again.');
+      }
     } catch (err) {
-      setError('Failed to send reset email. Please try again.');
+      console.error('Forgot password error:', err);
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
