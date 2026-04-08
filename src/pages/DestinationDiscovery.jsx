@@ -93,60 +93,80 @@ const DestinationDiscovery = () => {
     }
   }, [user, navigate]);
 
-  // Handle URL parameters for category, search, and region
+  // Handle URL parameters and fetch services
   useEffect(() => {
+    if (!user) return;
+
     const categoryParam = searchParams.get('category');
     const searchParam = searchParams.get('search');
     
-    if (categoryParam) {
+    console.log('🔗 URL params changed:', { categoryParam, searchParam, currentCategory: selectedCategory, currentSearch: searchQuery });
+    
+    // Update state from URL parameters
+    if (categoryParam && categoryParam !== selectedCategory) {
+      console.log('📝 Setting category from URL:', categoryParam);
       setSelectedCategory(categoryParam);
     }
-    if (searchParam) {
+    if (searchParam && searchParam !== searchQuery) {
+      console.log('📝 Setting search from URL:', searchParam);
       setSearchQuery(searchParam);
     }
-    // Don't automatically set region as search query - let it work as a filter only
-    // This prevents auto-typing in the search bar
-  }, [searchParams]);
+    
+    // Fetch services with current or updated parameters
+    const effectiveCategory = categoryParam || selectedCategory;
+    const effectiveSearch = searchParam || searchQuery;
+    
+    fetchServicesWithParams(effectiveCategory, effectiveSearch);
+  }, [searchParams, user]);
 
+  // Fetch services when category or search changes (not from URL)
   useEffect(() => {
-    if (user) {
+    if (user && !searchParams.get('category') && !searchParams.get('search')) {
       fetchServices();
     }
-  }, [selectedCategory, searchQuery, searchParams, user]); // Added searchParams dependency
+  }, [selectedCategory, searchQuery, user]);
 
-  const fetchServices = async () => {
+  const fetchServicesWithParams = async (category, search) => {
+    console.log('🔍 Fetching services with params:', { category, search });
     setLoading(true);
     setError(null);
     
     try {
       const params = new URLSearchParams();
-      if (selectedCategory !== 'all') {
-        params.append('category', selectedCategory);
+      if (category && category !== 'all') {
+        params.append('category', category);
       }
-      if (searchQuery) {
-        params.append('search', searchQuery);
+      if (search) {
+        params.append('search', search);
       }
       
       // Add region parameter only if it exists in URL and there's no search query
       const regionParam = searchParams.get('region');
-      if (regionParam && !searchQuery) {
+      if (regionParam && !search) {
         params.append('region', regionParam);
       }
       
+      console.log('📡 API call URL:', `${API_URL}/services?${params}`);
       const response = await fetch(`${API_URL}/services?${params}`);
       const data = await response.json();
       
       if (data.success) {
+        console.log('✅ Services loaded:', data.services.length, 'services');
         setServices(data.services);
       } else {
+        console.error('❌ API error:', data.message);
         setError('Failed to load services');
       }
     } catch (err) {
-      console.error('Error fetching services:', err);
+      console.error('❌ Network error fetching services:', err);
       setError('Failed to load services. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchServices = async () => {
+    await fetchServicesWithParams(selectedCategory, searchQuery);
   };
 
   // Real service categories from database - ALL CATEGORIES
@@ -273,7 +293,17 @@ const DestinationDiscovery = () => {
               {categories.map(category => (
                 <button
                   key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
+                  onClick={() => {
+                    setSelectedCategory(category.id);
+                    // Update URL to reflect the selected category
+                    const newSearchParams = new URLSearchParams(searchParams);
+                    if (category.id === 'all') {
+                      newSearchParams.delete('category');
+                    } else {
+                      newSearchParams.set('category', category.id);
+                    }
+                    navigate(`/destination-discovery?${newSearchParams.toString()}`, { replace: true });
+                  }}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                     selectedCategory === category.id
                       ? 'bg-primary text-primary-foreground shadow-md'
