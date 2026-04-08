@@ -228,11 +228,6 @@ const DestinationsSection = () => {
                   <div className="p-4 text-left">
                     <h3 className="font-bold text-foreground text-base md:text-lg">{d.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{d.desc}</p>
-                    {d.service_count && (
-                      <p className="text-xs text-primary mt-2">
-                        {d.service_count} service{d.service_count !== 1 ? 's' : ''} available
-                      </p>
-                    )}
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
