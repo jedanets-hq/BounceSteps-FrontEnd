@@ -72,25 +72,41 @@ const ServicesSection = () => {
           {sectionDesc}
         </p>
 
-        {/* Mobile: Grid Layout for better consistency */}
-        <div className="mt-10 max-w-7xl mx-auto md:hidden">
-          <div className="mobile-grid-2 px-4">
+        {/* Mobile: Horizontal Scroll Layout */}
+        <div className="relative mt-10 max-w-7xl mx-auto md:hidden">
+          <button
+            onClick={() => scroll(-1)}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background dark:bg-gray-800 shadow-md flex items-center justify-center text-muted-foreground dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
+          >
+            <Icon name="ChevronLeft" size={18} />
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto scrollbar-hide justify-start pl-6 pr-8 snap-x"
+            style={{ scrollbarWidth: "none" }}
+          >
             {services.map((s) => (
               <div
                 key={s.title}
                 onClick={() => handleServiceClick(s)}
-                className="mobile-card bg-background/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-4 gap-3 hover:shadow-lg transition-all cursor-pointer shadow-sm hover:scale-105 hover:bg-background dark:hover:bg-gray-800"
+                className="flex-shrink-0 w-[160px] bg-background/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-4 flex flex-col items-center gap-3 hover:shadow-lg transition-all cursor-pointer snap-start shadow-sm hover:scale-105 hover:bg-background dark:hover:bg-gray-800"
               >
-                <div className="w-12 h-12 rounded-xl bg-secondary dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-secondary dark:bg-gray-700 flex items-center justify-center">
                   <Icon name={s.icon} size={20} className="text-primary dark:text-primary" />
                 </div>
-                <div className="text-center">
-                  <h3 className="font-semibold text-foreground dark:text-white text-xs leading-tight mb-1">{s.title}</h3>
-                  <p className="text-xs text-muted-foreground dark:text-gray-300 leading-tight">{s.desc}</p>
-                </div>
+                <h3 className="font-semibold text-foreground dark:text-white text-xs leading-tight text-center">{s.title}</h3>
+                <p className="text-xs text-muted-foreground dark:text-gray-300 leading-tight text-center">{s.desc}</p>
               </div>
             ))}
           </div>
+
+          <button
+            onClick={() => scroll(1)}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background dark:bg-gray-800 shadow-md flex items-center justify-center text-muted-foreground dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
+          >
+            <Icon name="ChevronRight" size={18} />
+          </button>
         </div>
 
         {/* Desktop: Horizontal Scroll Layout */}
