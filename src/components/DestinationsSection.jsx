@@ -222,10 +222,10 @@ const DestinationsSection = () => {
 
       <div className="w-full px-4 text-center relative z-10">
         <div className="max-w-full">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
           {isProvider ? "My Services" : "Popular Destinations"}
         </h2>
-        <p className="text-muted-foreground mt-2">
+        <p className="text-muted-foreground mt-2 mb-8 md:mb-10">
           {isProvider ? "Your services and offerings for travelers" : "Discover the world's top travel spots"}
         </p>
 
@@ -446,19 +446,19 @@ const DestinationsSection = () => {
       )}
 
       {/* How BounceSteps Works Section */}
-      <div className="w-full px-4 text-center relative z-10 mt-20">
+      <div className="w-full px-4 text-center relative z-10 mt-16 md:mt-20">
         <div className="max-w-full">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
             {isProvider ? "How to Grow Your Business" : "How BounceSteps Works"}
           </h2>
-          <p className="text-muted-foreground mb-12 max-w-2xl mx-auto">
+          <p className="text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto text-sm md:text-base">
             {isProvider 
               ? "Build your service business and connect with travelers through our platform"
               : "From inspiration to memories, we guide you through every step of your journey with intelligent technology and human expertise."
             }
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 max-w-7xl mx-auto">
             {isProvider ? (
               // Provider Steps
               <>
@@ -624,12 +624,12 @@ const DestinationsSection = () => {
       </div>
 
       {/* Traveler Stories Section */}
-      <div className="w-full px-4 text-center relative z-10 mt-20">
+      <div className="w-full px-4 text-center relative z-10 mt-16 md:mt-20">
         <div className="max-w-full">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
             Traveler Stories
           </h2>
-          <p className="text-muted-foreground mb-12 max-w-2xl mx-auto">
+          <p className="text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto text-sm md:text-base">
             Real experiences from real travelers who discovered the world through
             BounceSteps
           </p>
