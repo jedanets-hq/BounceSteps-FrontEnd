@@ -115,7 +115,7 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border w-full">
       <div className="w-full flex items-center justify-between py-3 px-4 content-padding">
-        <div className="flex items-center gap-2 ml-2 md:ml-8 cursor-pointer" onClick={() => navigate('/')}>
+        <div className="flex items-center gap-2 ml-0 md:ml-8 cursor-pointer" onClick={() => navigate('/')}>
           <img
             src="/LOGO.png"
             alt="BounceSteps"
