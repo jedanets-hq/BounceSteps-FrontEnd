@@ -220,6 +220,24 @@ const DestinationsSection = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background/50 to-background" />
       </div>
 
+      {/* Tropical leaves - decorative (mobile + desktop) */}
+      <img
+        src="/leaves-left.png"
+        alt=""
+        className="absolute left-0 bottom-0 h-[40%] w-[120px] md:w-[180px] object-cover object-right opacity-20 md:opacity-25 pointer-events-none"
+        loading="lazy"
+        width={512}
+        height={800}
+      />
+      <img
+        src="/leaves-right.png"
+        alt=""
+        className="absolute right-0 top-1/3 h-[40%] w-[120px] md:w-[180px] object-cover object-left opacity-20 md:opacity-25 pointer-events-none"
+        loading="lazy"
+        width={512}
+        height={800}
+      />
+
       <div className="w-full px-4 text-center relative z-10">
         <div className="max-w-full">
         <h2 className="text-2xl md:text-3xl font-bold text-foreground">
