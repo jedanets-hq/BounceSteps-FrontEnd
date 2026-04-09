@@ -24,3 +24,5 @@ Thumbs.db
 
 # Auxly - AI Task Management (internal data)
 .auxly/
+
+.vercel

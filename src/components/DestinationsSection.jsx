@@ -220,11 +220,11 @@ const DestinationsSection = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background/50 to-background" />
       </div>
 
-      {/* Tropical leaves - decorative (mobile + desktop) */}
+      {/* Tropical leaves - decorative (desktop only) */}
       <img
         src="/leaves-left.png"
         alt=""
-        className="absolute left-0 bottom-0 h-[40%] w-[120px] md:w-[180px] object-cover object-right opacity-20 md:opacity-25 pointer-events-none"
+        className="hidden md:block absolute left-0 bottom-0 h-[40%] w-[180px] object-cover object-right opacity-25 pointer-events-none"
         loading="lazy"
         width={512}
         height={800}
@@ -232,7 +232,7 @@ const DestinationsSection = () => {
       <img
         src="/leaves-right.png"
         alt=""
-        className="absolute right-0 top-1/3 h-[40%] w-[120px] md:w-[180px] object-cover object-left opacity-20 md:opacity-25 pointer-events-none"
+        className="hidden md:block absolute right-0 top-1/3 h-[40%] w-[180px] object-cover object-left opacity-25 pointer-events-none"
         loading="lazy"
         width={512}
         height={800}

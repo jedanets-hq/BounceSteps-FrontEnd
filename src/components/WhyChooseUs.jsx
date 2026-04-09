@@ -24,11 +24,11 @@ const WhyChooseUs = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
       </div>
 
-      {/* Tropical leaves - both sides (faded, far back) */}
+      {/* Tropical leaves - both sides (faded, far back) - Hidden on mobile */}
       <img
         src="/leaves-left.png"
         alt=""
-        className="absolute left-0 top-0 h-full w-[140px] md:w-[220px] object-cover object-right opacity-25 md:opacity-30 pointer-events-none"
+        className="hidden md:block absolute left-0 top-0 h-full w-[220px] object-cover object-right opacity-30 pointer-events-none"
         loading="lazy"
         width={512}
         height={800}
@@ -36,7 +36,7 @@ const WhyChooseUs = () => {
       <img
         src="/leaves-right.png"
         alt=""
-        className="absolute right-0 bottom-0 h-full w-[140px] md:w-[220px] object-cover object-left opacity-25 md:opacity-30 pointer-events-none"
+        className="hidden md:block absolute right-0 bottom-0 h-full w-[220px] object-cover object-left opacity-30 pointer-events-none"
         loading="lazy"
         width={512}
         height={800}
