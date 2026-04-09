@@ -125,7 +125,7 @@ const TrendingServices = () => {
 
   const scroll = (dir) => {
     if (scrollRef.current) {
-      const cardWidth = window.innerWidth < 768 ? 240 : 400; // Updated mobile scroll width
+      const cardWidth = window.innerWidth < 768 ? window.innerWidth - 28 : 400; // Full-width card on mobile
       scrollRef.current.scrollBy({ left: dir * cardWidth, behavior: "smooth" });
       
       // Update active indicator
@@ -330,19 +330,19 @@ const TrendingServices = () => {
             {/* Services Carousel */}
             <div
               ref={scrollRef}
-              className="flex gap-3 md:gap-6 overflow-x-auto scrollbar-hide justify-start pl-4 md:pl-6 pr-4 md:pr-6 snap-x pb-4"
+              className="flex gap-3 md:gap-6 overflow-x-auto scrollbar-hide justify-start pl-4 md:pl-6 pr-4 md:pr-6 snap-x snap-mandatory pb-4"
               style={{ scrollbarWidth: "none" }}
             >
               {trendingServices.map((service, index) => (
                 <div
                   key={service.id}
                   onClick={() => handleServiceClick(service)}
-                  className={`flex-shrink-0 w-[220px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
+                  className={`flex-shrink-0 w-[calc(100vw-2.5rem)] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
                     index === trendingServices.length - 1 ? 'mr-8' : ''
                   }`}
                 >
                   {/* Service Image */}
-                  <div className="h-40 md:h-56 overflow-hidden relative">
+                  <div className="h-52 md:h-56 overflow-hidden relative">
                     <img
                       src={getServiceImage(service)}
                       alt={service.title}
@@ -388,15 +388,7 @@ const TrendingServices = () => {
                     <p className="text-xs text-primary mt-2">
                       TZS {parseFloat(service.price || 0).toLocaleString()} per person
                     </p>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleServiceClick(service);
-                      }}
-                      className="mt-3 bg-primary text-primary-foreground px-4 md:px-6 py-2 rounded-lg text-xs md:text-sm font-semibold hover:bg-accent transition-colors w-full md:w-auto"
-                    >
-                      View Details
-                    </button>
+                    {/* View Detail button removed - entire card is clickable */}
                   </div>
                 </div>
               ))}
