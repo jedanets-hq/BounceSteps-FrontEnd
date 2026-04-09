@@ -125,7 +125,7 @@ const TrendingServices = () => {
 
   const scroll = (dir) => {
     if (scrollRef.current) {
-      const cardWidth = window.innerWidth < 768 ? 180 : 400; // Smaller scroll for mobile
+      const cardWidth = window.innerWidth < 768 ? 240 : 400; // Updated mobile scroll width
       scrollRef.current.scrollBy({ left: dir * cardWidth, behavior: "smooth" });
       
       // Update active indicator
@@ -337,7 +337,7 @@ const TrendingServices = () => {
                 <div
                   key={service.id}
                   onClick={() => handleServiceClick(service)}
-                  className={`flex-shrink-0 w-[160px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
+                  className={`flex-shrink-0 w-[220px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
                     index === trendingServices.length - 1 ? 'mr-8' : ''
                   }`}
                 >
