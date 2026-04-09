@@ -18,7 +18,12 @@ const ServiceCard = ({
       <div 
         className="relative h-40 md:h-48 cursor-pointer group"
         onClick={() => {
-          if (service.images && service.images.length > 0 && onViewImages) {
+          // Mobile: Click image opens details modal
+          if (window.innerWidth < 768 && onViewDetails) {
+            onViewDetails(service);
+          }
+          // Desktop: Click image opens image viewer
+          else if (service.images && service.images.length > 0 && onViewImages) {
             onViewImages(service);
           }
         }}
@@ -120,7 +125,8 @@ const ServiceCard = ({
         <div className="flex items-center justify-between pt-2 md:pt-4 mt-auto border-t border-border">
           <div className="w-full">
             <div className="text-sm md:text-2xl font-bold text-foreground truncate">TZS {parseFloat(service.price || 0).toLocaleString()}</div>
-            <div className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1 line-clamp-1">
+            {/* Mobile: Hide provider info, Desktop: Show provider info */}
+            <div className="hidden md:flex text-[10px] md:text-xs text-muted-foreground items-center gap-1 line-clamp-1">
               by <span className="truncate max-w-[80px] md:max-w-[150px]">{service.provider_name || service.business_name}</span>
               {service.provider_badge_type && (
                  <ProviderBadge badgeType={service.provider_badge_type} size="xs" showText={false} />
@@ -129,18 +135,9 @@ const ServiceCard = ({
           </div>
         </div>
         
-        {/* Action Buttons - Mobile: View only, Desktop: All buttons */}
+        {/* Action Buttons - Mobile: No buttons (click image for details), Desktop: All buttons */}
         <div className="flex flex-col gap-1.5 md:gap-2 mt-3 md:mt-4">
-          {/* Mobile: Only View button */}
-          <Button 
-            variant="outline"
-            size="sm"
-            className="w-full md:hidden text-[10px] py-1.5 h-auto dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
-            onClick={() => onViewDetails && onViewDetails(service)}
-          >
-            <Icon name="Eye" className="w-3 h-3 mr-1" />
-            View
-          </Button>
+          {/* Mobile: No View button - click image instead */}
           
           {/* Desktop: All buttons */}
           <div className="hidden md:flex gap-2">
