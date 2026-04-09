@@ -192,46 +192,5 @@ All colors MUST be HSL.
       min-height: 44px;
       min-width: 44px;
     }
-
-    /* Enhanced mobile visibility for sections */
-    section {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Ensure proper spacing and visibility on mobile */
-    .content-padding {
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-
-    /* Mobile-specific section styling */
-    #services, #destinations {
-      padding-top: 3rem;
-      padding-bottom: 3rem;
-    }
-
-    /* Better mobile contrast for text */
-    .text-muted-foreground {
-      color: hsl(var(--muted-foreground));
-      opacity: 0.9;
-    }
-
-    /* Enhanced mobile card styling */
-    .mobile-service-card {
-      background: hsl(var(--background) / 0.98);
-      backdrop-filter: blur(8px);
-      border: 1px solid hsl(var(--border) / 0.8);
-      box-shadow: 0 4px 12px hsl(var(--foreground) / 0.1);
-    }
-
-    /* Mobile newsletter section */
-    .mobile-newsletter {
-      background: hsl(var(--card) / 0.95);
-      backdrop-filter: blur(12px);
-      border-radius: 1rem;
-      padding: 1.5rem;
-      margin: 1rem 0;
-    }
   }
 }

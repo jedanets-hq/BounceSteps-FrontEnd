@@ -74,19 +74,19 @@ const ServicesSection = () => {
 
         {/* Mobile: Grid Layout for better consistency */}
         <div className="mt-10 max-w-7xl mx-auto md:hidden">
-          <div className="grid grid-cols-2 gap-4 px-4">
+          <div className="mobile-grid-2 px-4">
             {services.map((s) => (
               <div
                 key={s.title}
                 onClick={() => handleServiceClick(s)}
-                className="bg-background/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-2xl p-4 flex flex-col items-center justify-center text-center min-h-[140px] hover:shadow-lg transition-all cursor-pointer shadow-md hover:scale-105 hover:bg-background dark:hover:bg-gray-800 border border-border/50"
+                className="mobile-card bg-background/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-4 gap-3 hover:shadow-lg transition-all cursor-pointer shadow-sm hover:scale-105 hover:bg-background dark:hover:bg-gray-800"
               >
-                <div className="w-14 h-14 rounded-xl bg-primary/10 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 mb-3">
-                  <Icon name={s.icon} size={24} className="text-primary dark:text-primary" />
+                <div className="w-12 h-12 rounded-xl bg-secondary dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                  <Icon name={s.icon} size={20} className="text-primary dark:text-primary" />
                 </div>
                 <div className="text-center">
-                  <h3 className="font-semibold text-foreground dark:text-white text-sm leading-tight mb-2">{s.title}</h3>
-                  <p className="text-xs text-muted-foreground dark:text-gray-300 leading-tight line-clamp-2">{s.desc}</p>
+                  <h3 className="font-semibold text-foreground dark:text-white text-xs leading-tight mb-1">{s.title}</h3>
+                  <p className="text-xs text-muted-foreground dark:text-gray-300 leading-tight">{s.desc}</p>
                 </div>
               </div>
             ))}
