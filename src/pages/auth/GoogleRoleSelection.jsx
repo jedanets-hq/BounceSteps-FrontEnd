@@ -1165,7 +1165,7 @@ const GoogleRoleSelection = () => {
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="Enter your company or business name"
-                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                     required={selectedRole === 'provider'}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -1186,7 +1186,7 @@ const GoogleRoleSelection = () => {
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder="Enter your first name"
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                       required={selectedRole === 'traveler'}
                     />
                   </div>
@@ -1199,7 +1199,7 @@ const GoogleRoleSelection = () => {
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder="Enter your last name"
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                       required={selectedRole === 'traveler'}
                     />
                   </div>
@@ -1219,7 +1219,7 @@ const GoogleRoleSelection = () => {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+255 XXX XXX XXX"
-                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">
@@ -1291,7 +1291,7 @@ const GoogleRoleSelection = () => {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={4}
-                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                     placeholder="Tell us about your business and services..."
                   />
                 </div>

@@ -117,7 +117,7 @@ const ForgotPassword = () => {
                         if (error) setError('');
                       }}
                       placeholder="Enter your email"
-                      className="w-full px-4 py-3 border border-border rounded-xl bg-background/50 backdrop-blur-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-border rounded-xl bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                       required
                     />
                     <p className="text-xs text-muted-foreground mt-2">

@@ -225,7 +225,7 @@ const Login = () => {
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="Enter your email"
-                  className="w-full px-4 py-3 border border-border rounded-xl bg-background/50 backdrop-blur-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-border rounded-xl bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   required
                 />
               </div>
@@ -239,7 +239,7 @@ const Login = () => {
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full px-4 py-3 border border-border rounded-xl bg-background/50 backdrop-blur-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-border rounded-xl bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   required
                 />
               </div>
@@ -251,7 +251,7 @@ const Login = () => {
                     id="rememberMe"
                     checked={formData.rememberMe}
                     onChange={(e) => handleInputChange('rememberMe', e.target.checked)}
-                    className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+                    className="h-4 w-4 text-primary bg-background border-border focus:ring-primary rounded"
                   />
                   <label htmlFor="rememberMe" className="ml-2 text-sm text-muted-foreground">
                     Remember me

@@ -169,7 +169,7 @@ const ResetPassword = () => {
                       value={formData.code}
                       onChange={handleChange}
                       placeholder="Enter 6-digit code from email"
-                      className="w-full px-4 py-3 border border-border rounded-xl bg-background/50 backdrop-blur-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-center text-lg font-mono tracking-widest"
+                      className="w-full px-4 py-3 border border-border rounded-xl bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-center text-lg font-mono tracking-widest"
                       maxLength={6}
                       required
                     />
@@ -189,7 +189,7 @@ const ResetPassword = () => {
                         value={formData.newPassword}
                         onChange={handleChange}
                         placeholder="Enter new password"
-                        className="w-full px-4 py-3 pr-12 border border-border rounded-xl bg-background/50 backdrop-blur-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 pr-12 border border-border rounded-xl bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                         minLength={6}
                         required
                       />
@@ -217,7 +217,7 @@ const ResetPassword = () => {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         placeholder="Confirm new password"
-                        className="w-full px-4 py-3 pr-12 border border-border rounded-xl bg-background/50 backdrop-blur-sm focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 pr-12 border border-border rounded-xl bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                         minLength={6}
                         required
                       />

@@ -341,7 +341,7 @@ const Register = () => {
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                       required
                     />
                   </div>
@@ -353,7 +353,7 @@ const Register = () => {
                       type="text"
                       value={formData.lastName}
                       onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                       required
                     />
                   </div>
@@ -367,7 +367,7 @@ const Register = () => {
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                     required
                   />
                 </div>
@@ -378,7 +378,7 @@ const Register = () => {
                   </label>
                   <div className="flex gap-2">
                     <select 
-                      className="px-3 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-muted"
+                      className="px-3 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       disabled
                     >
                       <option value="+255">+255</option>
@@ -392,7 +392,7 @@ const Register = () => {
                         handleInputChange('phone', value);
                       }}
                       placeholder="712345678"
-                      className="flex-1 px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="flex-1 px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                       maxLength="9"
                       required
                     />
@@ -409,7 +409,7 @@ const Register = () => {
                       type="password"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                       required
                     />
                   </div>
@@ -421,7 +421,7 @@ const Register = () => {
                       type="password"
                       value={formData.confirmPassword}
                       onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                       required
                     />
                   </div>
@@ -464,7 +464,7 @@ const Register = () => {
                             date.setFullYear(date.getFullYear() - 18);
                             return date.toISOString().split('T')[0];
                           })()}
-                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                           required
                         />
                         <p className="text-xs text-muted-foreground mt-1">Must be 18 years or older</p>
@@ -477,7 +477,7 @@ const Register = () => {
                           type="text"
                           value={formData.nationality}
                           onChange={(e) => handleInputChange('nationality', e.target.value)}
-                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                          className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                         />
                       </div>
                     </div>
@@ -495,7 +495,7 @@ const Register = () => {
                             className={`p-2 text-sm rounded-lg border transition-all ${
                               formData.travelPreferences.includes(pref)
                                 ? 'bg-primary text-primary-foreground border-primary'
-                                : 'bg-background border-border hover:border-primary'
+                                : 'bg-background text-foreground border-border hover:border-primary'
                             }`}
                           >
                             {pref}
@@ -517,7 +517,7 @@ const Register = () => {
                         type="text"
                         value={formData.companyName}
                         onChange={(e) => handleInputChange('companyName', e.target.value)}
-                        className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                         required
                       />
                     </div>
@@ -558,7 +558,7 @@ const Register = () => {
                             className={`p-3 text-sm rounded-lg border transition-all flex items-center justify-center ${
                               selectedCategories.includes(category)
                                 ? 'bg-secondary text-secondary-foreground border-secondary shadow-md'
-                                : 'bg-background border-border hover:border-secondary hover:shadow-sm'
+                                : 'bg-background text-foreground border-border hover:border-secondary hover:shadow-sm'
                             }`}
                           >
                             {category}
@@ -580,7 +580,7 @@ const Register = () => {
                         value={formData.description}
                         onChange={(e) => handleInputChange('description', e.target.value)}
                         rows={4}
-                        className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                         placeholder="Tell us about your business and services..."
                       />
                     </div>
@@ -594,7 +594,7 @@ const Register = () => {
                     id="acceptTerms"
                     checked={acceptedTerms}
                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 text-primary border-border rounded focus:ring-2 focus:ring-primary cursor-pointer"
+                    className="mt-1 w-4 h-4 text-primary bg-background border-border rounded focus:ring-2 focus:ring-primary cursor-pointer"
                     required
                   />
                   <label htmlFor="acceptTerms" className="text-sm text-muted-foreground cursor-pointer">
