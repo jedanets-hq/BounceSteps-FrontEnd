@@ -122,11 +122,12 @@ const ServiceCard = ({
         
         {/* Removed Payment Methods Display section */}
 
-        <div className="flex items-center justify-between pt-2 md:pt-4 mt-auto border-t border-border">
+        {/* Price and Provider Section - Mobile: Hide completely, Desktop: Show all */}
+        <div className="hidden md:flex items-center justify-between pt-2 md:pt-4 mt-auto border-t border-border">
           <div className="w-full">
             <div className="text-sm md:text-2xl font-bold text-foreground truncate">TZS {parseFloat(service.price || 0).toLocaleString()}</div>
-            {/* Mobile: Hide provider info, Desktop: Show provider info */}
-            <div className="hidden md:flex text-[10px] md:text-xs text-muted-foreground items-center gap-1 line-clamp-1">
+            {/* Desktop: Show provider info */}
+            <div className="flex text-[10px] md:text-xs text-muted-foreground items-center gap-1 line-clamp-1">
               by <span className="truncate max-w-[80px] md:max-w-[150px]">{service.provider_name || service.business_name}</span>
               {service.provider_badge_type && (
                  <ProviderBadge badgeType={service.provider_badge_type} size="xs" showText={false} />
