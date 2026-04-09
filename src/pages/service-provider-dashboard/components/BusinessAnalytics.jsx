@@ -139,7 +139,7 @@ const BusinessAnalytics = () => {
             <div className="bg-card border border-border rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Icon name="DollarSign" size={24} className="text-primary" />
+                  <Icon name="Banknote" size={24} className="text-primary" />
                 </div>
                 <div className={`flex items-center space-x-1 text-sm ${
                   analyticsData.revenue.trend === 'up' ? 'text-green-600' : 

@@ -52,7 +52,6 @@ const ProviderProfile = () => {
       });
       setShowMessaging(true);
     };
-
     window.addEventListener('openMessaging', handleOpenMessaging);
     return () => window.removeEventListener('openMessaging', handleOpenMessaging);
   }, []);
@@ -128,7 +127,6 @@ const ProviderProfile = () => {
       setLoadingFollow(false);
     }
   };
-
   const fetchProviderData = async () => {
     try {
       setLoading(true);
@@ -194,7 +192,6 @@ const ProviderProfile = () => {
       setLoading(false);
     }
   };
-
   const handleAddToCart = async (service) => {
     const result = await addToCart({
       id: service.id,
@@ -251,7 +248,6 @@ const ProviderProfile = () => {
   const filteredServices = selectedCategory === 'all' 
     ? services 
     : services.filter(s => s.category === selectedCategory);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -295,7 +291,6 @@ const ProviderProfile = () => {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -451,7 +446,6 @@ const ProviderProfile = () => {
                     </div>
                   )}
                 </div>
-
                 {/* Contact Button - Small and Transparent */}
                 {provider?.email && (
                   <button
@@ -501,7 +495,6 @@ const ProviderProfile = () => {
                 )}
               </div>
             </div>
-
             {/* Desktop Layout */}
             <div className="hidden md:flex items-start gap-6">
               <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
@@ -568,7 +561,6 @@ const ProviderProfile = () => {
                   )}
                 </div>
               </div>
-
               {/* Action Buttons */}
               <div className="flex flex-col gap-2">
                 {/* Follower Count */}
@@ -707,7 +699,6 @@ const ProviderProfile = () => {
               </div>
             </div>
           </div>
-
           {/* Category Filter */}
           {categories.length > 1 && (
             <div className="flex flex-wrap gap-2 mb-6">
@@ -893,7 +884,6 @@ const ProviderProfile = () => {
           setBooking(null);
         }}
       />
-
       {/* Service Details Modal */}
       {selectedService && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedService(null)}>
@@ -956,9 +946,6 @@ const ProviderProfile = () => {
                 <h3 className="font-semibold text-foreground mb-2">Description</h3>
                 <p className="text-muted-foreground">{selectedService.description || 'No description available'}</p>
               </div>
-
-
-
               {/* Action Buttons */}
               <div className="flex justify-center">
                 <Button 

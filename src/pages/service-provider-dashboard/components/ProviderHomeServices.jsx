@@ -199,8 +199,8 @@ const ProviderHomeServices = ({ onTabChange, onEditService }) => {
                       <span className="text-base sm:text-lg">{currentService?.category}</span>
                     </div>
                     <div className="flex items-center">
-                      <Icon name="DollarSign" size={18} className="mr-2" />
-                      <span className="text-base sm:text-lg font-medium">Tshs {parseFloat(currentService?.price || 0).toLocaleString()}/day</span>
+                      <Icon name="Banknote" size={18} className="mr-2" />
+                      <span className="text-base sm:text-lg font-medium">TZS {parseFloat(currentService?.price || 0).toLocaleString()}/day</span>
                     </div>
                   </div>
 

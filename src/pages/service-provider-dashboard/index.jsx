@@ -440,7 +440,7 @@ const ServiceProviderDashboard = () => {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-card border border-border rounded-lg p-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -468,7 +468,7 @@ const ServiceProviderDashboard = () => {
               <div className="bg-card border border-border rounded-lg p-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
-                    <Icon name="DollarSign" size={20} className="text-accent" />
+                    <Icon name="Package" size={20} className="text-accent" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">{myServices.length}</p>
