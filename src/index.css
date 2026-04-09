@@ -169,4 +169,28 @@ All colors MUST be HSL.
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Mobile-specific utilities for better consistency */
+  .mobile-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .mobile-card {
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Ensure consistent touch targets on mobile */
+  @media (max-width: 768px) {
+    .mobile-touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
 }

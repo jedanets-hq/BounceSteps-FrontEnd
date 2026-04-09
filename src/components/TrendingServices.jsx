@@ -330,14 +330,14 @@ const TrendingServices = () => {
             {/* Services Carousel */}
             <div
               ref={scrollRef}
-              className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide justify-start pl-4 md:pl-6 pr-4 md:pr-6 snap-x pb-4"
+              className="flex gap-3 md:gap-6 overflow-x-auto scrollbar-hide justify-start pl-4 md:pl-6 pr-4 md:pr-6 snap-x pb-4"
               style={{ scrollbarWidth: "none" }}
             >
               {trendingServices.map((service, index) => (
                 <div
                   key={service.id}
                   onClick={() => handleServiceClick(service)}
-                  className={`flex-shrink-0 w-[170px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
+                  className={`flex-shrink-0 w-[160px] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
                     index === trendingServices.length - 1 ? 'mr-8' : ''
                   }`}
                 >

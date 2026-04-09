@@ -72,7 +72,29 @@ const ServicesSection = () => {
           {sectionDesc}
         </p>
 
-        <div className="relative mt-10 max-w-7xl mx-auto">
+        {/* Mobile: Grid Layout for better consistency */}
+        <div className="mt-10 max-w-7xl mx-auto md:hidden">
+          <div className="mobile-grid-2 px-4">
+            {services.map((s) => (
+              <div
+                key={s.title}
+                onClick={() => handleServiceClick(s)}
+                className="mobile-card bg-background/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-4 gap-3 hover:shadow-lg transition-all cursor-pointer shadow-sm hover:scale-105 hover:bg-background dark:hover:bg-gray-800"
+              >
+                <div className="w-12 h-12 rounded-xl bg-secondary dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                  <Icon name={s.icon} size={20} className="text-primary dark:text-primary" />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-foreground dark:text-white text-xs leading-tight mb-1">{s.title}</h3>
+                  <p className="text-xs text-muted-foreground dark:text-gray-300 leading-tight">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop: Horizontal Scroll Layout */}
+        <div className="relative mt-10 max-w-7xl mx-auto hidden md:block">
           <button
             onClick={() => scroll(-1)}
             className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background dark:bg-gray-800 shadow-md flex items-center justify-center text-muted-foreground dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors"
@@ -89,13 +111,13 @@ const ServicesSection = () => {
               <div
                 key={s.title}
                 onClick={() => handleServiceClick(s)}
-                className="flex-shrink-0 w-[110px] md:w-[200px] bg-background/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-3 md:p-6 flex flex-col items-center gap-2 md:gap-4 hover:shadow-lg transition-all cursor-pointer snap-start shadow-sm hover:scale-105 hover:bg-background dark:hover:bg-gray-800"
+                className="flex-shrink-0 w-[200px] bg-background/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 flex flex-col items-center gap-4 hover:shadow-lg transition-all cursor-pointer snap-start shadow-sm hover:scale-105 hover:bg-background dark:hover:bg-gray-800"
               >
-                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-secondary dark:bg-gray-700 flex items-center justify-center">
-                  <Icon name={s.icon} size={24} className="text-primary dark:text-primary md:w-8 md:h-8" />
+                <div className="w-16 h-16 rounded-xl bg-secondary dark:bg-gray-700 flex items-center justify-center">
+                  <Icon name={s.icon} size={32} className="text-primary dark:text-primary" />
                 </div>
-                <h3 className="font-semibold text-foreground dark:text-white text-xs md:text-base">{s.title}</h3>
-                <p className="text-xs md:text-sm text-muted-foreground dark:text-gray-300 leading-tight text-center">{s.desc}</p>
+                <h3 className="font-semibold text-foreground dark:text-white text-base">{s.title}</h3>
+                <p className="text-sm text-muted-foreground dark:text-gray-300 leading-tight text-center">{s.desc}</p>
               </div>
             ))}
           </div>
