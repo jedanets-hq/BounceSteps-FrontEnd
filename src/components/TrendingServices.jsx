@@ -36,7 +36,7 @@ const TrendingServices = () => {
         if (isProvider && user?.id) {
           // For providers: fetch their approved services with top ratings
           // Since /top-ranking endpoint doesn't exist, we'll use regular endpoint and filter
-          url = `${API_URL}/services/provider/${user.id}`;
+          url = `${API_URL}/services/provider/my-services`;
           headers = {
             'Authorization': `Bearer ${user.token}`
           };
@@ -52,16 +52,61 @@ const TrendingServices = () => {
         
         if (data.success) {
           if (isProvider && user?.id) {
-            // Filter provider's services: only approved ones with good ratings
-            const approvedServices = (data.services || [])
-              .filter(service => 
-                service.status === 'approved' && // Only approved services
-                (service.rating >= 4.0 || service.average_rating >= 4.0) // Good rating
-              )
-              .sort((a, b) => (b.rating || b.average_rating || 0) - (a.rating || a.average_rating || 0)) // Sort by rating
+            console.log('🔍 [Provider Top Ranking] Processing services:', data.services?.length || 0);
+            
+            // Filter provider's services for "My Top Ranking":
+            // 1. Services marked as trending or featured by admin
+            // 2. Services with good ratings (4.0+)
+            // 3. Active services only
+            const topRankingServices = (data.services || [])
+              .filter(service => {
+                console.log(`🔍 [Service ${service.id}] ${service.title}:`, {
+                  status: service.status,
+                  is_active: service.is_active,
+                  is_trending: service.is_trending,
+                  is_featured: service.is_featured,
+                  rating: service.rating || service.average_rating || 0
+                });
+                
+                // Must be active
+                if (service.status !== 'active' || !service.is_active) {
+                  console.log(`❌ [Service ${service.id}] Filtered out: not active`);
+                  return false;
+                }
+                
+                // Show if marked as trending or featured by admin
+                if (service.is_trending || service.is_featured) {
+                  console.log(`✅ [Service ${service.id}] Included: trending/featured`);
+                  return true;
+                }
+                
+                // Show if has good rating (4.0+)
+                const rating = service.rating || service.average_rating || 0;
+                if (rating >= 4.0) {
+                  console.log(`✅ [Service ${service.id}] Included: good rating (${rating})`);
+                  return true;
+                }
+                
+                console.log(`❌ [Service ${service.id}] Filtered out: no trending/featured flag and rating < 4.0 (${rating})`);
+                return false;
+              })
+              .sort((a, b) => {
+                // Sort by: trending/featured first, then by rating
+                const aIsTrending = a.is_trending || a.is_featured;
+                const bIsTrending = b.is_trending || b.is_featured;
+                
+                if (aIsTrending && !bIsTrending) return -1;
+                if (!aIsTrending && bIsTrending) return 1;
+                
+                // Then sort by rating
+                const aRating = a.rating || a.average_rating || 0;
+                const bRating = b.rating || b.average_rating || 0;
+                return bRating - aRating;
+              })
               .slice(0, 8); // Take top 8
             
-            setTrendingServices(approvedServices);
+            console.log(`✅ [Provider Top Ranking] Final services count: ${topRankingServices.length}`);
+            setTrendingServices(topRankingServices);
           } else {
             setTrendingServices(data.services || []);
           }
