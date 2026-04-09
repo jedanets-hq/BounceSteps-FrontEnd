@@ -13,7 +13,7 @@ import { API_URL } from '../utils/api';
 const TrendingServices = () => {
   const scrollRef = useRef(null);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { addToCart } = useCart();
   const [active, setActive] = useState(0);
   const [trendingServices, setTrendingServices] = useState([]);
@@ -22,18 +22,49 @@ const TrendingServices = () => {
   const [showMessaging, setShowMessaging] = useState(false);
   const [messagingProvider, setMessagingProvider] = useState(null);
 
+  // Check if user is a service provider
+  const isProvider = isAuthenticated && user?.userType === 'service_provider';
+
   // Fetch trending services from backend
   useEffect(() => {
     const fetchTrendingServices = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-        const response = await fetch(`${API_URL}/services/trending?limit=8`);
+        
+        let url, headers = {};
+        
+        if (isProvider && user?.id) {
+          // For providers: fetch their approved services with top ratings
+          // Since /top-ranking endpoint doesn't exist, we'll use regular endpoint and filter
+          url = `${API_URL}/services/provider/${user.id}`;
+          headers = {
+            'Authorization': `Bearer ${user.token}`
+          };
+        } else {
+          // For travelers: fetch trending services from all providers
+          url = `${API_URL}/services/trending?limit=8`;
+        }
+        
+        const response = await fetch(url, { headers });
         const data = await response.json();
         
         console.log('Trending services API response:', data);
         
         if (data.success) {
-          setTrendingServices(data.services);
+          if (isProvider && user?.id) {
+            // Filter provider's services: only approved ones with good ratings
+            const approvedServices = (data.services || [])
+              .filter(service => 
+                service.status === 'approved' && // Only approved services
+                (service.rating >= 4.0 || service.average_rating >= 4.0) // Good rating
+              )
+              .sort((a, b) => (b.rating || b.average_rating || 0) - (a.rating || a.average_rating || 0)) // Sort by rating
+              .slice(0, 8); // Take top 8
+            
+            setTrendingServices(approvedServices);
+          } else {
+            setTrendingServices(data.services || []);
+          }
         } else {
           console.error('API returned error:', data.message);
         }
@@ -45,7 +76,7 @@ const TrendingServices = () => {
     };
 
     fetchTrendingServices();
-  }, []);
+  }, [isProvider, user]);
 
   const scroll = (dir) => {
     if (scrollRef.current) {
@@ -173,7 +204,7 @@ const TrendingServices = () => {
         <div className="w-full px-4 text-center relative z-10">
           <div className="max-w-full">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-              Top Ranking
+              {isProvider ? "My Top Ranking" : "Top Ranking"}
             </h2>
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -190,15 +221,26 @@ const TrendingServices = () => {
         <div className="w-full px-4 text-center relative z-10">
           <div className="max-w-full">
             <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-              Top Ranking
+              {isProvider ? "My Top Ranking" : "Top Ranking"}
             </h2>
             <div className="text-center py-12">
               <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
                 <Star className="w-8 h-8 text-muted-foreground" />
               </div>
               <p className="text-muted-foreground">
-                No top ranking services available at the moment. Check back soon!
+                {isProvider 
+                  ? "No top ranking services yet. Create high-quality services to get featured here!"
+                  : "No top ranking services available at the moment. Check back soon!"
+                }
               </p>
+              {isProvider && (
+                <button 
+                  onClick={() => navigate('/service-provider-dashboard?tab=services&action=add')}
+                  className="mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg font-semibold hover:bg-accent transition-colors"
+                >
+                  Add Your First Service
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -211,10 +253,13 @@ const TrendingServices = () => {
       <div className="w-full px-4 text-center relative z-10">
         <div className="max-w-full">
           <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            Top Ranking
+            {isProvider ? "My Top Ranking" : "Top Ranking"}
           </h2>
           <p className="text-muted-foreground mb-10">
-            Discover the most popular services approved by our community
+            {isProvider 
+              ? "Your highest-rated and most popular approved services"
+              : "Discover the most popular services approved by our community"
+            }
           </p>
 
           <div className="relative max-w-7xl mx-auto">
@@ -331,10 +376,13 @@ const TrendingServices = () => {
           {trendingServices.length > 0 && (
             <div className="mt-8">
               <button 
-                onClick={handleViewAllServices}
+                onClick={isProvider 
+                  ? () => navigate('/service-provider-dashboard?tab=services')
+                  : handleViewAllServices
+                }
                 className="bg-primary text-primary-foreground px-8 py-3 rounded-lg font-semibold hover:bg-accent transition-colors"
               >
-                View All Services
+                {isProvider ? "View All My Services" : "View All Services"}
               </button>
             </div>
           )}

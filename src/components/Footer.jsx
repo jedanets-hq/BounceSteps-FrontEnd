@@ -1,9 +1,14 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const Footer = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   
-  const links = [
+  // Check if user is a service provider
+  const isProvider = isAuthenticated && user?.userType === 'service_provider';
+  
+  const travelerLinks = [
     { name: "About", path: "/about" },
     { name: "Destinations", path: "/destination-discovery" },
     { name: "Services", path: "/destination-discovery" },
@@ -11,6 +16,17 @@ const Footer = () => {
     { name: "Privacy Policy", path: "/privacy" },
     { name: "Terms & Conditions", path: "/terms" }
   ];
+
+  const providerLinks = [
+    { name: "About", path: "/about" },
+    { name: "My Services", path: "/service-provider-dashboard?tab=services" },
+    { name: "Dashboard", path: "/service-provider-dashboard" },
+    { name: "Contact", path: "/about" },
+    { name: "Privacy Policy", path: "/privacy" },
+    { name: "Terms & Conditions", path: "/terms" }
+  ];
+
+  const links = isProvider ? providerLinks : travelerLinks;
 
   const handleLinkClick = (link) => {
     if (link.path) {

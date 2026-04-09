@@ -166,9 +166,9 @@ const HeroSection = () => {
                 <div className="mt-6 md:-ml-64">
                   <p className="text-lg font-semibold text-foreground" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
                     <span className="text-secondary font-bold">
-                      {user.user_type === 'service_provider' ? 'Service Provider' : 'Traveller'}
+                      {user.userType === 'service_provider' ? 'Service Provider' : 'Traveller'}
                     </span>{' '}
-                    {user.user_type === 'service_provider' 
+                    {user.userType === 'service_provider' 
                       ? `Welcome back, ${user.firstName || user.first_name || user.name || 'Provider'}! Ready to serve travelers?`
                       : `Welcome back, ${user.firstName || user.first_name || user.name || 'Traveler'}! Ready for your next adventure?`
                     } <Hand size={20} className="inline text-yellow-500" />

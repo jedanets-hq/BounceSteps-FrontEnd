@@ -1,8 +1,10 @@
 import Icon from "./AppIcon";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
-const services = [
+// Traveler services
+const travelerServices = [
   { icon: "Home", title: "Accommodation", desc: "Best stays at great prices", categoryId: "Accommodation" },
   { icon: "Car", title: "Transportation", desc: "Comfortable local transport", categoryId: "Transportation" },
   { icon: "Compass", title: "Tours & Activities", desc: "Guided tours and adventures", categoryId: "Tours & Activities" },
@@ -11,9 +13,25 @@ const services = [
   { icon: "Heart", title: "Health & Wellness", desc: "Wellness and spa services", categoryId: "Health & Wellness" },
 ];
 
+// Provider services
+const providerServices = [
+  { icon: "Briefcase", title: "My Services", desc: "Manage your service offerings", path: "/service-provider-dashboard?tab=services" },
+  { icon: "Calendar", title: "Bookings", desc: "View and manage bookings", path: "/service-provider-dashboard?tab=bookings" },
+  { icon: "Users", title: "Followers", desc: "Track your followers", path: "/service-provider-dashboard?tab=followers" },
+  { icon: "TrendingUp", title: "Promote", desc: "Boost your visibility", path: "/service-provider-dashboard?tab=marketing" },
+  { icon: "BarChart3", title: "Analytics", desc: "View performance insights", path: "/service-provider-dashboard?tab=analytics" },
+];
+
 const ServicesSection = () => {
   const scrollRef = useRef(null);
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+
+  // Determine which services to show
+  const isProvider = isAuthenticated && user?.userType === 'service_provider';
+  const services = isProvider ? providerServices : travelerServices;
+  const sectionTitle = isProvider ? "Provider Dashboard" : "Quick & Easy Travel Services";
+  const sectionDesc = isProvider ? "Manage your business and grow your services" : "Discover the world's top travel spots";
 
   const scroll = (dir) => {
     const scrollAmount = window.innerWidth < 768 ? 120 : 220; // Smaller scroll for mobile
@@ -21,8 +39,13 @@ const ServicesSection = () => {
   };
 
   const handleServiceClick = (service) => {
-    // Navigate to destination discovery with the specific category selected
-    navigate(`/destination-discovery?category=${encodeURIComponent(service.categoryId)}`);
+    if (isProvider) {
+      // Navigate to provider dashboard with specific tab
+      navigate(service.path);
+    } else {
+      // Navigate to destination discovery with the specific category selected
+      navigate(`/destination-discovery?category=${encodeURIComponent(service.categoryId)}`);
+    }
   };
 
   return (
@@ -43,10 +66,10 @@ const ServicesSection = () => {
       <div className="w-full px-4 text-center relative z-10">
         <div className="max-w-full">
         <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-          Quick & Easy Travel Services
+          {sectionTitle}
         </h2>
         <p className="text-muted-foreground mt-2">
-          Discover the world's top travel spots
+          {sectionDesc}
         </p>
 
         <div className="relative mt-10 max-w-7xl mx-auto">
