@@ -229,14 +229,6 @@ const DestinationsSection = () => {
         width={512}
         height={800}
       />
-      <img
-        src="/leaves-right.png"
-        alt=""
-        className="hidden md:block absolute right-0 top-1/3 h-[40%] w-[180px] object-cover object-left opacity-25 pointer-events-none"
-        loading="lazy"
-        width={512}
-        height={800}
-      />
 
       <div className="w-full px-4 text-center relative z-10">
         <div className="max-w-full">
