@@ -32,7 +32,16 @@ const BusinessProfile = () => {
       ward: '',
       street: ''
     },
-    description: user?.description || ''
+    description: user?.description || '',
+    // Payment Methods - Global for all services
+    paymentMethods: user?.paymentMethods || {
+      bankTransfer: { enabled: false, bankName: '', accountName: '', accountNumber: '', swiftCode: '' }
+    },
+    // Contact Info - Global for all services
+    contactInfo: user?.contactInfo || {
+      email: { enabled: true, address: user?.email || '' },
+      whatsapp: { enabled: false, number: user?.phone || '' }
+    }
   });
 
   // Fetch fresh profile data from backend
@@ -88,7 +97,14 @@ const BusinessProfile = () => {
               ward: '',
               street: ''
             },
-            description: freshUser.description || ''
+            description: freshUser.description || '',
+            paymentMethods: freshUser.paymentMethods || {
+              bankTransfer: { enabled: false, bankName: '', accountName: '', accountNumber: '', swiftCode: '' }
+            },
+            contactInfo: freshUser.contactInfo || {
+              email: { enabled: true, address: freshUser.email || '' },
+              whatsapp: { enabled: false, number: freshUser.phone || '' }
+            }
           });
           console.log('✅ Profile data updated from backend');
         }
@@ -198,7 +214,9 @@ const BusinessProfile = () => {
       const providerData = {
         business_name: profileData.companyName,
         business_type: profileData.businessType,
-        description: profileData.description
+        description: profileData.description,
+        payment_methods: profileData.paymentMethods,
+        contact_info: profileData.contactInfo
       };
       
       console.log('📤 Updating provider data (location & categories remain fixed):', providerData);
@@ -238,7 +256,9 @@ const BusinessProfile = () => {
         serviceLocation: profileData.serviceLocation,
         serviceCategories: profileData.serviceCategories,
         locationData: profileData.locationData,
-        description: profileData.description
+        description: profileData.description,
+        paymentMethods: profileData.paymentMethods,
+        contactInfo: profileData.contactInfo
       };
       localStorage.setItem('isafari_user', JSON.stringify(updatedUser));
       
@@ -509,7 +529,104 @@ const BusinessProfile = () => {
             </div>
           </div>
 
-          {/* Section 4: ADDITIONAL CONTACT */}
+          {/* Section 4: PAYMENT METHODS & CONTACT INFO */}
+          <div className="bg-card border border-border rounded-lg p-6">
+            <div className="flex items-center mb-6 pb-2 border-b border-border">
+              <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center mr-3">
+                <Icon name="CreditCard" size={20} className="text-green-600" />
+              </div>
+              <h4 className="font-display text-lg font-bold tracking-tight uppercase">PAYMENT & CONTACT SETTINGS</h4>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6 bg-primary/5 p-3 rounded-lg border border-primary/20">
+              <Icon name="Info" size={16} className="inline mr-2 text-primary" />
+              These settings apply to ALL your services. Update them here once, and they'll be used across all service listings.
+            </p>
+            
+            <div className="space-y-8">
+              {/* Payment Methods */}
+              <div>
+                <h5 className="text-sm font-bold text-foreground mb-4 flex items-center">
+                  <Icon name="CreditCard" size={16} className="mr-2 text-primary" />
+                  PAYMENT METHODS
+                </h5>
+                <div className="space-y-4">
+                  {/* Bank Transfer */}
+                  <div className={`p-4 rounded-lg border ${profileData.paymentMethods?.bankTransfer?.enabled ? 'border-green-500 bg-green-50/50' : 'border-border bg-muted/20'}`}>
+                    <div className="flex items-center mb-2">
+                      <Icon name="Building" size={18} className="mr-2 text-primary" />
+                      <span className="font-semibold text-foreground">Bank Transfer</span>
+                      <span className={`ml-auto text-xs px-2 py-1 rounded ${profileData.paymentMethods?.bankTransfer?.enabled ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                        {profileData.paymentMethods?.bankTransfer?.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </div>
+                    {profileData.paymentMethods?.bankTransfer?.enabled && (
+                      <div className="mt-3 space-y-2 text-sm">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <span className="text-muted-foreground">Bank:</span>
+                            <p className="font-medium">{profileData.paymentMethods.bankTransfer.bankName || 'Not set'}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Account Name:</span>
+                            <p className="font-medium">{profileData.paymentMethods.bankTransfer.accountName || 'Not set'}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Account Number:</span>
+                            <p className="font-medium">{profileData.paymentMethods.bankTransfer.accountNumber || 'Not set'}</p>
+                          </div>
+                          {profileData.paymentMethods.bankTransfer.swiftCode && (
+                            <div>
+                              <span className="text-muted-foreground">SWIFT Code:</span>
+                              <p className="font-medium">{profileData.paymentMethods.bankTransfer.swiftCode}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="pt-4 border-t border-dashed border-border">
+                <h5 className="text-sm font-bold text-foreground mb-4 flex items-center">
+                  <Icon name="MessageCircle" size={16} className="mr-2 text-green-600" />
+                  CONTACT INFORMATION
+                </h5>
+                <div className="space-y-4">
+                  {/* Email */}
+                  <div className={`p-4 rounded-lg border ${profileData.contactInfo?.email?.enabled ? 'border-green-500 bg-green-50/50' : 'border-border bg-muted/20'}`}>
+                    <div className="flex items-center mb-2">
+                      <Icon name="Mail" size={18} className="mr-2 text-primary" />
+                      <span className="font-semibold text-foreground">Email Contact</span>
+                      <span className={`ml-auto text-xs px-2 py-1 rounded ${profileData.contactInfo?.email?.enabled ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                        {profileData.contactInfo?.email?.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </div>
+                    {profileData.contactInfo?.email?.enabled && (
+                      <p className="text-sm font-medium mt-2">{profileData.contactInfo.email.address || 'Not set'}</p>
+                    )}
+                  </div>
+
+                  {/* WhatsApp */}
+                  <div className={`p-4 rounded-lg border ${profileData.contactInfo?.whatsapp?.enabled ? 'border-green-500 bg-green-50/50' : 'border-border bg-muted/20'}`}>
+                    <div className="flex items-center mb-2">
+                      <Icon name="MessageCircle" size={18} className="mr-2 text-green-500" />
+                      <span className="font-semibold text-foreground">WhatsApp Contact</span>
+                      <span className={`ml-auto text-xs px-2 py-1 rounded ${profileData.contactInfo?.whatsapp?.enabled ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                        {profileData.contactInfo?.whatsapp?.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </div>
+                    {profileData.contactInfo?.whatsapp?.enabled && (
+                      <p className="text-sm font-medium mt-2">{profileData.contactInfo.whatsapp.number || 'Not set'}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 5: ADDITIONAL CONTACT */}
           <div className="bg-card border border-border rounded-lg p-6">
             <div className="flex items-center mb-6 pb-2 border-b border-border">
               <div className="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center mr-3">
@@ -747,6 +864,201 @@ const BusinessProfile = () => {
           <p className="text-xs text-muted-foreground mt-2">
             Tell potential customers about your business, services, and what makes you unique.
           </p>
+        </div>
+      </div>
+
+      {/* Payment Methods & Contact Info - GLOBAL SETTINGS */}
+      <div className="bg-card border border-border rounded-lg p-6">
+        <div className="mb-6">
+          <h4 className="font-medium text-foreground mb-2 flex items-center">
+            <Icon name="CreditCard" size={20} className="mr-2 text-green-600" />
+            Payment & Contact Settings
+          </h4>
+          <p className="text-sm text-muted-foreground bg-primary/5 p-3 rounded-lg border border-primary/20">
+            <Icon name="Info" size={16} className="inline mr-2 text-primary" />
+            Configure these settings once - they'll apply to ALL your services automatically.
+          </p>
+        </div>
+
+        {/* Payment Methods Section */}
+        <div className="mb-6 p-4 bg-muted/30 rounded-lg border border-border">
+          <h5 className="font-medium text-foreground mb-4 flex items-center">
+            <Icon name="CreditCard" size={18} className="mr-2 text-primary" />
+            Payment Methods
+          </h5>
+          <div className="space-y-4">
+            {/* Bank Transfer */}
+            <div className={`p-4 rounded-lg border transition-all ${profileData.paymentMethods?.bankTransfer?.enabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profileData.paymentMethods?.bankTransfer?.enabled || false}
+                    onChange={(e) => setProfileData({
+                      ...profileData,
+                      paymentMethods: {
+                        ...profileData.paymentMethods,
+                        bankTransfer: { 
+                          ...(profileData.paymentMethods?.bankTransfer || {}), 
+                          enabled: e.target.checked 
+                        }
+                      }
+                    })}
+                    className="w-4 h-4 text-primary border-border rounded focus:ring-primary mr-3"
+                  />
+                  <Icon name="Building" size={20} className="mr-2 text-primary" />
+                  <span className="font-medium text-foreground">Bank Transfer</span>
+                </label>
+              </div>
+              {profileData.paymentMethods?.bankTransfer?.enabled && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                  <input
+                    type="text"
+                    placeholder="Bank Name"
+                    value={profileData.paymentMethods.bankTransfer.bankName || ''}
+                    onChange={(e) => setProfileData({
+                      ...profileData,
+                      paymentMethods: {
+                        ...profileData.paymentMethods,
+                        bankTransfer: { ...profileData.paymentMethods.bankTransfer, bankName: e.target.value }
+                      }
+                    })}
+                    className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Account Name"
+                    value={profileData.paymentMethods.bankTransfer.accountName || ''}
+                    onChange={(e) => setProfileData({
+                      ...profileData,
+                      paymentMethods: {
+                        ...profileData.paymentMethods,
+                        bankTransfer: { ...profileData.paymentMethods.bankTransfer, accountName: e.target.value }
+                      }
+                    })}
+                    className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Account Number"
+                    value={profileData.paymentMethods.bankTransfer.accountNumber || ''}
+                    onChange={(e) => setProfileData({
+                      ...profileData,
+                      paymentMethods: {
+                        ...profileData.paymentMethods,
+                        bankTransfer: { ...profileData.paymentMethods.bankTransfer, accountNumber: e.target.value }
+                      }
+                    })}
+                    className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="SWIFT / BIC Code (Optional)"
+                    value={profileData.paymentMethods.bankTransfer.swiftCode || ''}
+                    onChange={(e) => setProfileData({
+                      ...profileData,
+                      paymentMethods: {
+                        ...profileData.paymentMethods,
+                        bankTransfer: { ...profileData.paymentMethods.bankTransfer, swiftCode: e.target.value }
+                      }
+                    })}
+                    className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Contact Information Section */}
+        <div className="p-4 bg-muted/30 rounded-lg border border-border">
+          <h5 className="font-medium text-foreground mb-4 flex items-center">
+            <Icon name="MessageCircle" size={18} className="mr-2 text-green-600" />
+            Contact Information
+          </h5>
+          <div className="space-y-4">
+            {/* Email Contact */}
+            <div className={`p-4 rounded-lg border transition-all ${profileData.contactInfo?.email?.enabled ? 'border-green-500 bg-green-50/50' : 'border-border'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profileData.contactInfo?.email?.enabled || false}
+                    onChange={(e) => setProfileData({
+                      ...profileData,
+                      contactInfo: {
+                        ...profileData.contactInfo,
+                        email: { 
+                          ...(profileData.contactInfo?.email || {}), 
+                          enabled: e.target.checked,
+                          address: profileData.contactInfo?.email?.address || profileData.email
+                        }
+                      }
+                    })}
+                    className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500 mr-3"
+                  />
+                  <Icon name="Mail" size={20} className="mr-2 text-primary" />
+                  <span className="font-medium text-foreground">Email</span>
+                </label>
+              </div>
+              {profileData.contactInfo?.email?.enabled && (
+                <input
+                  type="email"
+                  placeholder="your.email@example.com"
+                  value={profileData.contactInfo.email.address || ''}
+                  onChange={(e) => setProfileData({
+                    ...profileData,
+                    contactInfo: {
+                      ...profileData.contactInfo,
+                      email: { ...profileData.contactInfo.email, address: e.target.value }
+                    }
+                  })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm mt-3"
+                />
+              )}
+            </div>
+
+            {/* WhatsApp Contact */}
+            <div className={`p-4 rounded-lg border transition-all ${profileData.contactInfo?.whatsapp?.enabled ? 'border-green-500 bg-green-50/50' : 'border-border'}`}>
+              <div className="flex items-center justify-between mb-3">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profileData.contactInfo?.whatsapp?.enabled || false}
+                    onChange={(e) => setProfileData({
+                      ...profileData,
+                      contactInfo: {
+                        ...profileData.contactInfo,
+                        whatsapp: { 
+                          ...(profileData.contactInfo?.whatsapp || {}), 
+                          enabled: e.target.checked,
+                          number: profileData.contactInfo?.whatsapp?.number || profileData.phone
+                        }
+                      }
+                    })}
+                    className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500 mr-3"
+                  />
+                  <Icon name="MessageCircle" size={20} className="mr-2 text-green-500" />
+                  <span className="font-medium text-foreground">WhatsApp</span>
+                </label>
+              </div>
+              {profileData.contactInfo?.whatsapp?.enabled && (
+                <input
+                  type="tel"
+                  placeholder="+255 123 456 789"
+                  value={profileData.contactInfo.whatsapp.number || ''}
+                  onChange={(e) => setProfileData({
+                    ...profileData,
+                    contactInfo: {
+                      ...profileData.contactInfo,
+                      whatsapp: { ...profileData.contactInfo.whatsapp, number: e.target.value }
+                    }
+                  })}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm mt-3"
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

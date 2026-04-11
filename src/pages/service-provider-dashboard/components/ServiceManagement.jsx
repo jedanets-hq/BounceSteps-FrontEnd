@@ -34,15 +34,7 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
     includes: '',
     excludes: '',
     requirements: '',
-    images: [],
-    paymentMethods: {
-      bankTransfer: { enabled: false, bankName: '', accountName: '', accountNumber: '', swiftCode: '' }
-    },
-    // Contact Information - AUTO-ENABLE email by default
-    contactInfo: {
-      email: { enabled: true, address: user?.email || '' }, // Auto-enable and pre-fill with user's email
-      whatsapp: { enabled: false, number: user?.phone || '' } // Pre-fill phone if available
-    }
+    images: []
   });
   
   const [imageUrl, setImageUrl] = useState('');
@@ -222,15 +214,7 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
       includes: '',
       excludes: '',
       requirements: '',
-      images: [],
-      paymentMethods: {
-        bankTransfer: { enabled: false, bankName: '', accountName: '', accountNumber: '', swiftCode: '' }
-      },
-      // AUTO-ENABLE email by default when resetting
-      contactInfo: {
-        email: { enabled: true, address: user?.email || '' }, // Auto-enable and pre-fill
-        whatsapp: { enabled: false, number: user?.phone || '' } // Pre-fill phone if available
-      }
+      images: []
     });
     setLocation({ region: '', district: '', ward: '', street: '' });
     setEditingServiceId(null);
@@ -265,22 +249,35 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
       
       console.log('✅ Using category:', category, editingServiceId ? '(from existing service)' : '(from provider profile)');
       
+      // Get payment methods and contact info from provider profile (GLOBAL SETTINGS)
+      const paymentMethods = providerProfile?.payment_methods || providerProfile?.paymentMethods || {
+        bankTransfer: { enabled: false, bankName: '', accountName: '', accountNumber: '', swiftCode: '' }
+      };
+      
+      const contactInfo = providerProfile?.contact_info || providerProfile?.contactInfo || {
+        email: { enabled: true, address: user?.email || '' },
+        whatsapp: { enabled: false, number: user?.phone || '' }
+      };
+      
+      console.log('💳 Using payment methods from profile:', paymentMethods);
+      console.log('📞 Using contact info from profile:', contactInfo);
+      
       // Validate contact info - at least one contact method required
-      const hasContact = serviceForm.contactInfo.email.enabled || serviceForm.contactInfo.whatsapp.enabled;
+      const hasContact = contactInfo.email?.enabled || contactInfo.whatsapp?.enabled;
       if (!hasContact) {
-        alert('Please provide at least one contact method (Email or WhatsApp)');
+        alert('Please configure contact information in your Business Profile first (My Profile tab)');
         setIsSubmitting(false);
         return;
       }
 
       // Validate contact details if enabled
-      if (serviceForm.contactInfo.email.enabled && !serviceForm.contactInfo.email.address) {
-        alert('Please enter your email address');
+      if (contactInfo.email?.enabled && !contactInfo.email?.address) {
+        alert('Please add your email address in Business Profile (My Profile tab)');
         setIsSubmitting(false);
         return;
       }
-      if (serviceForm.contactInfo.whatsapp.enabled && !serviceForm.contactInfo.whatsapp.number) {
-        alert('Please enter your WhatsApp number');
+      if (contactInfo.whatsapp?.enabled && !contactInfo.whatsapp?.number) {
+        alert('Please add your WhatsApp number in Business Profile (My Profile tab)');
         setIsSubmitting(false);
         return;
       }
@@ -337,8 +334,8 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
         country: 'Tanzania',
         images: imageUrls,
         amenities: serviceForm.includes ? serviceForm.includes.split(',').map(item => item.trim()) : [],
-        paymentMethods: serviceForm.paymentMethods,
-        contactInfo: serviceForm.contactInfo
+        paymentMethods: paymentMethods,  // From provider profile
+        contactInfo: contactInfo  // From provider profile
       };
 
       console.log('Sending service data:', serviceData);
@@ -454,29 +451,7 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
     // Set editing mode
     setEditingServiceId(service.id);
     
-    // Parse payment_methods and contact_info if they're strings
-    let paymentMethods = service.payment_methods || {};
-    let contactInfo = service.contact_info || {};
-    
-    if (typeof paymentMethods === 'string') {
-      try {
-        paymentMethods = JSON.parse(paymentMethods);
-      } catch (e) {
-        console.error('Error parsing payment_methods:', e);
-        paymentMethods = {};
-      }
-    }
-    
-    if (typeof contactInfo === 'string') {
-      try {
-        contactInfo = JSON.parse(contactInfo);
-      } catch (e) {
-        console.error('Error parsing contact_info:', e);
-        contactInfo = {};
-      }
-    }
-    
-    // Populate form with service data
+    // Populate form with service data (WITHOUT payment methods & contact info - those come from profile)
     setServiceForm({
       name: service.title,
       description: service.description || '',
@@ -489,15 +464,7 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
       requirements: '',
       images: Array.isArray(service.images) && service.images.length > 0 
         ? service.images.map(img => ({preview: img, isUrl: true})) 
-        : [],
-      // IMPORTANT: Preserve payment methods and contact info
-      paymentMethods: {
-        bankTransfer: paymentMethods.bankTransfer || { enabled: false, bankName: '', accountName: '', accountNumber: '', swiftCode: '' }
-      },
-      contactInfo: {
-        email: contactInfo.email || { enabled: false, address: '' },
-        whatsapp: contactInfo.whatsapp || { enabled: false, number: '' }
-      }
+        : []
     });
     
     // Parse location to get street, ward, district, and region
@@ -815,183 +782,43 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
             </div>
           </div>
 
-          {/* Payment Methods Section */}
-          <div className="mb-6 p-4 bg-muted/30 rounded-lg border border-border">
-            <h4 className="font-medium text-foreground mb-4 flex items-center">
-              <Icon name="CreditCard" size={18} className="mr-2 text-primary" />
-              Payment Methods
-              <span className="ml-2 text-xs font-normal text-muted-foreground">(Select methods you accept)</span>
-            </h4>
-            <p className="text-xs text-muted-foreground mb-4">
-              Choose which payment methods travelers can use to pay for this service. Only enabled methods with complete details will be shown to travelers.
-            </p>
-            <div className="space-y-4">
-              {/* Bank Transfer */}
-              <div className={`p-4 rounded-lg border transition-all ${serviceForm.paymentMethods.bankTransfer?.enabled ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={serviceForm.paymentMethods.bankTransfer?.enabled}
-                      onChange={(e) => setServiceForm({
-                        ...serviceForm,
-                        paymentMethods: {
-                          ...serviceForm.paymentMethods,
-                          bankTransfer: { ...serviceForm.paymentMethods.bankTransfer, enabled: e.target.checked }
-                        }
-                      })}
-                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary mr-3"
-                    />
-                    <Icon name="Building" size={20} className="mr-2 text-primary" />
-                    <span className="font-medium text-foreground">Bank Payment Method</span>
-                  </label>
+          {/* Info: Payment & Contact from Profile */}
+          <div className="mb-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <div className="flex items-start">
+              <Icon name="Info" size={20} className="mr-3 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-medium text-foreground mb-2">Payment & Contact Information</h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Payment methods and contact information are managed globally in your <span className="font-semibold text-primary">Business Profile</span> (My Profile tab). 
+                  All your services will automatically use these settings.
+                </p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {providerProfile?.paymentMethods?.bankTransfer?.enabled && (
+                    <span className="px-3 py-1 bg-green-500/10 text-green-700 border border-green-500/20 rounded-lg text-xs font-medium flex items-center">
+                      <Icon name="CreditCard" size={14} className="mr-1" />
+                      Bank Transfer Enabled
+                    </span>
+                  )}
+                  {providerProfile?.contactInfo?.email?.enabled && (
+                    <span className="px-3 py-1 bg-blue-500/10 text-blue-700 border border-blue-500/20 rounded-lg text-xs font-medium flex items-center">
+                      <Icon name="Mail" size={14} className="mr-1" />
+                      Email: {providerProfile.contactInfo.email.address}
+                    </span>
+                  )}
+                  {providerProfile?.contactInfo?.whatsapp?.enabled && (
+                    <span className="px-3 py-1 bg-green-500/10 text-green-700 border border-green-500/20 rounded-lg text-xs font-medium flex items-center">
+                      <Icon name="MessageCircle" size={14} className="mr-1" />
+                      WhatsApp: {providerProfile.contactInfo.whatsapp.number}
+                    </span>
+                  )}
+                  {!providerProfile?.paymentMethods?.bankTransfer?.enabled && 
+                   !providerProfile?.contactInfo?.email?.enabled && 
+                   !providerProfile?.contactInfo?.whatsapp?.enabled && (
+                    <span className="px-3 py-1 bg-yellow-500/10 text-yellow-700 border border-yellow-500/20 rounded-lg text-xs font-medium">
+                      ⚠️ No payment or contact methods configured
+                    </span>
+                  )}
                 </div>
-                {serviceForm.paymentMethods.bankTransfer?.enabled && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                    <input
-                      type="text"
-                      placeholder="Bank Name"
-                      value={serviceForm.paymentMethods.bankTransfer.bankName}
-                      onChange={(e) => setServiceForm({
-                        ...serviceForm,
-                        paymentMethods: {
-                          ...serviceForm.paymentMethods,
-                          bankTransfer: { ...serviceForm.paymentMethods.bankTransfer, bankName: e.target.value }
-                        }
-                      })}
-                      className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Account Name"
-                      value={serviceForm.paymentMethods.bankTransfer.accountName}
-                      onChange={(e) => setServiceForm({
-                        ...serviceForm,
-                        paymentMethods: {
-                          ...serviceForm.paymentMethods,
-                          bankTransfer: { ...serviceForm.paymentMethods.bankTransfer, accountName: e.target.value }
-                        }
-                      })}
-                      className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Account Number"
-                      value={serviceForm.paymentMethods.bankTransfer.accountNumber}
-                      onChange={(e) => setServiceForm({
-                        ...serviceForm,
-                        paymentMethods: {
-                          ...serviceForm.paymentMethods,
-                          bankTransfer: { ...serviceForm.paymentMethods.bankTransfer, accountNumber: e.target.value }
-                        }
-                      })}
-                      className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                    />
-                    <input
-                      type="text"
-                      placeholder="SWIFT / BIC Code (Optional)"
-                      value={serviceForm.paymentMethods.bankTransfer.swiftCode}
-                      onChange={(e) => setServiceForm({
-                        ...serviceForm,
-                        paymentMethods: {
-                          ...serviceForm.paymentMethods,
-                          bankTransfer: { ...serviceForm.paymentMethods.bankTransfer, swiftCode: e.target.value }
-                        }
-                      })}
-                      className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Information Section */}
-          <div className="mb-6 p-4 bg-muted/30 rounded-lg border border-border">
-            <h4 className="font-medium text-foreground mb-4 flex items-center">
-              <Icon name="MessageCircle" size={18} className="mr-2 text-green-600" />
-              Contact Information *
-              <span className="ml-2 text-xs font-normal text-muted-foreground">(At least one required)</span>
-            </h4>
-            <p className="text-xs text-muted-foreground mb-4">
-              Provide contact details so travelers can reach you directly. These will be displayed on your service listing.
-            </p>
-            
-            <div className="space-y-4">
-              {/* Email Contact */}
-              <div className={`p-4 rounded-lg border transition-all ${serviceForm.contactInfo.email.enabled ? 'border-green-500 bg-green-50/50' : 'border-border'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={serviceForm.contactInfo.email.enabled}
-                      onChange={(e) => setServiceForm({
-                        ...serviceForm,
-                        contactInfo: {
-                          ...serviceForm.contactInfo,
-                          email: { ...serviceForm.contactInfo.email, enabled: e.target.checked }
-                        }
-                      })}
-                      className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500 mr-3"
-                    />
-                    <Icon name="Mail" size={20} className="mr-2 text-primary" />
-                    <span className="font-medium text-foreground">Email</span>
-                  </label>
-                </div>
-                {serviceForm.contactInfo.email.enabled && (
-                  <input
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={serviceForm.contactInfo.email.address}
-                    onChange={(e) => setServiceForm({
-                      ...serviceForm,
-                      contactInfo: {
-                        ...serviceForm.contactInfo,
-                        email: { ...serviceForm.contactInfo.email, address: e.target.value }
-                      }
-                    })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm mt-3"
-                    required={serviceForm.contactInfo.email.enabled}
-                  />
-                )}
-              </div>
-
-              {/* WhatsApp Contact */}
-              <div className={`p-4 rounded-lg border transition-all ${serviceForm.contactInfo.whatsapp.enabled ? 'border-green-500 bg-green-50/50' : 'border-border'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={serviceForm.contactInfo.whatsapp.enabled}
-                      onChange={(e) => setServiceForm({
-                        ...serviceForm,
-                        contactInfo: {
-                          ...serviceForm.contactInfo,
-                          whatsapp: { ...serviceForm.contactInfo.whatsapp, enabled: e.target.checked }
-                        }
-                      })}
-                      className="w-4 h-4 text-green-600 border-border rounded focus:ring-green-500 mr-3"
-                    />
-                    <Icon name="MessageCircle" size={20} className="mr-2 text-green-500" />
-                    <span className="font-medium text-foreground">WhatsApp</span>
-                  </label>
-                </div>
-                {serviceForm.contactInfo.whatsapp.enabled && (
-                  <input
-                    type="tel"
-                    placeholder="+255 123 456 789"
-                    value={serviceForm.contactInfo.whatsapp.number}
-                    onChange={(e) => setServiceForm({
-                      ...serviceForm,
-                      contactInfo: {
-                        ...serviceForm.contactInfo,
-                        whatsapp: { ...serviceForm.contactInfo.whatsapp, number: e.target.value }
-                      }
-                    })}
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm mt-3"
-                    required={serviceForm.contactInfo.whatsapp.enabled}
-                  />
-                )}
               </div>
             </div>
           </div>
