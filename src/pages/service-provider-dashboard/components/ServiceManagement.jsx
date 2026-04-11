@@ -793,27 +793,27 @@ const ServiceManagement = ({ editingServiceId: propEditingServiceId, onEditCompl
                   All your services will automatically use these settings.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {providerProfile?.paymentMethods?.bankTransfer?.enabled && (
+                  {((providerProfile?.payment_methods || providerProfile?.paymentMethods)?.bankTransfer?.enabled) && (
                     <span className="px-3 py-1 bg-green-500/10 text-green-700 border border-green-500/20 rounded-lg text-xs font-medium flex items-center">
                       <Icon name="CreditCard" size={14} className="mr-1" />
                       Bank Transfer Enabled
                     </span>
                   )}
-                  {providerProfile?.contactInfo?.email?.enabled && (
+                  {((providerProfile?.contact_info || providerProfile?.contactInfo)?.email?.enabled) && (
                     <span className="px-3 py-1 bg-blue-500/10 text-blue-700 border border-blue-500/20 rounded-lg text-xs font-medium flex items-center">
                       <Icon name="Mail" size={14} className="mr-1" />
-                      Email: {providerProfile.contactInfo.email.address}
+                      Email: {(providerProfile.contact_info || providerProfile.contactInfo).email.address}
                     </span>
                   )}
-                  {providerProfile?.contactInfo?.whatsapp?.enabled && (
+                  {((providerProfile?.contact_info || providerProfile?.contactInfo)?.whatsapp?.enabled) && (
                     <span className="px-3 py-1 bg-green-500/10 text-green-700 border border-green-500/20 rounded-lg text-xs font-medium flex items-center">
                       <Icon name="MessageCircle" size={14} className="mr-1" />
-                      WhatsApp: {providerProfile.contactInfo.whatsapp.number}
+                      WhatsApp: {(providerProfile.contact_info || providerProfile.contactInfo).whatsapp.number}
                     </span>
                   )}
-                  {!providerProfile?.paymentMethods?.bankTransfer?.enabled && 
-                   !providerProfile?.contactInfo?.email?.enabled && 
-                   !providerProfile?.contactInfo?.whatsapp?.enabled && (
+                  {!((providerProfile?.payment_methods || providerProfile?.paymentMethods)?.bankTransfer?.enabled) && 
+                   !((providerProfile?.contact_info || providerProfile?.contactInfo)?.email?.enabled) && 
+                   !((providerProfile?.contact_info || providerProfile?.contactInfo)?.whatsapp?.enabled) && (
                     <span className="px-3 py-1 bg-yellow-500/10 text-yellow-700 border border-yellow-500/20 rounded-lg text-xs font-medium">
                       ⚠️ No payment or contact methods configured
                     </span>
