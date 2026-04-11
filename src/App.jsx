@@ -26,6 +26,7 @@ import DestinationDiscovery from './pages/DestinationDiscovery';
 import ServiceBooking from './pages/ServiceBooking';
 import JourneyPlannerEnhanced from './pages/JourneyPlannerEnhanced';
 import ProviderProfile from './pages/provider-profile';
+import PaymentCallback from './pages/PaymentCallback';
 import './App.css';
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
                   <Route path="/service-booking" element={<ServiceBooking />} />
                   <Route path="/journey-planner" element={<JourneyPlannerEnhanced />} />
                   <Route path="/provider/:providerId" element={<ProviderProfile />} />
+                  <Route path="/payment/callback" element={<PaymentCallback />} />
                   </Routes>
                   </div>
                   </TripsProvider>
