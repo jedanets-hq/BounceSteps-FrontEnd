@@ -34,19 +34,13 @@ const ProviderProfile = () => {
   const [showMessaging, setShowMessaging] = useState(false);
   const [messagingProvider, setMessagingProvider] = useState(null);
   
-  // Review states
-  const [reviews, setReviews] = useState([]);
-  const [loadingReviews, setLoadingReviews] = useState(false);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewRating, setReviewRating] = useState(0);
-  const [reviewComment, setReviewComment] = useState('');
-  const [submittingReview, setSubmittingReview] = useState(false);
+  // Review states - REMOVED (reviews only in service details now)
 
   useEffect(() => {
     fetchProviderData();
     checkFollowStatus();
     fetchFollowerCount();
-    fetchReviews();
+    // fetchReviews(); - REMOVED (reviews only in service details now)
   }, [providerId]);
 
   // Listen for messaging events from ServiceDetailsModal
@@ -86,74 +80,7 @@ const ProviderProfile = () => {
     }
   };
   
-  const fetchReviews = async () => {
-    try {
-      setLoadingReviews(true);
-      const response = await fetch(`${API_BASE_URL}/reviews/provider/${providerId}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setReviews(data.reviews || []);
-      } else {
-        console.warn('⚠️ Failed to fetch reviews:', data.message);
-        setReviews([]);
-      }
-    } catch (error) {
-      console.error('❌ Error fetching reviews:', error);
-      setReviews([]);
-    } finally {
-      setLoadingReviews(false);
-    }
-  };
-  
-  const handleSubmitReview = async () => {
-    if (reviewRating === 0) {
-      alert('❌ Please select a rating');
-      return;
-    }
-    
-    const savedUser = localStorage.getItem('isafari_user');
-    if (!savedUser) {
-      navigate('/login?redirect=/provider/' + providerId);
-      return;
-    }
-    
-    try {
-      setSubmittingReview(true);
-      const userData = JSON.parse(savedUser);
-      const token = userData.token;
-      
-      const response = await fetch(`${API_BASE_URL}/reviews/provider/${providerId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          rating: reviewRating,
-          comment: reviewComment
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        alert('✅ Review submitted successfully!');
-        setShowReviewForm(false);
-        setReviewRating(0);
-        setReviewComment('');
-        fetchReviews(); // Refresh reviews
-        fetchProviderData(); // Refresh provider data to update average rating
-      } else {
-        alert('❌ ' + (data.message || 'Failed to submit review'));
-      }
-    } catch (error) {
-      console.error('Error submitting review:', error);
-      alert('❌ Error submitting review. Please try again.');
-    } finally {
-      setSubmittingReview(false);
-    }
-  };
+  // Review functions - REMOVED (reviews only in service details now)
 
   const handleFollowToggle = async () => {
     try {
@@ -310,15 +237,7 @@ const ProviderProfile = () => {
     }
   };
 
-  const handleServiceToggle = (serviceId) => {
-    setSelectedServices(prev => {
-      if (prev.includes(serviceId)) {
-        return prev.filter(id => id !== serviceId);
-      } else {
-        return [...prev, serviceId];
-      }
-    });
-  };
+
 
   // Get unique categories from services
   const categories = ['all', ...new Set(services.map(s => s.category).filter(Boolean))];
@@ -922,162 +841,6 @@ const ProviderProfile = () => {
                         </Button>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          {/* Reviews Section */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-foreground">
-                Reviews & Ratings
-              </h2>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const savedUser = localStorage.getItem('isafari_user');
-                  if (!savedUser) {
-                    navigate('/login?redirect=/provider/' + providerId);
-                    return;
-                  }
-                  setShowReviewForm(!showReviewForm);
-                }}
-                className="dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
-              >
-                <Icon name="Star" size={16} />
-                Write a Review
-              </Button>
-            </div>
-            
-            {/* Review Form */}
-            {showReviewForm && (
-              <div className="bg-card rounded-lg border border-border p-6 mb-6">
-                <h3 className="text-lg font-semibold text-foreground mb-4">Write Your Review</h3>
-                
-                {/* Rating Stars */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Your Rating <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setReviewRating(star)}
-                        className="transition-transform hover:scale-110"
-                      >
-                        <Icon
-                          name="Star"
-                          size={32}
-                          className={`${
-                            star <= reviewRating
-                              ? 'text-yellow-500 fill-yellow-500'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Comment */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Your Review (Optional)
-                  </label>
-                  <textarea
-                    value={reviewComment}
-                    onChange={(e) => setReviewComment(e.target.value)}
-                    placeholder="Share your experience with this provider..."
-                    rows={4}
-                    className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
-                  />
-                </div>
-                
-                {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleSubmitReview}
-                    disabled={submittingReview || reviewRating === 0}
-                    className="dark:bg-primary dark:text-white dark:hover:bg-primary/80"
-                  >
-                    {submittingReview ? (
-                      <>
-                        <Icon name="Loader2" size={16} className="animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Icon name="Send" size={16} />
-                        Submit Review
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowReviewForm(false);
-                      setReviewRating(0);
-                      setReviewComment('');
-                    }}
-                    className="dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
-            
-            {/* Reviews List */}
-            {loadingReviews ? (
-              <div className="text-center py-8">
-                <Icon name="Loader2" size={32} className="mx-auto text-primary mb-2 animate-spin" />
-                <p className="text-muted-foreground">Loading reviews...</p>
-              </div>
-            ) : reviews.length === 0 ? (
-              <div className="text-center py-12 bg-muted/30 rounded-lg">
-                <Icon name="MessageSquare" size={48} className="mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No reviews yet</p>
-                <p className="text-sm text-muted-foreground mt-2">Be the first to review this provider!</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <div key={review.id} className="bg-card rounded-lg border border-border p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="font-semibold text-foreground">{review.user_name || 'Anonymous'}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Icon
-                                key={star}
-                                name="Star"
-                                size={16}
-                                className={`${
-                                  star <= review.rating
-                                    ? 'text-yellow-500 fill-yellow-500'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(review.created_at).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    {review.comment && (
-                      <p className="text-muted-foreground">{review.comment}</p>
-                    )}
                   </div>
                 ))}
               </div>
