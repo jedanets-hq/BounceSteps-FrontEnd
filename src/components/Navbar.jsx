@@ -274,18 +274,23 @@ const Navbar = () => {
                 toggleTheme();
                 setOpen(false);
               }}
-              className="flex items-center gap-3 py-4 px-4 font-medium w-full text-left transition-all duration-200 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-white dark:hover:bg-gray-700 rounded-xl shadow-sm"
+              className="flex items-center gap-4 py-4 px-4 font-medium w-full text-left transition-all duration-200 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-white dark:hover:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600"
             >
-              <div className="p-2 rounded-full bg-gray-200 dark:bg-gray-600">
+              <div className="p-3 rounded-full bg-gradient-to-r from-green-100 to-blue-100 dark:from-gray-700 dark:to-gray-600">
                 {theme === 'light' ? (
-                  <Moon size={18} />
+                  <Moon size={20} className="text-green-600 dark:text-green-400" />
                 ) : (
-                  <Sun size={18} />
+                  <Sun size={20} className="text-yellow-500" />
                 )}
               </div>
-              <span className="text-base font-semibold">
-                {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-base font-semibold">
+                  {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+                </span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+                </span>
+              </div>
             </button>
           </div>
         </div>
