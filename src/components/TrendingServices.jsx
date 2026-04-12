@@ -136,7 +136,7 @@ const TrendingServices = () => {
     }
   };
 
-  // Auto-slide functionality
+  // Auto-slide functionality with continuous loop
   useEffect(() => {
     if (trendingServices.length <= 1 || isPaused) {
       return;
@@ -149,10 +149,13 @@ const TrendingServices = () => {
           const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
           const currentScroll = scrollRef.current.scrollLeft;
 
-          // If we're at the end, scroll back to start
-          if (currentScroll >= maxScroll - 10) {
-            scrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
-            setActive(0);
+          // Check if we're at or near the end (within 50px tolerance)
+          if (currentScroll >= maxScroll - 50) {
+            // Loop back to start
+            setTimeout(() => {
+              scrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
+              setActive(0);
+            }, 100);
           } else {
             // Scroll to next card
             scrollRef.current.scrollBy({ left: cardWidth, behavior: "smooth" });
