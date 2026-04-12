@@ -16,6 +16,7 @@ import MessagesTab from './components/MessagesTab';
 import RatingStars from '../../components/RatingStars';
 import ReviewForm from '../../components/ReviewForm';
 import PesaPalPaymentModal from '../../components/PesaPalPaymentModal';
+import MobileDashboardSlider from '../../components/MobileDashboardSlider';
 import { API_URL } from '../../utils/api';
 const TravelerDashboard = () => {
   const location = useLocation();
@@ -2416,8 +2417,23 @@ const TravelerDashboard = () => {
               </p>
             </div>
 
-            {/* Tab Navigation with Glass Morphism */}
-            <div className="bg-background/90 backdrop-blur-lg rounded-2xl border border-border/50 p-2 mb-8 shadow-lg">
+            {/* Tab Navigation - Mobile */}
+            <div className="mb-8 md:hidden">
+              <MobileDashboardSlider
+                activeTab={activeTab}
+                onTabChange={(tabId) => {
+                  if (tabId === 'index') { 
+                    navigate('/'); 
+                    return; 
+                  }
+                  setActiveTab(tabId);
+                }}
+                tabs={tabs}
+              />
+            </div>
+
+            {/* Tab Navigation - Desktop with Glass Morphism */}
+            <div className="bg-background/90 backdrop-blur-lg rounded-2xl border border-border/50 p-2 mb-8 shadow-lg hidden md:block">
               <div className="flex flex-wrap gap-2 justify-center">
                 {tabs.map((tab) => (
                   <button
