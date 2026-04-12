@@ -23,6 +23,7 @@ const TrendingServices = () => {
   const [messagingProvider, setMessagingProvider] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const autoSlideInterval = useRef(null);
+  const [displayServices, setDisplayServices] = useState([]);
 
   // Check if user is a service provider
   const isProvider = isAuthenticated && user?.userType === 'service_provider';
@@ -125,6 +126,14 @@ const TrendingServices = () => {
     fetchTrendingServices();
   }, [isProvider, user]);
 
+  // Create infinite loop by triplicating services for seamless scrolling
+  useEffect(() => {
+    if (trendingServices.length > 0) {
+      // Triplicate the array for infinite scroll effect
+      setDisplayServices([...trendingServices, ...trendingServices, ...trendingServices]);
+    }
+  }, [trendingServices]);
+
   const scroll = (dir) => {
     if (scrollRef.current) {
       const cardWidth = window.innerWidth < 768 ? window.innerWidth - 28 : 400; // Full-width card on mobile
@@ -136,9 +145,9 @@ const TrendingServices = () => {
     }
   };
 
-  // Auto-slide functionality with continuous loop
+  // Auto-slide functionality with true infinite loop
   useEffect(() => {
-    if (trendingServices.length <= 1 || isPaused) {
+    if (trendingServices.length <= 1 || isPaused || displayServices.length === 0) {
       return;
     }
 
@@ -146,24 +155,24 @@ const TrendingServices = () => {
       autoSlideInterval.current = setInterval(() => {
         if (scrollRef.current) {
           const cardWidth = window.innerWidth < 768 ? window.innerWidth - 28 : 400;
-          const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+          const singleSetWidth = cardWidth * trendingServices.length;
           const currentScroll = scrollRef.current.scrollLeft;
 
-          // Check if we're at or near the end (within 50px tolerance)
-          if (currentScroll >= maxScroll - 50) {
-            // Loop back to start
+          // Scroll to next card
+          scrollRef.current.scrollBy({ left: cardWidth, behavior: "smooth" });
+
+          // Check if we've scrolled past the second set (middle copy)
+          // Reset to the equivalent position in the first set for seamless loop
+          if (currentScroll >= singleSetWidth * 1.5) {
             setTimeout(() => {
-              scrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
-              setActive(0);
-            }, 100);
-          } else {
-            // Scroll to next card
-            scrollRef.current.scrollBy({ left: cardWidth, behavior: "smooth" });
-            setActive((prev) => {
-              const maxIndex = Math.max(0, trendingServices.length - 3);
-              return Math.min(maxIndex, prev + 1);
-            });
+              scrollRef.current.scrollTo({ left: currentScroll - singleSetWidth, behavior: "auto" });
+            }, 500); // Wait for smooth scroll to finish
           }
+
+          setActive((prev) => {
+            const maxIndex = Math.max(0, trendingServices.length - 3);
+            return (prev + 1) % (maxIndex + 1);
+          });
         }
       }, 3000); // Auto-slide every 3 seconds
     };
@@ -175,7 +184,7 @@ const TrendingServices = () => {
         clearInterval(autoSlideInterval.current);
       }
     };
-  }, [trendingServices.length, isPaused]);
+  }, [trendingServices.length, isPaused, displayServices.length]);
 
   // Pause auto-slide on hover
   const handleMouseEnter = () => {
@@ -401,13 +410,11 @@ const TrendingServices = () => {
               className="flex gap-3 md:gap-6 overflow-x-auto scrollbar-hide justify-start pl-4 md:pl-6 pr-4 md:pr-6 snap-x snap-mandatory pb-4"
               style={{ scrollbarWidth: "none" }}
             >
-              {trendingServices.map((service, index) => (
+              {displayServices.map((service, index) => (
                 <div
-                  key={service.id}
+                  key={`${service.id}-${index}`}
                   onClick={() => handleServiceClick(service)}
-                  className={`flex-shrink-0 w-[calc(100vw-2.5rem)] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300 ${
-                    index === trendingServices.length - 1 ? 'mr-8' : ''
-                  }`}
+                  className={`flex-shrink-0 w-[calc(100vw-2.5rem)] md:w-[380px] rounded-2xl overflow-hidden shadow-lg bg-background/90 backdrop-blur-sm group cursor-pointer snap-start hover:shadow-xl transition-all duration-300`}
                 >
                   {/* Service Image */}
                   <div className="h-52 md:h-56 overflow-hidden relative">
