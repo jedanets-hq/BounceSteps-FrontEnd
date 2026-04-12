@@ -127,7 +127,26 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border w-full">
+    <>
+      <style jsx>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        .menu-item {
+          animation: slideInRight 0.3s ease-out forwards;
+          opacity: 0;
+        }
+      `}</style>
+      
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border w-full">
       <div className="w-full flex items-center justify-between py-3 px-4 content-padding">
         <div className="flex items-center gap-2 -ml-2 md:ml-8 cursor-pointer" onClick={() => navigate('/')}>
           <img
@@ -188,18 +207,18 @@ const Navbar = () => {
       {/* Mobile Drawer Overlay */}
       {open && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300 ease-in-out"
+          className="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity duration-300 ease-in-out backdrop-blur-sm"
           onClick={() => setOpen(false)}
         />
       )}
       
       {/* Mobile Side Drawer */}
-      <div className={`fixed top-0 right-0 h-full w-[85%] max-w-sm bg-background shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-in-out ${
+      <div className={`fixed top-0 right-0 h-full w-[80%] max-w-xs bg-white dark:bg-gray-900 shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-in-out border-l border-gray-200 dark:border-gray-700 ${
         open ? 'translate-x-0' : 'translate-x-full'
       }`}>
         {/* Drawer Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-800">
+          <div className="flex items-center gap-3">
             <img
               src="/LOGO.png"
               alt="BounceSteps"
@@ -210,63 +229,69 @@ const Navbar = () => {
                 if (fallback) fallback.style.display = 'flex';
               }}
             />
-            <div className="w-8 h-8 rounded-full border-2 border-primary items-center justify-center hidden">
-              <span className="text-primary font-bold text-sm">B</span>
+            <div className="w-8 h-8 rounded-full border-2 border-green-600 items-center justify-center hidden">
+              <span className="text-green-600 font-bold text-sm">B</span>
             </div>
-            <span className="font-bold text-lg text-foreground">BounceSteps</span>
+            <span className="font-bold text-lg text-gray-800 dark:text-white">BounceSteps</span>
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="p-2 rounded-lg hover:bg-primary/10 transition-colors text-foreground/80 hover:text-primary"
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
             aria-label="Close menu"
           >
-            <X size={20} />
+            <X size={22} />
           </button>
         </div>
         
         {/* Drawer Content */}
-        <div className="flex flex-col h-full overflow-y-auto">
-          <div className="flex-1 px-4 py-6">
-            {links.map((l) => (
+        <div className="flex flex-col h-full overflow-y-auto bg-white dark:bg-gray-900">
+          <div className="flex-1 px-3 py-4">
+            {links.map((l, index) => (
               <button
                 key={l}
                 onClick={() => handleNavigation(l)}
-                className={`block py-4 px-4 font-medium w-full text-left transition-colors rounded-lg mb-2 ${
+                className={`menu-item flex items-center w-full py-4 px-4 font-medium text-left transition-all duration-200 rounded-xl mb-2 ${
                   isActiveLink(l) 
-                    ? 'text-primary font-semibold bg-primary/10 border-l-4 border-primary' 
-                    : 'text-foreground/80 hover:text-primary hover:bg-primary/5'
+                    ? 'text-white bg-gradient-to-r from-green-600 to-blue-600 shadow-lg transform scale-[1.02]' 
+                    : 'text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-gray-800 hover:shadow-md'
                 }`}
+                style={{
+                  animationDelay: `${index * 100}ms`
+                }}
               >
-                {l}
+                <span className="text-base">{l}</span>
+                {isActiveLink(l) && (
+                  <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
+                )}
               </button>
             ))}
           </div>
           
           {/* Theme Toggle for Mobile - Bottom Section */}
-          <div className="border-t border-border p-4">
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-800">
             <button
               onClick={() => {
                 toggleTheme();
                 setOpen(false);
               }}
-              className="flex items-center gap-3 py-3 px-4 font-medium w-full text-left transition-colors text-foreground/80 hover:text-primary hover:bg-primary/5 rounded-lg"
+              className="flex items-center gap-3 py-4 px-4 font-medium w-full text-left transition-all duration-200 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-white dark:hover:bg-gray-700 rounded-xl shadow-sm"
             >
-              {theme === 'light' ? (
-                <>
-                  <Moon size={20} />
-                  <span>Dark Mode</span>
-                </>
-              ) : (
-                <>
-                  <Sun size={20} />
-                  <span>Light Mode</span>
-                </>
-              )}
+              <div className="p-2 rounded-full bg-gray-200 dark:bg-gray-600">
+                {theme === 'light' ? (
+                  <Moon size={18} />
+                ) : (
+                  <Sun size={18} />
+                )}
+              </div>
+              <span className="text-base">
+                {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+              </span>
             </button>
           </div>
         </div>
       </div>
     </nav>
+    </>
   );
 };
 
