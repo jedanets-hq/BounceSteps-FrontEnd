@@ -44,18 +44,8 @@ const ReviewsList = ({ serviceId, showAddReview = false, onAddReview = null }) =
   };
 
   const fetchSummary = async () => {
-    try {
-      const response = await fetch(
-        `${getApiUrl()}/api/reviews/service/${serviceId}/summary`
-      );
-      const data = await response.json();
-      
-      if (data.success) {
-        setSummary(data.summary);
-      }
-    } catch (err) {
-      console.error('Error fetching summary:', err);
-    }
+    // Summary endpoint not implemented yet, skip for now
+    setSummary(null);
   };
 
   const formatDate = (dateString) => {

@@ -36,14 +36,17 @@ const ReviewForm = ({
     setError('');
     
     try {
-      const token = localStorage.getItem('isafari_token');
-      if (!token) {
+      const savedUser = localStorage.getItem('isafari_user');
+      if (!savedUser) {
         throw new Error('Please login to submit a review');
       }
       
+      const userData = JSON.parse(savedUser);
+      const token = userData.token;
+      
       const url = existingReview 
         ? `${getApiUrl()}/api/reviews/${existingReview.id}`
-        : `${getApiUrl()}/api/reviews`;
+        : `${getApiUrl()}/api/reviews/service/${serviceId}`;
       
       const method = existingReview ? 'PUT' : 'POST';
       
@@ -54,10 +57,8 @@ const ReviewForm = ({
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          serviceId,
-          bookingId,
           rating,
-          reviewText: reviewText.trim() || null
+          comment: reviewText.trim() || null
         })
       });
       
