@@ -10,6 +10,7 @@ import ProviderBadge from '../components/ui/ProviderBadge';
 import VerifiedBadge from '../components/ui/VerifiedBadge';
 import MessagingModal from '../components/MessagingModal';
 import ServiceCard from '../components/ServiceCard';
+import MobileCategorySlider from '../components/MobileCategorySlider';
 import { API_URL } from '../utils/api';
 import { SERVICE_CATEGORIES } from '../data/serviceCategories';
 
@@ -287,8 +288,26 @@ const DestinationDiscovery = () => {
             </div>
           </div>
 
-          {/* Category Filters */}
-          <div className="mb-8 flex justify-center">
+          {/* Category Filters - Mobile */}
+          <div className="mb-8 md:hidden">
+            <MobileCategorySlider
+              activeCategory={selectedCategory}
+              onCategoryChange={(categoryId) => {
+                setSelectedCategory(categoryId || 'all');
+                // Update URL to reflect the selected category
+                const newSearchParams = new URLSearchParams(searchParams);
+                if (!categoryId || categoryId === 'all') {
+                  newSearchParams.delete('category');
+                } else {
+                  newSearchParams.set('category', categoryId);
+                }
+                navigate(`/destination-discovery?${newSearchParams.toString()}`, { replace: true });
+              }}
+            />
+          </div>
+
+          {/* Category Filters - Desktop */}
+          <div className="mb-8 hidden md:flex justify-center">
             <div className="flex flex-wrap gap-3 justify-center max-w-4xl">
               {categories.map(category => (
                 <button
