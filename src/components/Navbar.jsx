@@ -213,7 +213,7 @@ const Navbar = () => {
       )}
       
       {/* Mobile Side Drawer */}
-      <div className={`fixed top-0 right-0 h-full w-[80%] max-w-xs bg-white dark:bg-gray-900 shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-in-out border-l border-gray-200 dark:border-gray-700 ${
+      <div className={`fixed top-0 right-0 h-screen w-[75%] max-w-sm bg-white dark:bg-gray-900 shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-in-out border-l border-gray-200 dark:border-gray-700 ${
         open ? 'translate-x-0' : 'translate-x-full'
       }`}>
         {/* Drawer Header */}
@@ -245,12 +245,12 @@ const Navbar = () => {
         
         {/* Drawer Content */}
         <div className="flex flex-col h-full overflow-y-auto bg-white dark:bg-gray-900">
-          <div className="flex-1 px-3 py-4">
+          <div className="flex-1 px-4 py-6">
             {links.map((l, index) => (
               <button
                 key={l}
                 onClick={() => handleNavigation(l)}
-                className={`menu-item flex items-center w-full py-4 px-4 font-medium text-left transition-all duration-200 rounded-xl mb-2 ${
+                className={`menu-item flex items-center w-full py-4 px-4 font-medium text-left transition-all duration-200 rounded-xl mb-3 ${
                   isActiveLink(l) 
                     ? 'text-white bg-gradient-to-r from-green-600 to-blue-600 shadow-lg transform scale-[1.02]' 
                     : 'text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-gray-800 hover:shadow-md'
@@ -259,7 +259,7 @@ const Navbar = () => {
                   animationDelay: `${index * 100}ms`
                 }}
               >
-                <span className="text-base">{l}</span>
+                <span className="text-base font-semibold">{l}</span>
                 {isActiveLink(l) && (
                   <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
                 )}
@@ -283,7 +283,7 @@ const Navbar = () => {
                   <Sun size={18} />
                 )}
               </div>
-              <span className="text-base">
+              <span className="text-base font-semibold">
                 {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
               </span>
             </button>
