@@ -45,8 +45,8 @@ const ReviewForm = ({
       const token = userData.token;
       
       const url = existingReview 
-        ? `${getApiUrl()}/api/reviews/${existingReview.id}`
-        : `${getApiUrl()}/api/reviews/service/${serviceId}`;
+        ? `${getApiUrl()}/reviews/${existingReview.id}`
+        : `${getApiUrl()}/reviews/service/${serviceId}`;
       
       const method = existingReview ? 'PUT' : 'POST';
       

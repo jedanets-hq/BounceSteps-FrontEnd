@@ -28,7 +28,7 @@ const ReviewsList = ({ serviceId, showAddReview = false, onAddReview = null }) =
   const fetchReviews = async () => {
     try {
       const response = await fetch(
-        `${getApiUrl()}/api/reviews/service/${serviceId}`
+        `${getApiUrl()}/reviews/service/${serviceId}`
       );
       const data = await response.json();
       
