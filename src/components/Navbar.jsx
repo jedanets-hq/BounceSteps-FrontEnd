@@ -196,13 +196,32 @@ const Navbar = () => {
             </button>
           </li>
         </ul>
-        <button
-          className="md:hidden text-foreground"
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        
+        {/* Mobile Theme Toggle and Menu Button */}
+        <div className="md:hidden flex items-center gap-3">
+          {/* Theme Toggle for Mobile Header */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-primary/10 transition-colors text-foreground/80 hover:text-primary"
+            aria-label="Toggle theme"
+            title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          >
+            {theme === 'light' ? (
+              <Moon size={20} />
+            ) : (
+              <Sun size={20} />
+            )}
+          </button>
+          
+          {/* Hamburger Menu Button */}
+          <button
+            className="text-foreground"
+            onClick={() => setOpen(!open)}
+            aria-label="Toggle menu"
+          >
+            {open ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
       </div>
       {/* Mobile Drawer Overlay */}
       {open && (
@@ -274,23 +293,18 @@ const Navbar = () => {
                 toggleTheme();
                 setOpen(false);
               }}
-              className="flex items-center gap-4 py-4 px-4 font-medium w-full text-left transition-all duration-200 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-white dark:hover:bg-gray-700 rounded-xl shadow-sm border border-gray-200 dark:border-gray-600"
+              className="flex items-center gap-3 py-4 px-4 font-medium w-full text-left transition-all duration-200 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 hover:bg-white dark:hover:bg-gray-700 rounded-xl shadow-sm"
             >
-              <div className="p-3 rounded-full bg-gradient-to-r from-green-100 to-blue-100 dark:from-gray-700 dark:to-gray-600">
+              <div className="p-2 rounded-full bg-gray-200 dark:bg-gray-600">
                 {theme === 'light' ? (
-                  <Moon size={20} className="text-green-600 dark:text-green-400" />
+                  <Moon size={18} />
                 ) : (
-                  <Sun size={20} className="text-yellow-500" />
+                  <Sun size={18} />
                 )}
               </div>
-              <div className="flex flex-col">
-                <span className="text-base font-semibold">
-                  {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-                </span>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
-                </span>
-              </div>
+              <span className="text-base font-semibold">
+                {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+              </span>
             </button>
           </div>
         </div>
