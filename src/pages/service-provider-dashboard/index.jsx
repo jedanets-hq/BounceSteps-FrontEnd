@@ -13,6 +13,7 @@ import ServicePromotion from './components/ServicePromotion';
 import ProviderHomeServices from './components/ProviderHomeServices';
 import ProviderMessagesTab 
 from './components/ProviderMessagesTab';
+import MobileDashboardSlider from '../../components/MobileDashboardSlider';
 import { API_URL } from '../../utils/api';
 
 const ServiceProviderDashboard = () => {
@@ -808,8 +809,18 @@ const ServiceProviderDashboard = () => {
               </p>
             </div>
 
-            {/* Tab Navigation with Glass Morphism */}
-            <div className="bg-background/90 backdrop-blur-lg rounded-2xl border border-border/50 p-2 mb-8 shadow-lg">
+            {/* Mobile Navigation - Only visible on mobile */}
+            <div className="md:hidden mb-6">
+              <MobileDashboardSlider 
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                tabs={tabs}
+                className="bg-background/90 backdrop-blur-lg rounded-2xl border border-border/50 shadow-lg"
+              />
+            </div>
+
+            {/* Tab Navigation with Glass Morphism - Hidden on mobile */}
+            <div className="hidden md:block bg-background/90 backdrop-blur-lg rounded-2xl border border-border/50 p-2 mb-8 shadow-lg">
               <div className="flex flex-wrap gap-2 justify-center">
                 {tabs.map((tab) => (
                   <button
