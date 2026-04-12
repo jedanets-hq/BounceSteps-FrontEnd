@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -20,6 +20,20 @@ const Navbar = () => {
   };
   
   const links = getLinks();
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [open]);
 
   // Function to check if a link is active
   const isActiveLink = (link) => {
@@ -171,43 +185,87 @@ const Navbar = () => {
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
+      {/* Mobile Drawer Overlay */}
       {open && (
-        <div className="md:hidden bg-background border-t border-border px-4 pb-4">
-          {links.map((l) => (
-            <button
-              key={l}
-              onClick={() => handleNavigation(l)}
-              className={`block py-2 font-medium w-full text-left transition-colors ${
-                isActiveLink(l) 
-                  ? 'text-primary font-semibold' 
-                  : 'text-foreground/80 hover:text-primary'
-              }`}
-            >
-              {l}
-            </button>
-          ))}
-          {/* Theme Toggle for Mobile */}
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300 ease-in-out"
+          onClick={() => setOpen(false)}
+        />
+      )}
+      
+      {/* Mobile Side Drawer */}
+      <div className={`fixed top-0 right-0 h-full w-[85%] max-w-sm bg-background shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-in-out ${
+        open ? 'translate-x-0' : 'translate-x-full'
+      }`}>
+        {/* Drawer Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center gap-2">
+            <img
+              src="/LOGO.png"
+              alt="BounceSteps"
+              className="h-8 w-auto"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                const fallback = e.target.nextElementSibling;
+                if (fallback) fallback.style.display = 'flex';
+              }}
+            />
+            <div className="w-8 h-8 rounded-full border-2 border-primary items-center justify-center hidden">
+              <span className="text-primary font-bold text-sm">B</span>
+            </div>
+            <span className="font-bold text-lg text-foreground">BounceSteps</span>
+          </div>
           <button
-            onClick={() => {
-              toggleTheme();
-              setOpen(false);
-            }}
-            className="flex items-center gap-2 py-2 font-medium w-full text-left transition-colors text-foreground/80 hover:text-primary mt-2 pt-4 border-t border-border"
+            onClick={() => setOpen(false)}
+            className="p-2 rounded-lg hover:bg-primary/10 transition-colors text-foreground/80 hover:text-primary"
+            aria-label="Close menu"
           >
-            {theme === 'light' ? (
-              <>
-                <Moon size={18} />
-                <span>Dark Mode</span>
-              </>
-            ) : (
-              <>
-                <Sun size={18} />
-                <span>Light Mode</span>
-              </>
-            )}
+            <X size={20} />
           </button>
         </div>
-      )}
+        
+        {/* Drawer Content */}
+        <div className="flex flex-col h-full overflow-y-auto">
+          <div className="flex-1 px-4 py-6">
+            {links.map((l) => (
+              <button
+                key={l}
+                onClick={() => handleNavigation(l)}
+                className={`block py-4 px-4 font-medium w-full text-left transition-colors rounded-lg mb-2 ${
+                  isActiveLink(l) 
+                    ? 'text-primary font-semibold bg-primary/10 border-l-4 border-primary' 
+                    : 'text-foreground/80 hover:text-primary hover:bg-primary/5'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          
+          {/* Theme Toggle for Mobile - Bottom Section */}
+          <div className="border-t border-border p-4">
+            <button
+              onClick={() => {
+                toggleTheme();
+                setOpen(false);
+              }}
+              className="flex items-center gap-3 py-3 px-4 font-medium w-full text-left transition-colors text-foreground/80 hover:text-primary hover:bg-primary/5 rounded-lg"
+            >
+              {theme === 'light' ? (
+                <>
+                  <Moon size={20} />
+                  <span>Dark Mode</span>
+                </>
+              ) : (
+                <>
+                  <Sun size={20} />
+                  <span>Light Mode</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
     </nav>
   );
 };
