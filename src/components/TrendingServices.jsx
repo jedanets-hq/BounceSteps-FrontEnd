@@ -21,6 +21,8 @@ const TrendingServices = () => {
   const [selectedServiceDetails, setSelectedServiceDetails] = useState(null);
   const [showMessaging, setShowMessaging] = useState(false);
   const [messagingProvider, setMessagingProvider] = useState(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const autoSlideInterval = useRef(null);
 
   // Check if user is a service provider
   const isProvider = isAuthenticated && user?.userType === 'service_provider';
@@ -132,6 +134,67 @@ const TrendingServices = () => {
       const maxIndex = Math.max(0, trendingServices.length - 3); // Show 3 dots max
       setActive((prev) => Math.max(0, Math.min(maxIndex, prev + dir)));
     }
+  };
+
+  // Auto-slide functionality
+  useEffect(() => {
+    if (trendingServices.length <= 1 || isPaused) {
+      return;
+    }
+
+    const startAutoSlide = () => {
+      autoSlideInterval.current = setInterval(() => {
+        if (scrollRef.current) {
+          const cardWidth = window.innerWidth < 768 ? window.innerWidth - 28 : 400;
+          const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+          const currentScroll = scrollRef.current.scrollLeft;
+
+          // If we're at the end, scroll back to start
+          if (currentScroll >= maxScroll - 10) {
+            scrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
+            setActive(0);
+          } else {
+            // Scroll to next card
+            scrollRef.current.scrollBy({ left: cardWidth, behavior: "smooth" });
+            setActive((prev) => {
+              const maxIndex = Math.max(0, trendingServices.length - 3);
+              return Math.min(maxIndex, prev + 1);
+            });
+          }
+        }
+      }, 3000); // Auto-slide every 3 seconds
+    };
+
+    startAutoSlide();
+
+    return () => {
+      if (autoSlideInterval.current) {
+        clearInterval(autoSlideInterval.current);
+      }
+    };
+  }, [trendingServices.length, isPaused]);
+
+  // Pause auto-slide on hover
+  const handleMouseEnter = () => {
+    setIsPaused(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsPaused(false);
+  };
+
+  // Manual scroll with auto-slide reset
+  const handleManualScroll = (dir) => {
+    // Clear existing interval
+    if (autoSlideInterval.current) {
+      clearInterval(autoSlideInterval.current);
+    }
+    
+    // Perform manual scroll
+    scroll(dir);
+    
+    // Reset pause state to restart auto-slide
+    setIsPaused(false);
   };
 
   // Format price
@@ -312,14 +375,14 @@ const TrendingServices = () => {
             {trendingServices.length > 3 && (
               <>
                 <button
-                  onClick={() => scroll(-1)}
+                  onClick={() => handleManualScroll(-1)}
                   className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background shadow-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:shadow-xl transition-all duration-200"
                 >
                   <ChevronLeft size={20} />
                 </button>
 
                 <button
-                  onClick={() => scroll(1)}
+                  onClick={() => handleManualScroll(1)}
                   className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background shadow-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:shadow-xl transition-all duration-200"
                 >
                   <ChevronRight size={20} />
@@ -330,6 +393,8 @@ const TrendingServices = () => {
             {/* Services Carousel */}
             <div
               ref={scrollRef}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
               className="flex gap-3 md:gap-6 overflow-x-auto scrollbar-hide justify-start pl-4 md:pl-6 pr-4 md:pr-6 snap-x snap-mandatory pb-4"
               style={{ scrollbarWidth: "none" }}
             >
